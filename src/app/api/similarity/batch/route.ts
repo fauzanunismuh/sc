@@ -4,25 +4,55 @@ import { NextRequest, NextResponse } from "next/server";
 const PYTHON_SERVICE_URL = process.env.SIMILARITY_SERVICE_URL || "http://localhost:8000";
 
 // Threshold sesuai proposal skripsi (Tabel 3)
-const ALPHA = 0.6; // Akbar dkk. 2025
+// CodeBERT: 0.80 (Akbar dkk. 2025), Winnowing: 0.75 (Ramli 2021)
+const ALPHA = 0.6;
+const THRESHOLD_CODEBERT = 0.80;
+const THRESHOLD_WINNOWING = 0.75;
 
+/**
+ * Klasifikasi sesuai Tabel 3 Proposal:
+ * - Plagiarisme Kuat: S_CB ≥ 0.80 AND S_W ≥ 0.75
+ * - Mirip Tekstual: S_W ≥ 0.75 (tapi bukan Plagiarisme Kuat)
+ * - Mirip Semantik: S_CB ≥ 0.80 (tapi bukan Plagiarisme Kuat)
+ * - Normal: S_CB < 0.80 AND S_W < 0.75
+ */
 function getClassification(
-  sg: number,
   scb: number,
   sw: number
 ): { label: string; level: "danger" | "warning" | "secondary" | "success"; description: string } {
-  if (sg >= 0.80) {
-    return { label: "Plagiarisme Kuat", level: "danger", description: "Kemiripan tinggi secara semantik DAN tekstual" };
+  // Plagiarisme Kuat: kedua skor tinggi
+  if (scb >= THRESHOLD_CODEBERT && sw >= THRESHOLD_WINNOWING) {
+    return {
+      label: "Plagiarisme Kuat",
+      level: "danger",
+      description: "Kemiripan tinggi secara semantik DAN tekstual"
+    };
   }
-  if (sg >= 0.65) {
-    return sw >= scb
-      ? { label: "Mirip Tekstual", level: "warning", description: "Struktur teks sangat mirip (copy-paste terdeteksi)" }
-      : { label: "Mirip Semantik", level: "warning", description: "Logika serupa meski teks berbeda (refactoring)" };
+  
+  // Mirip Tekstual: hanya Winnowing tinggi
+  if (sw >= THRESHOLD_WINNOWING) {
+    return {
+      label: "Mirip Tekstual",
+      level: "warning",
+      description: "Struktur teks sangat mirip (indikasi copy-paste)"
+    };
   }
-  if (sg >= 0.45) {
-    return { label: "Mirip Semantik", level: "secondary", description: "Sedikit mirip secara semantik, perlu ditinjau" };
+  
+  // Mirip Semantik: hanya CodeBERT tinggi
+  if (scb >= THRESHOLD_CODEBERT) {
+    return {
+      label: "Mirip Semantik",
+      level: "warning",
+      description: "Logika serupa meski teks berbeda (kemungkinan refactoring)"
+    };
   }
-  return { label: "Normal / Aman", level: "success", description: "Tidak terindikasi plagiarisme" };
+  
+  // Normal: kedua skor di bawah threshold
+  return {
+    label: "Normal / Aman",
+    level: "success",
+    description: "Tidak terindikasi plagiarisme"
+  };
 }
 
 /**
@@ -37,6 +67,7 @@ async function fetchGitHubCode(
   try {
     const match = repoUrl.match(/github\.com\/([^/]+)\/([^/]+)/);
     if (!match) return null;
+
     const [, owner, repo] = match;
     const cleanRepo = repo.replace(/\.git$/, "");
 
@@ -89,7 +120,10 @@ async function fetchGitHubCode(
 
     // Jika tidak ada file kode ditemukan, gunakan placeholder
     // sehingga proyek tetap ikut dipasangkan (skor akan 0)
-    const finalCode = contents.length > 0 ? contents.join("\n\n") : `# Repo: ${cleanRepo} - tidak ada file kode terdeteksi`;
+    const finalCode =
+      contents.length > 0
+        ? contents.join("\n\n")
+        : `# Repo: ${cleanRepo} - tidak ada file kode terdeteksi`;
 
     return { code: finalCode, snippets, branch: activeBranch };
   } catch (err) {
@@ -105,9 +139,7 @@ export async function POST(req: NextRequest) {
 
     // Ambil SEMUA proyek - tidak hanya yang punya githubRepoUrl
     // Proyek tanpa URL akan tetap dipasangkan dengan skor 0
-    const whereClause = projectIds?.length
-      ? { id: { in: projectIds } }
-      : {};
+    const whereClause = projectIds?.length ? { id: { in: projectIds } } : {};
 
     const projects = await prisma.project.findMany({
       where: whereClause,
@@ -140,13 +172,19 @@ export async function POST(req: NextRequest) {
           console.log(`[Batch] ✓ ${p.title} (branch: ${data.branch}, snippets: ${Object.keys(data.snippets).length})`);
         } else {
           // Repo tidak bisa diakses - tetap masukkan dengan kode placeholder
-          projectData[p.id] = { code: `# Proyek: ${p.title} - repo tidak dapat diakses`, snippets: {} };
+          projectData[p.id] = {
+            code: `# Proyek: ${p.title} - repo tidak dapat diakses`,
+            snippets: {}
+          };
           fetchErrors.push(p.title);
           console.warn(`[Batch] ✗ Gagal fetch: ${p.title} (${p.githubRepoUrl})`);
         }
       } else {
         // Proyek tanpa GitHub URL - tetap ikut dengan kode placeholder
-        projectData[p.id] = { code: `# Proyek: ${p.title} - tidak ada GitHub URL`, snippets: {} };
+        projectData[p.id] = {
+          code: `# Proyek: ${p.title} - tidak ada GitHub URL`,
+          snippets: {}
+        };
         console.warn(`[Batch] ⚠ Tidak ada GitHub URL: ${p.title}`);
       }
     }
@@ -188,7 +226,7 @@ export async function POST(req: NextRequest) {
         }
 
         const sg = ALPHA * scb + (1 - ALPHA) * sw;
-        const classification = getClassification(sg, scb, sw);
+        const classification = getClassification(scb, sw);
         const isPlagiarized = classification.level !== "success";
 
         const snippetAData = projectData[a.id]?.snippets ?? {};
@@ -197,7 +235,10 @@ export async function POST(req: NextRequest) {
         // Simpan/update ke database
         await prisma.similarityResult.upsert({
           where: {
-            projectAId_projectBId: { projectAId: a.id, projectBId: b.id },
+            projectAId_projectBId: {
+              projectAId: a.id,
+              projectBId: b.id,
+            },
           },
           update: {
             codebertScore: scb,
@@ -287,7 +328,7 @@ export async function GET() {
       codebert_score: r.codebertScore,
       winnowing_score: r.winnowingScore,
       hybrid_score: r.hybridScore,
-      classification: getClassification(r.hybridScore, r.codebertScore, r.winnowingScore),
+      classification: getClassification(r.codebertScore, r.winnowingScore),
       snippetA: r.snippetA as Record<string, string> | null,
       snippetB: r.snippetB as Record<string, string> | null,
     }));
