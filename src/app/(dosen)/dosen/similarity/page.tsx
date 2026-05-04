@@ -11,6 +11,7 @@ interface SimilarityResult {
   winnowingScore: number;
   hybridScore: number;
   status: string;
+    snippets?: Array<{ fileA: string; fileB: string; codeA: string; codeB: string; similarity: number }>;
   checkedAt: string | null;
   snippetA?: Record<string, string>;
   snippetB?: Record<string, string>;
@@ -36,9 +37,37 @@ const ScoreBadge = ({ score, label, color }: { score: number; label: string; col
   );
 };
 
+// Komponen untuk menampilkan snippet kode yang mirip
+const CodeSnippet = ({ snippet }: { snippet: { fileA: string; fileB: string; codeA: string; codeB: string; similarity: number } }) => {
+  return (
+    <div className="bg-gray-800 rounded-lg p-4 mb-4">
+      <div className="flex justify-between items-center mb-3">
+        <h4 className="text-sm font-semibold text-white">Potongan Kode Terdeteksi Mirip</h4>
+        <span className="text-xs bg-red-500 px-2 py-1 rounded-full">{snippet.similarity.toFixed(1)}% mirip</span>
+      </div>
+      <div className="grid grid-cols-2 gap-4">
+        <div>
+          <p className="text-xs text-gray-400 mb-2">Proyek A: {snippet.fileA}</p>
+          <pre className="bg-gray-900 p-3 rounded text-xs overflow-x-auto">
+            <code className="text-green-400">{snippet.codeA}</code>
+          </pre>
+        </div>
+        <div>
+          <p className="text-xs text-gray-400 mb-2">Proyek B: {snippet.fileB}</p>
+          <pre className="bg-gray-900 p-3 rounded text-xs overflow-x-auto">
+            <code className="text-blue-400">{snippet.codeB}</code>
+          </pre>
+        </div>
+      </div>
+    </div>
+  );
+};
+
 export default function SimilarityPage() {
   const [results, setResults] = useState<SimilarityResult[]>([]);
   const [loading, setLoading] = useState(true);
+
+  
   const [running, setRunning] = useState(false);
   const [expanded, setExpanded] = useState<string | null>(null);
   const [search, setSearch] = useState("");
@@ -436,6 +465,15 @@ export default function SimilarityPage() {
                           <FileCode2 className="w-5 h-5 text-green-400" />
                           Potongan Kode Terdeteksi Mirip
                         </h3>
+
+                                        {/* Tampilkan snippet kode yang terdeteksi mirip */}
+                {r.snippets && r.snippets.length > 0 && (
+                  <div className="mt-4">
+                    {r.snippets.map((snippet, idx) => (
+                      <CodeSnippet key={idx} snippet={snippet} />
+                    ))}
+                  </div>
+                )}
                         
                         {/* Keterangan Skor */}
                         <div className="mb-4 p-4 bg-gradient-to-r from-blue-500/10 to-purple-500/10 border border-white/10 rounded-lg">
