@@ -1,6 +1,9 @@
 "use client";
 
-import { Accordion, AccordionItem, Card, CardBody, CardHeader, Chip, Progress, Spinner } from "@nextui-org/react";
+import {
+  Accordion, AccordionItem,
+  Card, CardBody, CardHeader, Chip, Progress, Spinner
+} from "@heroui/react";
 import { useEffect, useState } from "react";
 
 type Classification = { label: string; level: "danger" | "warning" | "secondary" | "success" };
@@ -43,26 +46,27 @@ export default function DosenSimilarityPage() {
     return () => clearInterval(iv);
   }, []);
 
-  const getChipColor = (level?: string) => {
-    if (level === "danger") return "danger" as const;
-    if (level === "warning") return "warning" as const;
-    if (level === "secondary") return "secondary" as const;
-    return "success" as const;
+  const getChipColor = (level?: string): "danger" | "warning" | "secondary" | "success" | "default" => {
+    if (level === "danger") return "danger";
+    if (level === "warning") return "warning";
+    if (level === "secondary") return "secondary";
+    if (level === "success") return "success";
+    return "default";
   };
 
   return (
     <div className="space-y-6">
       <div>
         <h1 className="text-2xl font-bold">Kemiripan Kode Mahasiswa</h1>
-        <p className="text-sm text-default-500">Analisis CodeBERT + Winnowing · Live setiap 60 detik</p>
+        <p className="text-sm text-default-500">Analisis CodeBERT + Winnowing - Live setiap 60 detik</p>
       </div>
 
       <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
         {[
-          { label: "🔴 Plagiat Tinggi", value: stats.high },
-          { label: "🟠 Kemiripan Signifikan", value: stats.significant },
-          { label: "🟣 Kemiripan Sedang", value: stats.moderate },
-          { label: "🟢 Normal", value: stats.normal },
+          { label: "Plagiat Tinggi (>=85%)", value: stats.high },
+          { label: "Kemiripan Signifikan (65-84%)", value: stats.significant },
+          { label: "Kemiripan Sedang (45-64%)", value: stats.moderate },
+          { label: "Normal (<45%)", value: stats.normal },
         ].map((s, i) => (
           <Card key={i} className="shadow-sm">
             <CardBody className="py-3 px-4">
@@ -74,9 +78,11 @@ export default function DosenSimilarityPage() {
       </div>
 
       <Card>
-        <CardHeader className="flex justify-between items-center">
-          <h2 className="font-semibold text-lg">Hasil Analisis ({stats.total} pasang)</h2>
-          {loading && <Spinner size="sm" />}
+        <CardHeader>
+          <div className="flex justify-between items-center w-full">
+            <h2 className="font-semibold text-lg">Hasil Analisis ({stats.total} pasang)</h2>
+            {loading && <Spinner size="sm" />}
+          </div>
         </CardHeader>
         <CardBody className="p-0">
           {loading && results.length === 0 ? (
@@ -104,12 +110,11 @@ export default function DosenSimilarityPage() {
                     }
                   >
                     <div className="px-2 pb-4 space-y-4">
-                      {/* Score breakdown - DOSEN bisa lihat breakdown */}
                       <div className="grid grid-cols-3 gap-3">
                         {[
                           { label: "CodeBERT (Semantik)", value: codebert },
                           { label: "Winnowing (Tekstual)", value: winnowing },
-                          { label: "Hybrid Score (α=0.6)", value: hybrid },
+                          { label: "Hybrid Score (a=0.6)", value: hybrid },
                         ].map((s, idx) => (
                           <div key={idx}>
                             <p className="text-xs text-default-500 mb-1">{s.label}</p>
@@ -118,37 +123,33 @@ export default function DosenSimilarityPage() {
                           </div>
                         ))}
                       </div>
-                      <p className="text-xs text-default-400">Formula: 0.6 × CodeBERT + 0.4 × Winnowing</p>
-
-                      {/* Project info */}
+                      <p className="text-xs text-default-400">Formula: 0.6 x CodeBERT + 0.4 x Winnowing</p>
                       <div className="grid grid-cols-2 gap-3">
-                        {[
-                          { label: "PROJECT A", project: r.projectA },
-                          { label: "PROJECT B", project: r.projectB },
-                        ].map(({ label, project }) => (
-                          <div key={label} className="p-3 rounded-lg bg-default-50 border border-default-200">
-                            <p className="text-xs font-semibold text-default-600">{label}</p>
-                            <p className="text-sm font-medium">{project.title}</p>
-                            <p className="text-xs text-default-500">{project.mahasiswa.name} · {project.mahasiswa.nim}</p>
-                          </div>
-                        ))}
+                        <div className="p-3 rounded-lg bg-default-50 border border-default-200">
+                          <p className="text-xs font-semibold text-default-600">PROJECT A</p>
+                          <p className="text-sm font-medium">{r.projectA.title}</p>
+                          <p className="text-xs text-default-500">{r.projectA.mahasiswa.name} - {r.projectA.mahasiswa.nim}</p>
+                        </div>
+                        <div className="p-3 rounded-lg bg-default-50 border border-default-200">
+                          <p className="text-xs font-semibold text-default-600">PROJECT B</p>
+                          <p className="text-sm font-medium">{r.projectB.title}</p>
+                          <p className="text-xs text-default-500">{r.projectB.mahasiswa.name} - {r.projectB.mahasiswa.nim}</p>
+                        </div>
                       </div>
-
-                      {/* Code Snippets */}
                       {(r.snippetA || r.snippetB) && (
                         <div className="space-y-2">
                           <p className="text-xs font-semibold text-default-600">SNIPPET KODE</p>
                           <div className="grid grid-cols-2 gap-3">
                             {r.snippetA && Object.entries(r.snippetA).slice(0, 1).map(([file, code]) => (
-                              <div key={file} className="rounded-lg border border-default-200 overflow-hidden">
-                                <p className="text-[10px] font-mono bg-blue-50 px-2 py-1 text-blue-700 truncate">📁 {file}</p>
-                                <pre className="text-[10px] font-mono p-2 overflow-auto max-h-36 text-default-700 bg-default-50">{code}</pre>
+                              <div key={file} className="rounded-lg border border-blue-200 overflow-hidden">
+                                <p className="text-[10px] font-mono bg-blue-50 px-2 py-1 text-blue-700 truncate">{file}</p>
+                                <pre className="text-[10px] font-mono p-2 overflow-auto max-h-36 text-default-700">{code}</pre>
                               </div>
                             ))}
                             {r.snippetB && Object.entries(r.snippetB).slice(0, 1).map(([file, code]) => (
-                              <div key={file} className="rounded-lg border border-default-200 overflow-hidden">
-                                <p className="text-[10px] font-mono bg-orange-50 px-2 py-1 text-orange-700 truncate">📁 {file}</p>
-                                <pre className="text-[10px] font-mono p-2 overflow-auto max-h-36 text-default-700 bg-default-50">{code}</pre>
+                              <div key={file} className="rounded-lg border border-orange-200 overflow-hidden">
+                                <p className="text-[10px] font-mono bg-orange-50 px-2 py-1 text-orange-700 truncate">{file}</p>
+                                <pre className="text-[10px] font-mono p-2 overflow-auto max-h-36 text-default-700">{code}</pre>
                               </div>
                             ))}
                           </div>
