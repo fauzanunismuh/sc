@@ -1,20 +1,19 @@
 'use client';
 
-import Link from 'next/link';
-import { usePathname } from 'next/navigation';
-import { useSession } from 'next-auth/react';
+import { cn } from '@/lib/utils';
 import { motion } from 'framer-motion';
 import {
-  LayoutDashboard,
-  FolderGit2,
-  Bell,
-  User,
   ClipboardCheck,
-  Users,
+  FolderGit2,
+  GitCompare,
+  LayoutDashboard,
   Mail,
+  User,
+  Users
 } from 'lucide-react';
-import { cn } from '@/lib/utils';
-
+import { useSession } from 'next-auth/react';
+import Link from 'next/link';
+import { usePathname } from 'next/navigation';
 interface NavItem {
   title: string;
   href: string;
@@ -25,13 +24,16 @@ const mahasiswaNavItems: NavItem[] = [
   { title: 'Home', href: '/mahasiswa/dashboard', icon: LayoutDashboard },
   { title: 'Project', href: '/mahasiswa/projects', icon: FolderGit2 },
   { title: 'Undangan', href: '/mahasiswa/invitations', icon: Mail },
+  { title: 'Kemiripan', href: '/mahasiswa/similarity', icon: GitCompare },
   { title: 'Profil', href: '/mahasiswa/profile', icon: User },
+
 ];
 
 const dosenNavItems: NavItem[] = [
   { title: 'Home', href: '/dosen/dashboard', icon: LayoutDashboard },
   { title: 'Project', href: '/dosen/projects', icon: FolderGit2 },
   { title: 'Review', href: '/dosen/reviews', icon: ClipboardCheck },
+  { title: 'Kemiripan', href: '/dosen/similarity', icon: GitCompare },
   { title: 'Profil', href: '/dosen/profile', icon: User },
 ];
 
@@ -39,6 +41,7 @@ const adminNavItems: NavItem[] = [
   { title: 'Home', href: '/admin/dashboard', icon: LayoutDashboard },
   { title: 'Project', href: '/admin/projects', icon: FolderGit2 },
   { title: 'User', href: '/admin/users', icon: Users },
+  { title: 'Kemiripan', href: '/admin/similarity', icon: GitCompare },
   { title: 'Profil', href: '/admin/profile', icon: User },
 ];
 

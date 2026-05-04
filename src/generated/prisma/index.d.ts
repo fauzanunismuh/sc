@@ -29,6 +29,11 @@ export type Account = $Result.DefaultSelection<Prisma.$AccountPayload>
  */
 export type Project = $Result.DefaultSelection<Prisma.$ProjectPayload>
 /**
+ * Model SimilarityResult
+ * 
+ */
+export type SimilarityResult = $Result.DefaultSelection<Prisma.$SimilarityResultPayload>
+/**
  * Model ProjectMember
  * 
  */
@@ -335,6 +340,16 @@ export class PrismaClient<
     * ```
     */
   get project(): Prisma.ProjectDelegate<ExtArgs, ClientOptions>;
+
+  /**
+   * `prisma.similarityResult`: Exposes CRUD operations for the **SimilarityResult** model.
+    * Example usage:
+    * ```ts
+    * // Fetch zero or more SimilarityResults
+    * const similarityResults = await prisma.similarityResult.findMany()
+    * ```
+    */
+  get similarityResult(): Prisma.SimilarityResultDelegate<ExtArgs, ClientOptions>;
 
   /**
    * `prisma.projectMember`: Exposes CRUD operations for the **ProjectMember** model.
@@ -932,6 +947,7 @@ export namespace Prisma {
     User: 'User',
     Account: 'Account',
     Project: 'Project',
+    SimilarityResult: 'SimilarityResult',
     ProjectMember: 'ProjectMember',
     TeamInvitation: 'TeamInvitation',
     ProjectRequirements: 'ProjectRequirements',
@@ -963,7 +979,7 @@ export namespace Prisma {
       omit: GlobalOmitOptions
     }
     meta: {
-      modelProps: "user" | "account" | "project" | "projectMember" | "teamInvitation" | "projectRequirements" | "stakeholderDocument" | "projectScreenshot" | "document" | "review" | "reviewScore" | "reviewComment" | "rubrikPenilaian" | "memberReviewScore" | "projectAssignment" | "notification" | "semester" | "presentationSchedule" | "projectDiscussion"
+      modelProps: "user" | "account" | "project" | "similarityResult" | "projectMember" | "teamInvitation" | "projectRequirements" | "stakeholderDocument" | "projectScreenshot" | "document" | "review" | "reviewScore" | "reviewComment" | "rubrikPenilaian" | "memberReviewScore" | "projectAssignment" | "notification" | "semester" | "presentationSchedule" | "projectDiscussion"
       txIsolationLevel: Prisma.TransactionIsolationLevel
     }
     model: {
@@ -1186,6 +1202,80 @@ export namespace Prisma {
           count: {
             args: Prisma.ProjectCountArgs<ExtArgs>
             result: $Utils.Optional<ProjectCountAggregateOutputType> | number
+          }
+        }
+      }
+      SimilarityResult: {
+        payload: Prisma.$SimilarityResultPayload<ExtArgs>
+        fields: Prisma.SimilarityResultFieldRefs
+        operations: {
+          findUnique: {
+            args: Prisma.SimilarityResultFindUniqueArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$SimilarityResultPayload> | null
+          }
+          findUniqueOrThrow: {
+            args: Prisma.SimilarityResultFindUniqueOrThrowArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$SimilarityResultPayload>
+          }
+          findFirst: {
+            args: Prisma.SimilarityResultFindFirstArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$SimilarityResultPayload> | null
+          }
+          findFirstOrThrow: {
+            args: Prisma.SimilarityResultFindFirstOrThrowArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$SimilarityResultPayload>
+          }
+          findMany: {
+            args: Prisma.SimilarityResultFindManyArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$SimilarityResultPayload>[]
+          }
+          create: {
+            args: Prisma.SimilarityResultCreateArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$SimilarityResultPayload>
+          }
+          createMany: {
+            args: Prisma.SimilarityResultCreateManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          createManyAndReturn: {
+            args: Prisma.SimilarityResultCreateManyAndReturnArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$SimilarityResultPayload>[]
+          }
+          delete: {
+            args: Prisma.SimilarityResultDeleteArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$SimilarityResultPayload>
+          }
+          update: {
+            args: Prisma.SimilarityResultUpdateArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$SimilarityResultPayload>
+          }
+          deleteMany: {
+            args: Prisma.SimilarityResultDeleteManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          updateMany: {
+            args: Prisma.SimilarityResultUpdateManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          updateManyAndReturn: {
+            args: Prisma.SimilarityResultUpdateManyAndReturnArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$SimilarityResultPayload>[]
+          }
+          upsert: {
+            args: Prisma.SimilarityResultUpsertArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$SimilarityResultPayload>
+          }
+          aggregate: {
+            args: Prisma.SimilarityResultAggregateArgs<ExtArgs>
+            result: $Utils.Optional<AggregateSimilarityResult>
+          }
+          groupBy: {
+            args: Prisma.SimilarityResultGroupByArgs<ExtArgs>
+            result: $Utils.Optional<SimilarityResultGroupByOutputType>[]
+          }
+          count: {
+            args: Prisma.SimilarityResultCountArgs<ExtArgs>
+            result: $Utils.Optional<SimilarityResultCountAggregateOutputType> | number
           }
         }
       }
@@ -2484,6 +2574,7 @@ export namespace Prisma {
     user?: UserOmit
     account?: AccountOmit
     project?: ProjectOmit
+    similarityResult?: SimilarityResultOmit
     projectMember?: ProjectMemberOmit
     teamInvitation?: TeamInvitationOmit
     projectRequirements?: ProjectRequirementsOmit
@@ -2700,6 +2791,8 @@ export namespace Prisma {
     stakeholderDocuments: number
     screenshots: number
     discussions: number
+    similarityAsA: number
+    similarityAsB: number
   }
 
   export type ProjectCountOutputTypeSelect<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
@@ -2711,6 +2804,8 @@ export namespace Prisma {
     stakeholderDocuments?: boolean | ProjectCountOutputTypeCountStakeholderDocumentsArgs
     screenshots?: boolean | ProjectCountOutputTypeCountScreenshotsArgs
     discussions?: boolean | ProjectCountOutputTypeCountDiscussionsArgs
+    similarityAsA?: boolean | ProjectCountOutputTypeCountSimilarityAsAArgs
+    similarityAsB?: boolean | ProjectCountOutputTypeCountSimilarityAsBArgs
   }
 
   // Custom InputTypes
@@ -2778,6 +2873,20 @@ export namespace Prisma {
    */
   export type ProjectCountOutputTypeCountDiscussionsArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
     where?: ProjectDiscussionWhereInput
+  }
+
+  /**
+   * ProjectCountOutputType without action
+   */
+  export type ProjectCountOutputTypeCountSimilarityAsAArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    where?: SimilarityResultWhereInput
+  }
+
+  /**
+   * ProjectCountOutputType without action
+   */
+  export type ProjectCountOutputTypeCountSimilarityAsBArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    where?: SimilarityResultWhereInput
   }
 
 
@@ -5690,6 +5799,7 @@ export namespace Prisma {
     updatedAt: Date | null
     submittedAt: Date | null
     mahasiswaId: string | null
+    similarityCheckedAt: Date | null
   }
 
   export type ProjectMaxAggregateOutputType = {
@@ -5710,6 +5820,7 @@ export namespace Prisma {
     updatedAt: Date | null
     submittedAt: Date | null
     mahasiswaId: string | null
+    similarityCheckedAt: Date | null
   }
 
   export type ProjectCountAggregateOutputType = {
@@ -5730,6 +5841,7 @@ export namespace Prisma {
     updatedAt: number
     submittedAt: number
     mahasiswaId: number
+    similarityCheckedAt: number
     _all: number
   }
 
@@ -5752,6 +5864,7 @@ export namespace Prisma {
     updatedAt?: true
     submittedAt?: true
     mahasiswaId?: true
+    similarityCheckedAt?: true
   }
 
   export type ProjectMaxAggregateInputType = {
@@ -5772,6 +5885,7 @@ export namespace Prisma {
     updatedAt?: true
     submittedAt?: true
     mahasiswaId?: true
+    similarityCheckedAt?: true
   }
 
   export type ProjectCountAggregateInputType = {
@@ -5792,6 +5906,7 @@ export namespace Prisma {
     updatedAt?: true
     submittedAt?: true
     mahasiswaId?: true
+    similarityCheckedAt?: true
     _all?: true
   }
 
@@ -5885,6 +6000,7 @@ export namespace Prisma {
     updatedAt: Date
     submittedAt: Date | null
     mahasiswaId: string
+    similarityCheckedAt: Date | null
     _count: ProjectCountAggregateOutputType | null
     _min: ProjectMinAggregateOutputType | null
     _max: ProjectMaxAggregateOutputType | null
@@ -5922,6 +6038,7 @@ export namespace Prisma {
     updatedAt?: boolean
     submittedAt?: boolean
     mahasiswaId?: boolean
+    similarityCheckedAt?: boolean
     mahasiswa?: boolean | UserDefaultArgs<ExtArgs>
     documents?: boolean | Project$documentsArgs<ExtArgs>
     reviews?: boolean | Project$reviewsArgs<ExtArgs>
@@ -5933,6 +6050,8 @@ export namespace Prisma {
     screenshots?: boolean | Project$screenshotsArgs<ExtArgs>
     presentationSchedule?: boolean | Project$presentationScheduleArgs<ExtArgs>
     discussions?: boolean | Project$discussionsArgs<ExtArgs>
+    similarityAsA?: boolean | Project$similarityAsAArgs<ExtArgs>
+    similarityAsB?: boolean | Project$similarityAsBArgs<ExtArgs>
     _count?: boolean | ProjectCountOutputTypeDefaultArgs<ExtArgs>
   }, ExtArgs["result"]["project"]>
 
@@ -5954,6 +6073,7 @@ export namespace Prisma {
     updatedAt?: boolean
     submittedAt?: boolean
     mahasiswaId?: boolean
+    similarityCheckedAt?: boolean
     mahasiswa?: boolean | UserDefaultArgs<ExtArgs>
   }, ExtArgs["result"]["project"]>
 
@@ -5975,6 +6095,7 @@ export namespace Prisma {
     updatedAt?: boolean
     submittedAt?: boolean
     mahasiswaId?: boolean
+    similarityCheckedAt?: boolean
     mahasiswa?: boolean | UserDefaultArgs<ExtArgs>
   }, ExtArgs["result"]["project"]>
 
@@ -5996,9 +6117,10 @@ export namespace Prisma {
     updatedAt?: boolean
     submittedAt?: boolean
     mahasiswaId?: boolean
+    similarityCheckedAt?: boolean
   }
 
-  export type ProjectOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"id" | "title" | "description" | "status" | "githubRepoUrl" | "githubRepoName" | "productionUrl" | "orgRepoUrl" | "orgRepoName" | "forkedAt" | "approvedAt" | "semester" | "tahunAkademik" | "createdAt" | "updatedAt" | "submittedAt" | "mahasiswaId", ExtArgs["result"]["project"]>
+  export type ProjectOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"id" | "title" | "description" | "status" | "githubRepoUrl" | "githubRepoName" | "productionUrl" | "orgRepoUrl" | "orgRepoName" | "forkedAt" | "approvedAt" | "semester" | "tahunAkademik" | "createdAt" | "updatedAt" | "submittedAt" | "mahasiswaId" | "similarityCheckedAt", ExtArgs["result"]["project"]>
   export type ProjectInclude<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
     mahasiswa?: boolean | UserDefaultArgs<ExtArgs>
     documents?: boolean | Project$documentsArgs<ExtArgs>
@@ -6011,6 +6133,8 @@ export namespace Prisma {
     screenshots?: boolean | Project$screenshotsArgs<ExtArgs>
     presentationSchedule?: boolean | Project$presentationScheduleArgs<ExtArgs>
     discussions?: boolean | Project$discussionsArgs<ExtArgs>
+    similarityAsA?: boolean | Project$similarityAsAArgs<ExtArgs>
+    similarityAsB?: boolean | Project$similarityAsBArgs<ExtArgs>
     _count?: boolean | ProjectCountOutputTypeDefaultArgs<ExtArgs>
   }
   export type ProjectIncludeCreateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
@@ -6034,6 +6158,8 @@ export namespace Prisma {
       screenshots: Prisma.$ProjectScreenshotPayload<ExtArgs>[]
       presentationSchedule: Prisma.$PresentationSchedulePayload<ExtArgs> | null
       discussions: Prisma.$ProjectDiscussionPayload<ExtArgs>[]
+      similarityAsA: Prisma.$SimilarityResultPayload<ExtArgs>[]
+      similarityAsB: Prisma.$SimilarityResultPayload<ExtArgs>[]
     }
     scalars: $Extensions.GetPayloadResult<{
       id: string
@@ -6053,6 +6179,7 @@ export namespace Prisma {
       updatedAt: Date
       submittedAt: Date | null
       mahasiswaId: string
+      similarityCheckedAt: Date | null
     }, ExtArgs["result"]["project"]>
     composites: {}
   }
@@ -6458,6 +6585,8 @@ export namespace Prisma {
     screenshots<T extends Project$screenshotsArgs<ExtArgs> = {}>(args?: Subset<T, Project$screenshotsArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$ProjectScreenshotPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
     presentationSchedule<T extends Project$presentationScheduleArgs<ExtArgs> = {}>(args?: Subset<T, Project$presentationScheduleArgs<ExtArgs>>): Prisma__PresentationScheduleClient<$Result.GetResult<Prisma.$PresentationSchedulePayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
     discussions<T extends Project$discussionsArgs<ExtArgs> = {}>(args?: Subset<T, Project$discussionsArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$ProjectDiscussionPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
+    similarityAsA<T extends Project$similarityAsAArgs<ExtArgs> = {}>(args?: Subset<T, Project$similarityAsAArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$SimilarityResultPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
+    similarityAsB<T extends Project$similarityAsBArgs<ExtArgs> = {}>(args?: Subset<T, Project$similarityAsBArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$SimilarityResultPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
     /**
      * Attaches callbacks for the resolution and/or rejection of the Promise.
      * @param onfulfilled The callback to execute when the Promise is resolved.
@@ -6504,6 +6633,7 @@ export namespace Prisma {
     readonly updatedAt: FieldRef<"Project", 'DateTime'>
     readonly submittedAt: FieldRef<"Project", 'DateTime'>
     readonly mahasiswaId: FieldRef<"Project", 'String'>
+    readonly similarityCheckedAt: FieldRef<"Project", 'DateTime'>
   }
     
 
@@ -7130,6 +7260,54 @@ export namespace Prisma {
   }
 
   /**
+   * Project.similarityAsA
+   */
+  export type Project$similarityAsAArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the SimilarityResult
+     */
+    select?: SimilarityResultSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the SimilarityResult
+     */
+    omit?: SimilarityResultOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: SimilarityResultInclude<ExtArgs> | null
+    where?: SimilarityResultWhereInput
+    orderBy?: SimilarityResultOrderByWithRelationInput | SimilarityResultOrderByWithRelationInput[]
+    cursor?: SimilarityResultWhereUniqueInput
+    take?: number
+    skip?: number
+    distinct?: SimilarityResultScalarFieldEnum | SimilarityResultScalarFieldEnum[]
+  }
+
+  /**
+   * Project.similarityAsB
+   */
+  export type Project$similarityAsBArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the SimilarityResult
+     */
+    select?: SimilarityResultSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the SimilarityResult
+     */
+    omit?: SimilarityResultOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: SimilarityResultInclude<ExtArgs> | null
+    where?: SimilarityResultWhereInput
+    orderBy?: SimilarityResultOrderByWithRelationInput | SimilarityResultOrderByWithRelationInput[]
+    cursor?: SimilarityResultWhereUniqueInput
+    take?: number
+    skip?: number
+    distinct?: SimilarityResultScalarFieldEnum | SimilarityResultScalarFieldEnum[]
+  }
+
+  /**
    * Project without action
    */
   export type ProjectDefaultArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
@@ -7145,6 +7323,1153 @@ export namespace Prisma {
      * Choose, which related nodes to fetch as well
      */
     include?: ProjectInclude<ExtArgs> | null
+  }
+
+
+  /**
+   * Model SimilarityResult
+   */
+
+  export type AggregateSimilarityResult = {
+    _count: SimilarityResultCountAggregateOutputType | null
+    _avg: SimilarityResultAvgAggregateOutputType | null
+    _sum: SimilarityResultSumAggregateOutputType | null
+    _min: SimilarityResultMinAggregateOutputType | null
+    _max: SimilarityResultMaxAggregateOutputType | null
+  }
+
+  export type SimilarityResultAvgAggregateOutputType = {
+    codebertScore: number | null
+    winnowingScore: number | null
+    hybridScore: number | null
+  }
+
+  export type SimilarityResultSumAggregateOutputType = {
+    codebertScore: number | null
+    winnowingScore: number | null
+    hybridScore: number | null
+  }
+
+  export type SimilarityResultMinAggregateOutputType = {
+    id: string | null
+    projectAId: string | null
+    projectBId: string | null
+    codebertScore: number | null
+    winnowingScore: number | null
+    hybridScore: number | null
+    isPlagiarized: boolean | null
+    checkedAt: Date | null
+  }
+
+  export type SimilarityResultMaxAggregateOutputType = {
+    id: string | null
+    projectAId: string | null
+    projectBId: string | null
+    codebertScore: number | null
+    winnowingScore: number | null
+    hybridScore: number | null
+    isPlagiarized: boolean | null
+    checkedAt: Date | null
+  }
+
+  export type SimilarityResultCountAggregateOutputType = {
+    id: number
+    projectAId: number
+    projectBId: number
+    codebertScore: number
+    winnowingScore: number
+    hybridScore: number
+    isPlagiarized: number
+    checkedAt: number
+    _all: number
+  }
+
+
+  export type SimilarityResultAvgAggregateInputType = {
+    codebertScore?: true
+    winnowingScore?: true
+    hybridScore?: true
+  }
+
+  export type SimilarityResultSumAggregateInputType = {
+    codebertScore?: true
+    winnowingScore?: true
+    hybridScore?: true
+  }
+
+  export type SimilarityResultMinAggregateInputType = {
+    id?: true
+    projectAId?: true
+    projectBId?: true
+    codebertScore?: true
+    winnowingScore?: true
+    hybridScore?: true
+    isPlagiarized?: true
+    checkedAt?: true
+  }
+
+  export type SimilarityResultMaxAggregateInputType = {
+    id?: true
+    projectAId?: true
+    projectBId?: true
+    codebertScore?: true
+    winnowingScore?: true
+    hybridScore?: true
+    isPlagiarized?: true
+    checkedAt?: true
+  }
+
+  export type SimilarityResultCountAggregateInputType = {
+    id?: true
+    projectAId?: true
+    projectBId?: true
+    codebertScore?: true
+    winnowingScore?: true
+    hybridScore?: true
+    isPlagiarized?: true
+    checkedAt?: true
+    _all?: true
+  }
+
+  export type SimilarityResultAggregateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Filter which SimilarityResult to aggregate.
+     */
+    where?: SimilarityResultWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of SimilarityResults to fetch.
+     */
+    orderBy?: SimilarityResultOrderByWithRelationInput | SimilarityResultOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the start position
+     */
+    cursor?: SimilarityResultWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` SimilarityResults from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` SimilarityResults.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Count returned SimilarityResults
+    **/
+    _count?: true | SimilarityResultCountAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to average
+    **/
+    _avg?: SimilarityResultAvgAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to sum
+    **/
+    _sum?: SimilarityResultSumAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to find the minimum value
+    **/
+    _min?: SimilarityResultMinAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to find the maximum value
+    **/
+    _max?: SimilarityResultMaxAggregateInputType
+  }
+
+  export type GetSimilarityResultAggregateType<T extends SimilarityResultAggregateArgs> = {
+        [P in keyof T & keyof AggregateSimilarityResult]: P extends '_count' | 'count'
+      ? T[P] extends true
+        ? number
+        : GetScalarType<T[P], AggregateSimilarityResult[P]>
+      : GetScalarType<T[P], AggregateSimilarityResult[P]>
+  }
+
+
+
+
+  export type SimilarityResultGroupByArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    where?: SimilarityResultWhereInput
+    orderBy?: SimilarityResultOrderByWithAggregationInput | SimilarityResultOrderByWithAggregationInput[]
+    by: SimilarityResultScalarFieldEnum[] | SimilarityResultScalarFieldEnum
+    having?: SimilarityResultScalarWhereWithAggregatesInput
+    take?: number
+    skip?: number
+    _count?: SimilarityResultCountAggregateInputType | true
+    _avg?: SimilarityResultAvgAggregateInputType
+    _sum?: SimilarityResultSumAggregateInputType
+    _min?: SimilarityResultMinAggregateInputType
+    _max?: SimilarityResultMaxAggregateInputType
+  }
+
+  export type SimilarityResultGroupByOutputType = {
+    id: string
+    projectAId: string
+    projectBId: string
+    codebertScore: number
+    winnowingScore: number
+    hybridScore: number
+    isPlagiarized: boolean
+    checkedAt: Date
+    _count: SimilarityResultCountAggregateOutputType | null
+    _avg: SimilarityResultAvgAggregateOutputType | null
+    _sum: SimilarityResultSumAggregateOutputType | null
+    _min: SimilarityResultMinAggregateOutputType | null
+    _max: SimilarityResultMaxAggregateOutputType | null
+  }
+
+  type GetSimilarityResultGroupByPayload<T extends SimilarityResultGroupByArgs> = Prisma.PrismaPromise<
+    Array<
+      PickEnumerable<SimilarityResultGroupByOutputType, T['by']> &
+        {
+          [P in ((keyof T) & (keyof SimilarityResultGroupByOutputType))]: P extends '_count'
+            ? T[P] extends boolean
+              ? number
+              : GetScalarType<T[P], SimilarityResultGroupByOutputType[P]>
+            : GetScalarType<T[P], SimilarityResultGroupByOutputType[P]>
+        }
+      >
+    >
+
+
+  export type SimilarityResultSelect<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    id?: boolean
+    projectAId?: boolean
+    projectBId?: boolean
+    codebertScore?: boolean
+    winnowingScore?: boolean
+    hybridScore?: boolean
+    isPlagiarized?: boolean
+    checkedAt?: boolean
+    projectA?: boolean | ProjectDefaultArgs<ExtArgs>
+    projectB?: boolean | ProjectDefaultArgs<ExtArgs>
+  }, ExtArgs["result"]["similarityResult"]>
+
+  export type SimilarityResultSelectCreateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    id?: boolean
+    projectAId?: boolean
+    projectBId?: boolean
+    codebertScore?: boolean
+    winnowingScore?: boolean
+    hybridScore?: boolean
+    isPlagiarized?: boolean
+    checkedAt?: boolean
+    projectA?: boolean | ProjectDefaultArgs<ExtArgs>
+    projectB?: boolean | ProjectDefaultArgs<ExtArgs>
+  }, ExtArgs["result"]["similarityResult"]>
+
+  export type SimilarityResultSelectUpdateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    id?: boolean
+    projectAId?: boolean
+    projectBId?: boolean
+    codebertScore?: boolean
+    winnowingScore?: boolean
+    hybridScore?: boolean
+    isPlagiarized?: boolean
+    checkedAt?: boolean
+    projectA?: boolean | ProjectDefaultArgs<ExtArgs>
+    projectB?: boolean | ProjectDefaultArgs<ExtArgs>
+  }, ExtArgs["result"]["similarityResult"]>
+
+  export type SimilarityResultSelectScalar = {
+    id?: boolean
+    projectAId?: boolean
+    projectBId?: boolean
+    codebertScore?: boolean
+    winnowingScore?: boolean
+    hybridScore?: boolean
+    isPlagiarized?: boolean
+    checkedAt?: boolean
+  }
+
+  export type SimilarityResultOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"id" | "projectAId" | "projectBId" | "codebertScore" | "winnowingScore" | "hybridScore" | "isPlagiarized" | "checkedAt", ExtArgs["result"]["similarityResult"]>
+  export type SimilarityResultInclude<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    projectA?: boolean | ProjectDefaultArgs<ExtArgs>
+    projectB?: boolean | ProjectDefaultArgs<ExtArgs>
+  }
+  export type SimilarityResultIncludeCreateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    projectA?: boolean | ProjectDefaultArgs<ExtArgs>
+    projectB?: boolean | ProjectDefaultArgs<ExtArgs>
+  }
+  export type SimilarityResultIncludeUpdateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    projectA?: boolean | ProjectDefaultArgs<ExtArgs>
+    projectB?: boolean | ProjectDefaultArgs<ExtArgs>
+  }
+
+  export type $SimilarityResultPayload<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    name: "SimilarityResult"
+    objects: {
+      projectA: Prisma.$ProjectPayload<ExtArgs>
+      projectB: Prisma.$ProjectPayload<ExtArgs>
+    }
+    scalars: $Extensions.GetPayloadResult<{
+      id: string
+      projectAId: string
+      projectBId: string
+      codebertScore: number
+      winnowingScore: number
+      hybridScore: number
+      isPlagiarized: boolean
+      checkedAt: Date
+    }, ExtArgs["result"]["similarityResult"]>
+    composites: {}
+  }
+
+  type SimilarityResultGetPayload<S extends boolean | null | undefined | SimilarityResultDefaultArgs> = $Result.GetResult<Prisma.$SimilarityResultPayload, S>
+
+  type SimilarityResultCountArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> =
+    Omit<SimilarityResultFindManyArgs, 'select' | 'include' | 'distinct' | 'omit'> & {
+      select?: SimilarityResultCountAggregateInputType | true
+    }
+
+  export interface SimilarityResultDelegate<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs, GlobalOmitOptions = {}> {
+    [K: symbol]: { types: Prisma.TypeMap<ExtArgs>['model']['SimilarityResult'], meta: { name: 'SimilarityResult' } }
+    /**
+     * Find zero or one SimilarityResult that matches the filter.
+     * @param {SimilarityResultFindUniqueArgs} args - Arguments to find a SimilarityResult
+     * @example
+     * // Get one SimilarityResult
+     * const similarityResult = await prisma.similarityResult.findUnique({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findUnique<T extends SimilarityResultFindUniqueArgs>(args: SelectSubset<T, SimilarityResultFindUniqueArgs<ExtArgs>>): Prisma__SimilarityResultClient<$Result.GetResult<Prisma.$SimilarityResultPayload<ExtArgs>, T, "findUnique", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find one SimilarityResult that matches the filter or throw an error with `error.code='P2025'`
+     * if no matches were found.
+     * @param {SimilarityResultFindUniqueOrThrowArgs} args - Arguments to find a SimilarityResult
+     * @example
+     * // Get one SimilarityResult
+     * const similarityResult = await prisma.similarityResult.findUniqueOrThrow({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findUniqueOrThrow<T extends SimilarityResultFindUniqueOrThrowArgs>(args: SelectSubset<T, SimilarityResultFindUniqueOrThrowArgs<ExtArgs>>): Prisma__SimilarityResultClient<$Result.GetResult<Prisma.$SimilarityResultPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find the first SimilarityResult that matches the filter.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {SimilarityResultFindFirstArgs} args - Arguments to find a SimilarityResult
+     * @example
+     * // Get one SimilarityResult
+     * const similarityResult = await prisma.similarityResult.findFirst({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findFirst<T extends SimilarityResultFindFirstArgs>(args?: SelectSubset<T, SimilarityResultFindFirstArgs<ExtArgs>>): Prisma__SimilarityResultClient<$Result.GetResult<Prisma.$SimilarityResultPayload<ExtArgs>, T, "findFirst", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find the first SimilarityResult that matches the filter or
+     * throw `PrismaKnownClientError` with `P2025` code if no matches were found.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {SimilarityResultFindFirstOrThrowArgs} args - Arguments to find a SimilarityResult
+     * @example
+     * // Get one SimilarityResult
+     * const similarityResult = await prisma.similarityResult.findFirstOrThrow({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findFirstOrThrow<T extends SimilarityResultFindFirstOrThrowArgs>(args?: SelectSubset<T, SimilarityResultFindFirstOrThrowArgs<ExtArgs>>): Prisma__SimilarityResultClient<$Result.GetResult<Prisma.$SimilarityResultPayload<ExtArgs>, T, "findFirstOrThrow", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find zero or more SimilarityResults that matches the filter.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {SimilarityResultFindManyArgs} args - Arguments to filter and select certain fields only.
+     * @example
+     * // Get all SimilarityResults
+     * const similarityResults = await prisma.similarityResult.findMany()
+     * 
+     * // Get first 10 SimilarityResults
+     * const similarityResults = await prisma.similarityResult.findMany({ take: 10 })
+     * 
+     * // Only select the `id`
+     * const similarityResultWithIdOnly = await prisma.similarityResult.findMany({ select: { id: true } })
+     * 
+     */
+    findMany<T extends SimilarityResultFindManyArgs>(args?: SelectSubset<T, SimilarityResultFindManyArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$SimilarityResultPayload<ExtArgs>, T, "findMany", GlobalOmitOptions>>
+
+    /**
+     * Create a SimilarityResult.
+     * @param {SimilarityResultCreateArgs} args - Arguments to create a SimilarityResult.
+     * @example
+     * // Create one SimilarityResult
+     * const SimilarityResult = await prisma.similarityResult.create({
+     *   data: {
+     *     // ... data to create a SimilarityResult
+     *   }
+     * })
+     * 
+     */
+    create<T extends SimilarityResultCreateArgs>(args: SelectSubset<T, SimilarityResultCreateArgs<ExtArgs>>): Prisma__SimilarityResultClient<$Result.GetResult<Prisma.$SimilarityResultPayload<ExtArgs>, T, "create", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Create many SimilarityResults.
+     * @param {SimilarityResultCreateManyArgs} args - Arguments to create many SimilarityResults.
+     * @example
+     * // Create many SimilarityResults
+     * const similarityResult = await prisma.similarityResult.createMany({
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     *     
+     */
+    createMany<T extends SimilarityResultCreateManyArgs>(args?: SelectSubset<T, SimilarityResultCreateManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Create many SimilarityResults and returns the data saved in the database.
+     * @param {SimilarityResultCreateManyAndReturnArgs} args - Arguments to create many SimilarityResults.
+     * @example
+     * // Create many SimilarityResults
+     * const similarityResult = await prisma.similarityResult.createManyAndReturn({
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * 
+     * // Create many SimilarityResults and only return the `id`
+     * const similarityResultWithIdOnly = await prisma.similarityResult.createManyAndReturn({
+     *   select: { id: true },
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * 
+     */
+    createManyAndReturn<T extends SimilarityResultCreateManyAndReturnArgs>(args?: SelectSubset<T, SimilarityResultCreateManyAndReturnArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$SimilarityResultPayload<ExtArgs>, T, "createManyAndReturn", GlobalOmitOptions>>
+
+    /**
+     * Delete a SimilarityResult.
+     * @param {SimilarityResultDeleteArgs} args - Arguments to delete one SimilarityResult.
+     * @example
+     * // Delete one SimilarityResult
+     * const SimilarityResult = await prisma.similarityResult.delete({
+     *   where: {
+     *     // ... filter to delete one SimilarityResult
+     *   }
+     * })
+     * 
+     */
+    delete<T extends SimilarityResultDeleteArgs>(args: SelectSubset<T, SimilarityResultDeleteArgs<ExtArgs>>): Prisma__SimilarityResultClient<$Result.GetResult<Prisma.$SimilarityResultPayload<ExtArgs>, T, "delete", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Update one SimilarityResult.
+     * @param {SimilarityResultUpdateArgs} args - Arguments to update one SimilarityResult.
+     * @example
+     * // Update one SimilarityResult
+     * const similarityResult = await prisma.similarityResult.update({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: {
+     *     // ... provide data here
+     *   }
+     * })
+     * 
+     */
+    update<T extends SimilarityResultUpdateArgs>(args: SelectSubset<T, SimilarityResultUpdateArgs<ExtArgs>>): Prisma__SimilarityResultClient<$Result.GetResult<Prisma.$SimilarityResultPayload<ExtArgs>, T, "update", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Delete zero or more SimilarityResults.
+     * @param {SimilarityResultDeleteManyArgs} args - Arguments to filter SimilarityResults to delete.
+     * @example
+     * // Delete a few SimilarityResults
+     * const { count } = await prisma.similarityResult.deleteMany({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     * 
+     */
+    deleteMany<T extends SimilarityResultDeleteManyArgs>(args?: SelectSubset<T, SimilarityResultDeleteManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Update zero or more SimilarityResults.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {SimilarityResultUpdateManyArgs} args - Arguments to update one or more rows.
+     * @example
+     * // Update many SimilarityResults
+     * const similarityResult = await prisma.similarityResult.updateMany({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: {
+     *     // ... provide data here
+     *   }
+     * })
+     * 
+     */
+    updateMany<T extends SimilarityResultUpdateManyArgs>(args: SelectSubset<T, SimilarityResultUpdateManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Update zero or more SimilarityResults and returns the data updated in the database.
+     * @param {SimilarityResultUpdateManyAndReturnArgs} args - Arguments to update many SimilarityResults.
+     * @example
+     * // Update many SimilarityResults
+     * const similarityResult = await prisma.similarityResult.updateManyAndReturn({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * 
+     * // Update zero or more SimilarityResults and only return the `id`
+     * const similarityResultWithIdOnly = await prisma.similarityResult.updateManyAndReturn({
+     *   select: { id: true },
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * 
+     */
+    updateManyAndReturn<T extends SimilarityResultUpdateManyAndReturnArgs>(args: SelectSubset<T, SimilarityResultUpdateManyAndReturnArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$SimilarityResultPayload<ExtArgs>, T, "updateManyAndReturn", GlobalOmitOptions>>
+
+    /**
+     * Create or update one SimilarityResult.
+     * @param {SimilarityResultUpsertArgs} args - Arguments to update or create a SimilarityResult.
+     * @example
+     * // Update or create a SimilarityResult
+     * const similarityResult = await prisma.similarityResult.upsert({
+     *   create: {
+     *     // ... data to create a SimilarityResult
+     *   },
+     *   update: {
+     *     // ... in case it already exists, update
+     *   },
+     *   where: {
+     *     // ... the filter for the SimilarityResult we want to update
+     *   }
+     * })
+     */
+    upsert<T extends SimilarityResultUpsertArgs>(args: SelectSubset<T, SimilarityResultUpsertArgs<ExtArgs>>): Prisma__SimilarityResultClient<$Result.GetResult<Prisma.$SimilarityResultPayload<ExtArgs>, T, "upsert", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+
+    /**
+     * Count the number of SimilarityResults.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {SimilarityResultCountArgs} args - Arguments to filter SimilarityResults to count.
+     * @example
+     * // Count the number of SimilarityResults
+     * const count = await prisma.similarityResult.count({
+     *   where: {
+     *     // ... the filter for the SimilarityResults we want to count
+     *   }
+     * })
+    **/
+    count<T extends SimilarityResultCountArgs>(
+      args?: Subset<T, SimilarityResultCountArgs>,
+    ): Prisma.PrismaPromise<
+      T extends $Utils.Record<'select', any>
+        ? T['select'] extends true
+          ? number
+          : GetScalarType<T['select'], SimilarityResultCountAggregateOutputType>
+        : number
+    >
+
+    /**
+     * Allows you to perform aggregations operations on a SimilarityResult.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {SimilarityResultAggregateArgs} args - Select which aggregations you would like to apply and on what fields.
+     * @example
+     * // Ordered by age ascending
+     * // Where email contains prisma.io
+     * // Limited to the 10 users
+     * const aggregations = await prisma.user.aggregate({
+     *   _avg: {
+     *     age: true,
+     *   },
+     *   where: {
+     *     email: {
+     *       contains: "prisma.io",
+     *     },
+     *   },
+     *   orderBy: {
+     *     age: "asc",
+     *   },
+     *   take: 10,
+     * })
+    **/
+    aggregate<T extends SimilarityResultAggregateArgs>(args: Subset<T, SimilarityResultAggregateArgs>): Prisma.PrismaPromise<GetSimilarityResultAggregateType<T>>
+
+    /**
+     * Group by SimilarityResult.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {SimilarityResultGroupByArgs} args - Group by arguments.
+     * @example
+     * // Group by city, order by createdAt, get count
+     * const result = await prisma.user.groupBy({
+     *   by: ['city', 'createdAt'],
+     *   orderBy: {
+     *     createdAt: true
+     *   },
+     *   _count: {
+     *     _all: true
+     *   },
+     * })
+     * 
+    **/
+    groupBy<
+      T extends SimilarityResultGroupByArgs,
+      HasSelectOrTake extends Or<
+        Extends<'skip', Keys<T>>,
+        Extends<'take', Keys<T>>
+      >,
+      OrderByArg extends True extends HasSelectOrTake
+        ? { orderBy: SimilarityResultGroupByArgs['orderBy'] }
+        : { orderBy?: SimilarityResultGroupByArgs['orderBy'] },
+      OrderFields extends ExcludeUnderscoreKeys<Keys<MaybeTupleToUnion<T['orderBy']>>>,
+      ByFields extends MaybeTupleToUnion<T['by']>,
+      ByValid extends Has<ByFields, OrderFields>,
+      HavingFields extends GetHavingFields<T['having']>,
+      HavingValid extends Has<ByFields, HavingFields>,
+      ByEmpty extends T['by'] extends never[] ? True : False,
+      InputErrors extends ByEmpty extends True
+      ? `Error: "by" must not be empty.`
+      : HavingValid extends False
+      ? {
+          [P in HavingFields]: P extends ByFields
+            ? never
+            : P extends string
+            ? `Error: Field "${P}" used in "having" needs to be provided in "by".`
+            : [
+                Error,
+                'Field ',
+                P,
+                ` in "having" needs to be provided in "by"`,
+              ]
+        }[HavingFields]
+      : 'take' extends Keys<T>
+      ? 'orderBy' extends Keys<T>
+        ? ByValid extends True
+          ? {}
+          : {
+              [P in OrderFields]: P extends ByFields
+                ? never
+                : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+            }[OrderFields]
+        : 'Error: If you provide "take", you also need to provide "orderBy"'
+      : 'skip' extends Keys<T>
+      ? 'orderBy' extends Keys<T>
+        ? ByValid extends True
+          ? {}
+          : {
+              [P in OrderFields]: P extends ByFields
+                ? never
+                : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+            }[OrderFields]
+        : 'Error: If you provide "skip", you also need to provide "orderBy"'
+      : ByValid extends True
+      ? {}
+      : {
+          [P in OrderFields]: P extends ByFields
+            ? never
+            : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+        }[OrderFields]
+    >(args: SubsetIntersection<T, SimilarityResultGroupByArgs, OrderByArg> & InputErrors): {} extends InputErrors ? GetSimilarityResultGroupByPayload<T> : Prisma.PrismaPromise<InputErrors>
+  /**
+   * Fields of the SimilarityResult model
+   */
+  readonly fields: SimilarityResultFieldRefs;
+  }
+
+  /**
+   * The delegate class that acts as a "Promise-like" for SimilarityResult.
+   * Why is this prefixed with `Prisma__`?
+   * Because we want to prevent naming conflicts as mentioned in
+   * https://github.com/prisma/prisma-client-js/issues/707
+   */
+  export interface Prisma__SimilarityResultClient<T, Null = never, ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs, GlobalOmitOptions = {}> extends Prisma.PrismaPromise<T> {
+    readonly [Symbol.toStringTag]: "PrismaPromise"
+    projectA<T extends ProjectDefaultArgs<ExtArgs> = {}>(args?: Subset<T, ProjectDefaultArgs<ExtArgs>>): Prisma__ProjectClient<$Result.GetResult<Prisma.$ProjectPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | Null, Null, ExtArgs, GlobalOmitOptions>
+    projectB<T extends ProjectDefaultArgs<ExtArgs> = {}>(args?: Subset<T, ProjectDefaultArgs<ExtArgs>>): Prisma__ProjectClient<$Result.GetResult<Prisma.$ProjectPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | Null, Null, ExtArgs, GlobalOmitOptions>
+    /**
+     * Attaches callbacks for the resolution and/or rejection of the Promise.
+     * @param onfulfilled The callback to execute when the Promise is resolved.
+     * @param onrejected The callback to execute when the Promise is rejected.
+     * @returns A Promise for the completion of which ever callback is executed.
+     */
+    then<TResult1 = T, TResult2 = never>(onfulfilled?: ((value: T) => TResult1 | PromiseLike<TResult1>) | undefined | null, onrejected?: ((reason: any) => TResult2 | PromiseLike<TResult2>) | undefined | null): $Utils.JsPromise<TResult1 | TResult2>
+    /**
+     * Attaches a callback for only the rejection of the Promise.
+     * @param onrejected The callback to execute when the Promise is rejected.
+     * @returns A Promise for the completion of the callback.
+     */
+    catch<TResult = never>(onrejected?: ((reason: any) => TResult | PromiseLike<TResult>) | undefined | null): $Utils.JsPromise<T | TResult>
+    /**
+     * Attaches a callback that is invoked when the Promise is settled (fulfilled or rejected). The
+     * resolved value cannot be modified from the callback.
+     * @param onfinally The callback to execute when the Promise is settled (fulfilled or rejected).
+     * @returns A Promise for the completion of the callback.
+     */
+    finally(onfinally?: (() => void) | undefined | null): $Utils.JsPromise<T>
+  }
+
+
+
+
+  /**
+   * Fields of the SimilarityResult model
+   */
+  interface SimilarityResultFieldRefs {
+    readonly id: FieldRef<"SimilarityResult", 'String'>
+    readonly projectAId: FieldRef<"SimilarityResult", 'String'>
+    readonly projectBId: FieldRef<"SimilarityResult", 'String'>
+    readonly codebertScore: FieldRef<"SimilarityResult", 'Float'>
+    readonly winnowingScore: FieldRef<"SimilarityResult", 'Float'>
+    readonly hybridScore: FieldRef<"SimilarityResult", 'Float'>
+    readonly isPlagiarized: FieldRef<"SimilarityResult", 'Boolean'>
+    readonly checkedAt: FieldRef<"SimilarityResult", 'DateTime'>
+  }
+    
+
+  // Custom InputTypes
+  /**
+   * SimilarityResult findUnique
+   */
+  export type SimilarityResultFindUniqueArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the SimilarityResult
+     */
+    select?: SimilarityResultSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the SimilarityResult
+     */
+    omit?: SimilarityResultOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: SimilarityResultInclude<ExtArgs> | null
+    /**
+     * Filter, which SimilarityResult to fetch.
+     */
+    where: SimilarityResultWhereUniqueInput
+  }
+
+  /**
+   * SimilarityResult findUniqueOrThrow
+   */
+  export type SimilarityResultFindUniqueOrThrowArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the SimilarityResult
+     */
+    select?: SimilarityResultSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the SimilarityResult
+     */
+    omit?: SimilarityResultOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: SimilarityResultInclude<ExtArgs> | null
+    /**
+     * Filter, which SimilarityResult to fetch.
+     */
+    where: SimilarityResultWhereUniqueInput
+  }
+
+  /**
+   * SimilarityResult findFirst
+   */
+  export type SimilarityResultFindFirstArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the SimilarityResult
+     */
+    select?: SimilarityResultSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the SimilarityResult
+     */
+    omit?: SimilarityResultOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: SimilarityResultInclude<ExtArgs> | null
+    /**
+     * Filter, which SimilarityResult to fetch.
+     */
+    where?: SimilarityResultWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of SimilarityResults to fetch.
+     */
+    orderBy?: SimilarityResultOrderByWithRelationInput | SimilarityResultOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for searching for SimilarityResults.
+     */
+    cursor?: SimilarityResultWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` SimilarityResults from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` SimilarityResults.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+     * 
+     * Filter by unique combinations of SimilarityResults.
+     */
+    distinct?: SimilarityResultScalarFieldEnum | SimilarityResultScalarFieldEnum[]
+  }
+
+  /**
+   * SimilarityResult findFirstOrThrow
+   */
+  export type SimilarityResultFindFirstOrThrowArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the SimilarityResult
+     */
+    select?: SimilarityResultSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the SimilarityResult
+     */
+    omit?: SimilarityResultOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: SimilarityResultInclude<ExtArgs> | null
+    /**
+     * Filter, which SimilarityResult to fetch.
+     */
+    where?: SimilarityResultWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of SimilarityResults to fetch.
+     */
+    orderBy?: SimilarityResultOrderByWithRelationInput | SimilarityResultOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for searching for SimilarityResults.
+     */
+    cursor?: SimilarityResultWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` SimilarityResults from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` SimilarityResults.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+     * 
+     * Filter by unique combinations of SimilarityResults.
+     */
+    distinct?: SimilarityResultScalarFieldEnum | SimilarityResultScalarFieldEnum[]
+  }
+
+  /**
+   * SimilarityResult findMany
+   */
+  export type SimilarityResultFindManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the SimilarityResult
+     */
+    select?: SimilarityResultSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the SimilarityResult
+     */
+    omit?: SimilarityResultOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: SimilarityResultInclude<ExtArgs> | null
+    /**
+     * Filter, which SimilarityResults to fetch.
+     */
+    where?: SimilarityResultWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of SimilarityResults to fetch.
+     */
+    orderBy?: SimilarityResultOrderByWithRelationInput | SimilarityResultOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for listing SimilarityResults.
+     */
+    cursor?: SimilarityResultWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` SimilarityResults from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` SimilarityResults.
+     */
+    skip?: number
+    distinct?: SimilarityResultScalarFieldEnum | SimilarityResultScalarFieldEnum[]
+  }
+
+  /**
+   * SimilarityResult create
+   */
+  export type SimilarityResultCreateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the SimilarityResult
+     */
+    select?: SimilarityResultSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the SimilarityResult
+     */
+    omit?: SimilarityResultOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: SimilarityResultInclude<ExtArgs> | null
+    /**
+     * The data needed to create a SimilarityResult.
+     */
+    data: XOR<SimilarityResultCreateInput, SimilarityResultUncheckedCreateInput>
+  }
+
+  /**
+   * SimilarityResult createMany
+   */
+  export type SimilarityResultCreateManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * The data used to create many SimilarityResults.
+     */
+    data: SimilarityResultCreateManyInput | SimilarityResultCreateManyInput[]
+    skipDuplicates?: boolean
+  }
+
+  /**
+   * SimilarityResult createManyAndReturn
+   */
+  export type SimilarityResultCreateManyAndReturnArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the SimilarityResult
+     */
+    select?: SimilarityResultSelectCreateManyAndReturn<ExtArgs> | null
+    /**
+     * Omit specific fields from the SimilarityResult
+     */
+    omit?: SimilarityResultOmit<ExtArgs> | null
+    /**
+     * The data used to create many SimilarityResults.
+     */
+    data: SimilarityResultCreateManyInput | SimilarityResultCreateManyInput[]
+    skipDuplicates?: boolean
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: SimilarityResultIncludeCreateManyAndReturn<ExtArgs> | null
+  }
+
+  /**
+   * SimilarityResult update
+   */
+  export type SimilarityResultUpdateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the SimilarityResult
+     */
+    select?: SimilarityResultSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the SimilarityResult
+     */
+    omit?: SimilarityResultOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: SimilarityResultInclude<ExtArgs> | null
+    /**
+     * The data needed to update a SimilarityResult.
+     */
+    data: XOR<SimilarityResultUpdateInput, SimilarityResultUncheckedUpdateInput>
+    /**
+     * Choose, which SimilarityResult to update.
+     */
+    where: SimilarityResultWhereUniqueInput
+  }
+
+  /**
+   * SimilarityResult updateMany
+   */
+  export type SimilarityResultUpdateManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * The data used to update SimilarityResults.
+     */
+    data: XOR<SimilarityResultUpdateManyMutationInput, SimilarityResultUncheckedUpdateManyInput>
+    /**
+     * Filter which SimilarityResults to update
+     */
+    where?: SimilarityResultWhereInput
+    /**
+     * Limit how many SimilarityResults to update.
+     */
+    limit?: number
+  }
+
+  /**
+   * SimilarityResult updateManyAndReturn
+   */
+  export type SimilarityResultUpdateManyAndReturnArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the SimilarityResult
+     */
+    select?: SimilarityResultSelectUpdateManyAndReturn<ExtArgs> | null
+    /**
+     * Omit specific fields from the SimilarityResult
+     */
+    omit?: SimilarityResultOmit<ExtArgs> | null
+    /**
+     * The data used to update SimilarityResults.
+     */
+    data: XOR<SimilarityResultUpdateManyMutationInput, SimilarityResultUncheckedUpdateManyInput>
+    /**
+     * Filter which SimilarityResults to update
+     */
+    where?: SimilarityResultWhereInput
+    /**
+     * Limit how many SimilarityResults to update.
+     */
+    limit?: number
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: SimilarityResultIncludeUpdateManyAndReturn<ExtArgs> | null
+  }
+
+  /**
+   * SimilarityResult upsert
+   */
+  export type SimilarityResultUpsertArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the SimilarityResult
+     */
+    select?: SimilarityResultSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the SimilarityResult
+     */
+    omit?: SimilarityResultOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: SimilarityResultInclude<ExtArgs> | null
+    /**
+     * The filter to search for the SimilarityResult to update in case it exists.
+     */
+    where: SimilarityResultWhereUniqueInput
+    /**
+     * In case the SimilarityResult found by the `where` argument doesn't exist, create a new SimilarityResult with this data.
+     */
+    create: XOR<SimilarityResultCreateInput, SimilarityResultUncheckedCreateInput>
+    /**
+     * In case the SimilarityResult was found with the provided `where` argument, update it with this data.
+     */
+    update: XOR<SimilarityResultUpdateInput, SimilarityResultUncheckedUpdateInput>
+  }
+
+  /**
+   * SimilarityResult delete
+   */
+  export type SimilarityResultDeleteArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the SimilarityResult
+     */
+    select?: SimilarityResultSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the SimilarityResult
+     */
+    omit?: SimilarityResultOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: SimilarityResultInclude<ExtArgs> | null
+    /**
+     * Filter which SimilarityResult to delete.
+     */
+    where: SimilarityResultWhereUniqueInput
+  }
+
+  /**
+   * SimilarityResult deleteMany
+   */
+  export type SimilarityResultDeleteManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Filter which SimilarityResults to delete
+     */
+    where?: SimilarityResultWhereInput
+    /**
+     * Limit how many SimilarityResults to delete.
+     */
+    limit?: number
+  }
+
+  /**
+   * SimilarityResult without action
+   */
+  export type SimilarityResultDefaultArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the SimilarityResult
+     */
+    select?: SimilarityResultSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the SimilarityResult
+     */
+    omit?: SimilarityResultOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: SimilarityResultInclude<ExtArgs> | null
   }
 
 
@@ -25863,10 +27188,25 @@ export namespace Prisma {
     createdAt: 'createdAt',
     updatedAt: 'updatedAt',
     submittedAt: 'submittedAt',
-    mahasiswaId: 'mahasiswaId'
+    mahasiswaId: 'mahasiswaId',
+    similarityCheckedAt: 'similarityCheckedAt'
   };
 
   export type ProjectScalarFieldEnum = (typeof ProjectScalarFieldEnum)[keyof typeof ProjectScalarFieldEnum]
+
+
+  export const SimilarityResultScalarFieldEnum: {
+    id: 'id',
+    projectAId: 'projectAId',
+    projectBId: 'projectBId',
+    codebertScore: 'codebertScore',
+    winnowingScore: 'winnowingScore',
+    hybridScore: 'hybridScore',
+    isPlagiarized: 'isPlagiarized',
+    checkedAt: 'checkedAt'
+  };
+
+  export type SimilarityResultScalarFieldEnum = (typeof SimilarityResultScalarFieldEnum)[keyof typeof SimilarityResultScalarFieldEnum]
 
 
   export const ProjectMemberScalarFieldEnum: {
@@ -26239,6 +27579,20 @@ export namespace Prisma {
 
 
   /**
+   * Reference to a field of type 'Float'
+   */
+  export type FloatFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'Float'>
+    
+
+
+  /**
+   * Reference to a field of type 'Float[]'
+   */
+  export type ListFloatFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'Float[]'>
+    
+
+
+  /**
    * Reference to a field of type 'StakeholderDocumentType'
    */
   export type EnumStakeholderDocumentTypeFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'StakeholderDocumentType'>
@@ -26277,20 +27631,6 @@ export namespace Prisma {
    * Reference to a field of type 'ReviewStatus[]'
    */
   export type ListEnumReviewStatusFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'ReviewStatus[]'>
-    
-
-
-  /**
-   * Reference to a field of type 'Float'
-   */
-  export type FloatFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'Float'>
-    
-
-
-  /**
-   * Reference to a field of type 'Float[]'
-   */
-  export type ListFloatFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'Float[]'>
     
   /**
    * Deep Input Types
@@ -26578,6 +27918,7 @@ export namespace Prisma {
     updatedAt?: DateTimeFilter<"Project"> | Date | string
     submittedAt?: DateTimeNullableFilter<"Project"> | Date | string | null
     mahasiswaId?: StringFilter<"Project"> | string
+    similarityCheckedAt?: DateTimeNullableFilter<"Project"> | Date | string | null
     mahasiswa?: XOR<UserScalarRelationFilter, UserWhereInput>
     documents?: DocumentListRelationFilter
     reviews?: ReviewListRelationFilter
@@ -26589,6 +27930,8 @@ export namespace Prisma {
     screenshots?: ProjectScreenshotListRelationFilter
     presentationSchedule?: XOR<PresentationScheduleNullableScalarRelationFilter, PresentationScheduleWhereInput> | null
     discussions?: ProjectDiscussionListRelationFilter
+    similarityAsA?: SimilarityResultListRelationFilter
+    similarityAsB?: SimilarityResultListRelationFilter
   }
 
   export type ProjectOrderByWithRelationInput = {
@@ -26609,6 +27952,7 @@ export namespace Prisma {
     updatedAt?: SortOrder
     submittedAt?: SortOrderInput | SortOrder
     mahasiswaId?: SortOrder
+    similarityCheckedAt?: SortOrderInput | SortOrder
     mahasiswa?: UserOrderByWithRelationInput
     documents?: DocumentOrderByRelationAggregateInput
     reviews?: ReviewOrderByRelationAggregateInput
@@ -26620,6 +27964,8 @@ export namespace Prisma {
     screenshots?: ProjectScreenshotOrderByRelationAggregateInput
     presentationSchedule?: PresentationScheduleOrderByWithRelationInput
     discussions?: ProjectDiscussionOrderByRelationAggregateInput
+    similarityAsA?: SimilarityResultOrderByRelationAggregateInput
+    similarityAsB?: SimilarityResultOrderByRelationAggregateInput
   }
 
   export type ProjectWhereUniqueInput = Prisma.AtLeast<{
@@ -26643,6 +27989,7 @@ export namespace Prisma {
     updatedAt?: DateTimeFilter<"Project"> | Date | string
     submittedAt?: DateTimeNullableFilter<"Project"> | Date | string | null
     mahasiswaId?: StringFilter<"Project"> | string
+    similarityCheckedAt?: DateTimeNullableFilter<"Project"> | Date | string | null
     mahasiswa?: XOR<UserScalarRelationFilter, UserWhereInput>
     documents?: DocumentListRelationFilter
     reviews?: ReviewListRelationFilter
@@ -26654,6 +28001,8 @@ export namespace Prisma {
     screenshots?: ProjectScreenshotListRelationFilter
     presentationSchedule?: XOR<PresentationScheduleNullableScalarRelationFilter, PresentationScheduleWhereInput> | null
     discussions?: ProjectDiscussionListRelationFilter
+    similarityAsA?: SimilarityResultListRelationFilter
+    similarityAsB?: SimilarityResultListRelationFilter
   }, "id">
 
   export type ProjectOrderByWithAggregationInput = {
@@ -26674,6 +28023,7 @@ export namespace Prisma {
     updatedAt?: SortOrder
     submittedAt?: SortOrderInput | SortOrder
     mahasiswaId?: SortOrder
+    similarityCheckedAt?: SortOrderInput | SortOrder
     _count?: ProjectCountOrderByAggregateInput
     _max?: ProjectMaxOrderByAggregateInput
     _min?: ProjectMinOrderByAggregateInput
@@ -26700,6 +28050,83 @@ export namespace Prisma {
     updatedAt?: DateTimeWithAggregatesFilter<"Project"> | Date | string
     submittedAt?: DateTimeNullableWithAggregatesFilter<"Project"> | Date | string | null
     mahasiswaId?: StringWithAggregatesFilter<"Project"> | string
+    similarityCheckedAt?: DateTimeNullableWithAggregatesFilter<"Project"> | Date | string | null
+  }
+
+  export type SimilarityResultWhereInput = {
+    AND?: SimilarityResultWhereInput | SimilarityResultWhereInput[]
+    OR?: SimilarityResultWhereInput[]
+    NOT?: SimilarityResultWhereInput | SimilarityResultWhereInput[]
+    id?: StringFilter<"SimilarityResult"> | string
+    projectAId?: StringFilter<"SimilarityResult"> | string
+    projectBId?: StringFilter<"SimilarityResult"> | string
+    codebertScore?: FloatFilter<"SimilarityResult"> | number
+    winnowingScore?: FloatFilter<"SimilarityResult"> | number
+    hybridScore?: FloatFilter<"SimilarityResult"> | number
+    isPlagiarized?: BoolFilter<"SimilarityResult"> | boolean
+    checkedAt?: DateTimeFilter<"SimilarityResult"> | Date | string
+    projectA?: XOR<ProjectScalarRelationFilter, ProjectWhereInput>
+    projectB?: XOR<ProjectScalarRelationFilter, ProjectWhereInput>
+  }
+
+  export type SimilarityResultOrderByWithRelationInput = {
+    id?: SortOrder
+    projectAId?: SortOrder
+    projectBId?: SortOrder
+    codebertScore?: SortOrder
+    winnowingScore?: SortOrder
+    hybridScore?: SortOrder
+    isPlagiarized?: SortOrder
+    checkedAt?: SortOrder
+    projectA?: ProjectOrderByWithRelationInput
+    projectB?: ProjectOrderByWithRelationInput
+  }
+
+  export type SimilarityResultWhereUniqueInput = Prisma.AtLeast<{
+    id?: string
+    projectAId_projectBId?: SimilarityResultProjectAIdProjectBIdCompoundUniqueInput
+    AND?: SimilarityResultWhereInput | SimilarityResultWhereInput[]
+    OR?: SimilarityResultWhereInput[]
+    NOT?: SimilarityResultWhereInput | SimilarityResultWhereInput[]
+    projectAId?: StringFilter<"SimilarityResult"> | string
+    projectBId?: StringFilter<"SimilarityResult"> | string
+    codebertScore?: FloatFilter<"SimilarityResult"> | number
+    winnowingScore?: FloatFilter<"SimilarityResult"> | number
+    hybridScore?: FloatFilter<"SimilarityResult"> | number
+    isPlagiarized?: BoolFilter<"SimilarityResult"> | boolean
+    checkedAt?: DateTimeFilter<"SimilarityResult"> | Date | string
+    projectA?: XOR<ProjectScalarRelationFilter, ProjectWhereInput>
+    projectB?: XOR<ProjectScalarRelationFilter, ProjectWhereInput>
+  }, "id" | "projectAId_projectBId">
+
+  export type SimilarityResultOrderByWithAggregationInput = {
+    id?: SortOrder
+    projectAId?: SortOrder
+    projectBId?: SortOrder
+    codebertScore?: SortOrder
+    winnowingScore?: SortOrder
+    hybridScore?: SortOrder
+    isPlagiarized?: SortOrder
+    checkedAt?: SortOrder
+    _count?: SimilarityResultCountOrderByAggregateInput
+    _avg?: SimilarityResultAvgOrderByAggregateInput
+    _max?: SimilarityResultMaxOrderByAggregateInput
+    _min?: SimilarityResultMinOrderByAggregateInput
+    _sum?: SimilarityResultSumOrderByAggregateInput
+  }
+
+  export type SimilarityResultScalarWhereWithAggregatesInput = {
+    AND?: SimilarityResultScalarWhereWithAggregatesInput | SimilarityResultScalarWhereWithAggregatesInput[]
+    OR?: SimilarityResultScalarWhereWithAggregatesInput[]
+    NOT?: SimilarityResultScalarWhereWithAggregatesInput | SimilarityResultScalarWhereWithAggregatesInput[]
+    id?: StringWithAggregatesFilter<"SimilarityResult"> | string
+    projectAId?: StringWithAggregatesFilter<"SimilarityResult"> | string
+    projectBId?: StringWithAggregatesFilter<"SimilarityResult"> | string
+    codebertScore?: FloatWithAggregatesFilter<"SimilarityResult"> | number
+    winnowingScore?: FloatWithAggregatesFilter<"SimilarityResult"> | number
+    hybridScore?: FloatWithAggregatesFilter<"SimilarityResult"> | number
+    isPlagiarized?: BoolWithAggregatesFilter<"SimilarityResult"> | boolean
+    checkedAt?: DateTimeWithAggregatesFilter<"SimilarityResult"> | Date | string
   }
 
   export type ProjectMemberWhereInput = {
@@ -28426,6 +29853,7 @@ export namespace Prisma {
     createdAt?: Date | string
     updatedAt?: Date | string
     submittedAt?: Date | string | null
+    similarityCheckedAt?: Date | string | null
     mahasiswa: UserCreateNestedOneWithoutProjectsInput
     documents?: DocumentCreateNestedManyWithoutProjectInput
     reviews?: ReviewCreateNestedManyWithoutProjectInput
@@ -28437,6 +29865,8 @@ export namespace Prisma {
     screenshots?: ProjectScreenshotCreateNestedManyWithoutProjectInput
     presentationSchedule?: PresentationScheduleCreateNestedOneWithoutProjectInput
     discussions?: ProjectDiscussionCreateNestedManyWithoutProjectInput
+    similarityAsA?: SimilarityResultCreateNestedManyWithoutProjectAInput
+    similarityAsB?: SimilarityResultCreateNestedManyWithoutProjectBInput
   }
 
   export type ProjectUncheckedCreateInput = {
@@ -28457,6 +29887,7 @@ export namespace Prisma {
     updatedAt?: Date | string
     submittedAt?: Date | string | null
     mahasiswaId: string
+    similarityCheckedAt?: Date | string | null
     documents?: DocumentUncheckedCreateNestedManyWithoutProjectInput
     reviews?: ReviewUncheckedCreateNestedManyWithoutProjectInput
     assignments?: ProjectAssignmentUncheckedCreateNestedManyWithoutProjectInput
@@ -28467,6 +29898,8 @@ export namespace Prisma {
     screenshots?: ProjectScreenshotUncheckedCreateNestedManyWithoutProjectInput
     presentationSchedule?: PresentationScheduleUncheckedCreateNestedOneWithoutProjectInput
     discussions?: ProjectDiscussionUncheckedCreateNestedManyWithoutProjectInput
+    similarityAsA?: SimilarityResultUncheckedCreateNestedManyWithoutProjectAInput
+    similarityAsB?: SimilarityResultUncheckedCreateNestedManyWithoutProjectBInput
   }
 
   export type ProjectUpdateInput = {
@@ -28486,6 +29919,7 @@ export namespace Prisma {
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     submittedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    similarityCheckedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     mahasiswa?: UserUpdateOneRequiredWithoutProjectsNestedInput
     documents?: DocumentUpdateManyWithoutProjectNestedInput
     reviews?: ReviewUpdateManyWithoutProjectNestedInput
@@ -28497,6 +29931,8 @@ export namespace Prisma {
     screenshots?: ProjectScreenshotUpdateManyWithoutProjectNestedInput
     presentationSchedule?: PresentationScheduleUpdateOneWithoutProjectNestedInput
     discussions?: ProjectDiscussionUpdateManyWithoutProjectNestedInput
+    similarityAsA?: SimilarityResultUpdateManyWithoutProjectANestedInput
+    similarityAsB?: SimilarityResultUpdateManyWithoutProjectBNestedInput
   }
 
   export type ProjectUncheckedUpdateInput = {
@@ -28517,6 +29953,7 @@ export namespace Prisma {
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     submittedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     mahasiswaId?: StringFieldUpdateOperationsInput | string
+    similarityCheckedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     documents?: DocumentUncheckedUpdateManyWithoutProjectNestedInput
     reviews?: ReviewUncheckedUpdateManyWithoutProjectNestedInput
     assignments?: ProjectAssignmentUncheckedUpdateManyWithoutProjectNestedInput
@@ -28527,6 +29964,8 @@ export namespace Prisma {
     screenshots?: ProjectScreenshotUncheckedUpdateManyWithoutProjectNestedInput
     presentationSchedule?: PresentationScheduleUncheckedUpdateOneWithoutProjectNestedInput
     discussions?: ProjectDiscussionUncheckedUpdateManyWithoutProjectNestedInput
+    similarityAsA?: SimilarityResultUncheckedUpdateManyWithoutProjectANestedInput
+    similarityAsB?: SimilarityResultUncheckedUpdateManyWithoutProjectBNestedInput
   }
 
   export type ProjectCreateManyInput = {
@@ -28547,6 +29986,7 @@ export namespace Prisma {
     updatedAt?: Date | string
     submittedAt?: Date | string | null
     mahasiswaId: string
+    similarityCheckedAt?: Date | string | null
   }
 
   export type ProjectUpdateManyMutationInput = {
@@ -28566,6 +30006,7 @@ export namespace Prisma {
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     submittedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    similarityCheckedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   }
 
   export type ProjectUncheckedUpdateManyInput = {
@@ -28586,6 +30027,82 @@ export namespace Prisma {
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     submittedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     mahasiswaId?: StringFieldUpdateOperationsInput | string
+    similarityCheckedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  }
+
+  export type SimilarityResultCreateInput = {
+    id?: string
+    codebertScore: number
+    winnowingScore: number
+    hybridScore: number
+    isPlagiarized: boolean
+    checkedAt?: Date | string
+    projectA: ProjectCreateNestedOneWithoutSimilarityAsAInput
+    projectB: ProjectCreateNestedOneWithoutSimilarityAsBInput
+  }
+
+  export type SimilarityResultUncheckedCreateInput = {
+    id?: string
+    projectAId: string
+    projectBId: string
+    codebertScore: number
+    winnowingScore: number
+    hybridScore: number
+    isPlagiarized: boolean
+    checkedAt?: Date | string
+  }
+
+  export type SimilarityResultUpdateInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    codebertScore?: FloatFieldUpdateOperationsInput | number
+    winnowingScore?: FloatFieldUpdateOperationsInput | number
+    hybridScore?: FloatFieldUpdateOperationsInput | number
+    isPlagiarized?: BoolFieldUpdateOperationsInput | boolean
+    checkedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    projectA?: ProjectUpdateOneRequiredWithoutSimilarityAsANestedInput
+    projectB?: ProjectUpdateOneRequiredWithoutSimilarityAsBNestedInput
+  }
+
+  export type SimilarityResultUncheckedUpdateInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    projectAId?: StringFieldUpdateOperationsInput | string
+    projectBId?: StringFieldUpdateOperationsInput | string
+    codebertScore?: FloatFieldUpdateOperationsInput | number
+    winnowingScore?: FloatFieldUpdateOperationsInput | number
+    hybridScore?: FloatFieldUpdateOperationsInput | number
+    isPlagiarized?: BoolFieldUpdateOperationsInput | boolean
+    checkedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type SimilarityResultCreateManyInput = {
+    id?: string
+    projectAId: string
+    projectBId: string
+    codebertScore: number
+    winnowingScore: number
+    hybridScore: number
+    isPlagiarized: boolean
+    checkedAt?: Date | string
+  }
+
+  export type SimilarityResultUpdateManyMutationInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    codebertScore?: FloatFieldUpdateOperationsInput | number
+    winnowingScore?: FloatFieldUpdateOperationsInput | number
+    hybridScore?: FloatFieldUpdateOperationsInput | number
+    isPlagiarized?: BoolFieldUpdateOperationsInput | boolean
+    checkedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type SimilarityResultUncheckedUpdateManyInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    projectAId?: StringFieldUpdateOperationsInput | string
+    projectBId?: StringFieldUpdateOperationsInput | string
+    codebertScore?: FloatFieldUpdateOperationsInput | number
+    winnowingScore?: FloatFieldUpdateOperationsInput | number
+    hybridScore?: FloatFieldUpdateOperationsInput | number
+    isPlagiarized?: BoolFieldUpdateOperationsInput | boolean
+    checkedAt?: DateTimeFieldUpdateOperationsInput | Date | string
   }
 
   export type ProjectMemberCreateInput = {
@@ -30537,6 +32054,12 @@ export namespace Prisma {
     isNot?: PresentationScheduleWhereInput | null
   }
 
+  export type SimilarityResultListRelationFilter = {
+    every?: SimilarityResultWhereInput
+    some?: SimilarityResultWhereInput
+    none?: SimilarityResultWhereInput
+  }
+
   export type DocumentOrderByRelationAggregateInput = {
     _count?: SortOrder
   }
@@ -30546,6 +32069,10 @@ export namespace Prisma {
   }
 
   export type ProjectScreenshotOrderByRelationAggregateInput = {
+    _count?: SortOrder
+  }
+
+  export type SimilarityResultOrderByRelationAggregateInput = {
     _count?: SortOrder
   }
 
@@ -30567,6 +32094,7 @@ export namespace Prisma {
     updatedAt?: SortOrder
     submittedAt?: SortOrder
     mahasiswaId?: SortOrder
+    similarityCheckedAt?: SortOrder
   }
 
   export type ProjectMaxOrderByAggregateInput = {
@@ -30587,6 +32115,7 @@ export namespace Prisma {
     updatedAt?: SortOrder
     submittedAt?: SortOrder
     mahasiswaId?: SortOrder
+    similarityCheckedAt?: SortOrder
   }
 
   export type ProjectMinOrderByAggregateInput = {
@@ -30607,6 +32136,7 @@ export namespace Prisma {
     updatedAt?: SortOrder
     submittedAt?: SortOrder
     mahasiswaId?: SortOrder
+    similarityCheckedAt?: SortOrder
   }
 
   export type EnumProjectStatusWithAggregatesFilter<$PrismaModel = never> = {
@@ -30619,9 +32149,86 @@ export namespace Prisma {
     _max?: NestedEnumProjectStatusFilter<$PrismaModel>
   }
 
+  export type FloatFilter<$PrismaModel = never> = {
+    equals?: number | FloatFieldRefInput<$PrismaModel>
+    in?: number[] | ListFloatFieldRefInput<$PrismaModel>
+    notIn?: number[] | ListFloatFieldRefInput<$PrismaModel>
+    lt?: number | FloatFieldRefInput<$PrismaModel>
+    lte?: number | FloatFieldRefInput<$PrismaModel>
+    gt?: number | FloatFieldRefInput<$PrismaModel>
+    gte?: number | FloatFieldRefInput<$PrismaModel>
+    not?: NestedFloatFilter<$PrismaModel> | number
+  }
+
   export type ProjectScalarRelationFilter = {
     is?: ProjectWhereInput
     isNot?: ProjectWhereInput
+  }
+
+  export type SimilarityResultProjectAIdProjectBIdCompoundUniqueInput = {
+    projectAId: string
+    projectBId: string
+  }
+
+  export type SimilarityResultCountOrderByAggregateInput = {
+    id?: SortOrder
+    projectAId?: SortOrder
+    projectBId?: SortOrder
+    codebertScore?: SortOrder
+    winnowingScore?: SortOrder
+    hybridScore?: SortOrder
+    isPlagiarized?: SortOrder
+    checkedAt?: SortOrder
+  }
+
+  export type SimilarityResultAvgOrderByAggregateInput = {
+    codebertScore?: SortOrder
+    winnowingScore?: SortOrder
+    hybridScore?: SortOrder
+  }
+
+  export type SimilarityResultMaxOrderByAggregateInput = {
+    id?: SortOrder
+    projectAId?: SortOrder
+    projectBId?: SortOrder
+    codebertScore?: SortOrder
+    winnowingScore?: SortOrder
+    hybridScore?: SortOrder
+    isPlagiarized?: SortOrder
+    checkedAt?: SortOrder
+  }
+
+  export type SimilarityResultMinOrderByAggregateInput = {
+    id?: SortOrder
+    projectAId?: SortOrder
+    projectBId?: SortOrder
+    codebertScore?: SortOrder
+    winnowingScore?: SortOrder
+    hybridScore?: SortOrder
+    isPlagiarized?: SortOrder
+    checkedAt?: SortOrder
+  }
+
+  export type SimilarityResultSumOrderByAggregateInput = {
+    codebertScore?: SortOrder
+    winnowingScore?: SortOrder
+    hybridScore?: SortOrder
+  }
+
+  export type FloatWithAggregatesFilter<$PrismaModel = never> = {
+    equals?: number | FloatFieldRefInput<$PrismaModel>
+    in?: number[] | ListFloatFieldRefInput<$PrismaModel>
+    notIn?: number[] | ListFloatFieldRefInput<$PrismaModel>
+    lt?: number | FloatFieldRefInput<$PrismaModel>
+    lte?: number | FloatFieldRefInput<$PrismaModel>
+    gt?: number | FloatFieldRefInput<$PrismaModel>
+    gte?: number | FloatFieldRefInput<$PrismaModel>
+    not?: NestedFloatWithAggregatesFilter<$PrismaModel> | number
+    _count?: NestedIntFilter<$PrismaModel>
+    _avg?: NestedFloatFilter<$PrismaModel>
+    _sum?: NestedFloatFilter<$PrismaModel>
+    _min?: NestedFloatFilter<$PrismaModel>
+    _max?: NestedFloatFilter<$PrismaModel>
   }
 
   export type UserNullableScalarRelationFilter = {
@@ -31185,17 +32792,6 @@ export namespace Prisma {
     _max?: NestedFloatNullableFilter<$PrismaModel>
   }
 
-  export type FloatFilter<$PrismaModel = never> = {
-    equals?: number | FloatFieldRefInput<$PrismaModel>
-    in?: number[] | ListFloatFieldRefInput<$PrismaModel>
-    notIn?: number[] | ListFloatFieldRefInput<$PrismaModel>
-    lt?: number | FloatFieldRefInput<$PrismaModel>
-    lte?: number | FloatFieldRefInput<$PrismaModel>
-    gt?: number | FloatFieldRefInput<$PrismaModel>
-    gte?: number | FloatFieldRefInput<$PrismaModel>
-    not?: NestedFloatFilter<$PrismaModel> | number
-  }
-
   export type ReviewScalarRelationFilter = {
     is?: ReviewWhereInput
     isNot?: ReviewWhereInput
@@ -31246,22 +32842,6 @@ export namespace Prisma {
   export type ReviewScoreSumOrderByAggregateInput = {
     score?: SortOrder
     maxScore?: SortOrder
-  }
-
-  export type FloatWithAggregatesFilter<$PrismaModel = never> = {
-    equals?: number | FloatFieldRefInput<$PrismaModel>
-    in?: number[] | ListFloatFieldRefInput<$PrismaModel>
-    notIn?: number[] | ListFloatFieldRefInput<$PrismaModel>
-    lt?: number | FloatFieldRefInput<$PrismaModel>
-    lte?: number | FloatFieldRefInput<$PrismaModel>
-    gt?: number | FloatFieldRefInput<$PrismaModel>
-    gte?: number | FloatFieldRefInput<$PrismaModel>
-    not?: NestedFloatWithAggregatesFilter<$PrismaModel> | number
-    _count?: NestedIntFilter<$PrismaModel>
-    _avg?: NestedFloatFilter<$PrismaModel>
-    _sum?: NestedFloatFilter<$PrismaModel>
-    _min?: NestedFloatFilter<$PrismaModel>
-    _max?: NestedFloatFilter<$PrismaModel>
   }
 
   export type ReviewCommentCountOrderByAggregateInput = {
@@ -32116,6 +33696,20 @@ export namespace Prisma {
     connect?: ProjectDiscussionWhereUniqueInput | ProjectDiscussionWhereUniqueInput[]
   }
 
+  export type SimilarityResultCreateNestedManyWithoutProjectAInput = {
+    create?: XOR<SimilarityResultCreateWithoutProjectAInput, SimilarityResultUncheckedCreateWithoutProjectAInput> | SimilarityResultCreateWithoutProjectAInput[] | SimilarityResultUncheckedCreateWithoutProjectAInput[]
+    connectOrCreate?: SimilarityResultCreateOrConnectWithoutProjectAInput | SimilarityResultCreateOrConnectWithoutProjectAInput[]
+    createMany?: SimilarityResultCreateManyProjectAInputEnvelope
+    connect?: SimilarityResultWhereUniqueInput | SimilarityResultWhereUniqueInput[]
+  }
+
+  export type SimilarityResultCreateNestedManyWithoutProjectBInput = {
+    create?: XOR<SimilarityResultCreateWithoutProjectBInput, SimilarityResultUncheckedCreateWithoutProjectBInput> | SimilarityResultCreateWithoutProjectBInput[] | SimilarityResultUncheckedCreateWithoutProjectBInput[]
+    connectOrCreate?: SimilarityResultCreateOrConnectWithoutProjectBInput | SimilarityResultCreateOrConnectWithoutProjectBInput[]
+    createMany?: SimilarityResultCreateManyProjectBInputEnvelope
+    connect?: SimilarityResultWhereUniqueInput | SimilarityResultWhereUniqueInput[]
+  }
+
   export type DocumentUncheckedCreateNestedManyWithoutProjectInput = {
     create?: XOR<DocumentCreateWithoutProjectInput, DocumentUncheckedCreateWithoutProjectInput> | DocumentCreateWithoutProjectInput[] | DocumentUncheckedCreateWithoutProjectInput[]
     connectOrCreate?: DocumentCreateOrConnectWithoutProjectInput | DocumentCreateOrConnectWithoutProjectInput[]
@@ -32182,6 +33776,20 @@ export namespace Prisma {
     connectOrCreate?: ProjectDiscussionCreateOrConnectWithoutProjectInput | ProjectDiscussionCreateOrConnectWithoutProjectInput[]
     createMany?: ProjectDiscussionCreateManyProjectInputEnvelope
     connect?: ProjectDiscussionWhereUniqueInput | ProjectDiscussionWhereUniqueInput[]
+  }
+
+  export type SimilarityResultUncheckedCreateNestedManyWithoutProjectAInput = {
+    create?: XOR<SimilarityResultCreateWithoutProjectAInput, SimilarityResultUncheckedCreateWithoutProjectAInput> | SimilarityResultCreateWithoutProjectAInput[] | SimilarityResultUncheckedCreateWithoutProjectAInput[]
+    connectOrCreate?: SimilarityResultCreateOrConnectWithoutProjectAInput | SimilarityResultCreateOrConnectWithoutProjectAInput[]
+    createMany?: SimilarityResultCreateManyProjectAInputEnvelope
+    connect?: SimilarityResultWhereUniqueInput | SimilarityResultWhereUniqueInput[]
+  }
+
+  export type SimilarityResultUncheckedCreateNestedManyWithoutProjectBInput = {
+    create?: XOR<SimilarityResultCreateWithoutProjectBInput, SimilarityResultUncheckedCreateWithoutProjectBInput> | SimilarityResultCreateWithoutProjectBInput[] | SimilarityResultUncheckedCreateWithoutProjectBInput[]
+    connectOrCreate?: SimilarityResultCreateOrConnectWithoutProjectBInput | SimilarityResultCreateOrConnectWithoutProjectBInput[]
+    createMany?: SimilarityResultCreateManyProjectBInputEnvelope
+    connect?: SimilarityResultWhereUniqueInput | SimilarityResultWhereUniqueInput[]
   }
 
   export type EnumProjectStatusFieldUpdateOperationsInput = {
@@ -32328,6 +33936,34 @@ export namespace Prisma {
     deleteMany?: ProjectDiscussionScalarWhereInput | ProjectDiscussionScalarWhereInput[]
   }
 
+  export type SimilarityResultUpdateManyWithoutProjectANestedInput = {
+    create?: XOR<SimilarityResultCreateWithoutProjectAInput, SimilarityResultUncheckedCreateWithoutProjectAInput> | SimilarityResultCreateWithoutProjectAInput[] | SimilarityResultUncheckedCreateWithoutProjectAInput[]
+    connectOrCreate?: SimilarityResultCreateOrConnectWithoutProjectAInput | SimilarityResultCreateOrConnectWithoutProjectAInput[]
+    upsert?: SimilarityResultUpsertWithWhereUniqueWithoutProjectAInput | SimilarityResultUpsertWithWhereUniqueWithoutProjectAInput[]
+    createMany?: SimilarityResultCreateManyProjectAInputEnvelope
+    set?: SimilarityResultWhereUniqueInput | SimilarityResultWhereUniqueInput[]
+    disconnect?: SimilarityResultWhereUniqueInput | SimilarityResultWhereUniqueInput[]
+    delete?: SimilarityResultWhereUniqueInput | SimilarityResultWhereUniqueInput[]
+    connect?: SimilarityResultWhereUniqueInput | SimilarityResultWhereUniqueInput[]
+    update?: SimilarityResultUpdateWithWhereUniqueWithoutProjectAInput | SimilarityResultUpdateWithWhereUniqueWithoutProjectAInput[]
+    updateMany?: SimilarityResultUpdateManyWithWhereWithoutProjectAInput | SimilarityResultUpdateManyWithWhereWithoutProjectAInput[]
+    deleteMany?: SimilarityResultScalarWhereInput | SimilarityResultScalarWhereInput[]
+  }
+
+  export type SimilarityResultUpdateManyWithoutProjectBNestedInput = {
+    create?: XOR<SimilarityResultCreateWithoutProjectBInput, SimilarityResultUncheckedCreateWithoutProjectBInput> | SimilarityResultCreateWithoutProjectBInput[] | SimilarityResultUncheckedCreateWithoutProjectBInput[]
+    connectOrCreate?: SimilarityResultCreateOrConnectWithoutProjectBInput | SimilarityResultCreateOrConnectWithoutProjectBInput[]
+    upsert?: SimilarityResultUpsertWithWhereUniqueWithoutProjectBInput | SimilarityResultUpsertWithWhereUniqueWithoutProjectBInput[]
+    createMany?: SimilarityResultCreateManyProjectBInputEnvelope
+    set?: SimilarityResultWhereUniqueInput | SimilarityResultWhereUniqueInput[]
+    disconnect?: SimilarityResultWhereUniqueInput | SimilarityResultWhereUniqueInput[]
+    delete?: SimilarityResultWhereUniqueInput | SimilarityResultWhereUniqueInput[]
+    connect?: SimilarityResultWhereUniqueInput | SimilarityResultWhereUniqueInput[]
+    update?: SimilarityResultUpdateWithWhereUniqueWithoutProjectBInput | SimilarityResultUpdateWithWhereUniqueWithoutProjectBInput[]
+    updateMany?: SimilarityResultUpdateManyWithWhereWithoutProjectBInput | SimilarityResultUpdateManyWithWhereWithoutProjectBInput[]
+    deleteMany?: SimilarityResultScalarWhereInput | SimilarityResultScalarWhereInput[]
+  }
+
   export type DocumentUncheckedUpdateManyWithoutProjectNestedInput = {
     create?: XOR<DocumentCreateWithoutProjectInput, DocumentUncheckedCreateWithoutProjectInput> | DocumentCreateWithoutProjectInput[] | DocumentUncheckedCreateWithoutProjectInput[]
     connectOrCreate?: DocumentCreateOrConnectWithoutProjectInput | DocumentCreateOrConnectWithoutProjectInput[]
@@ -32458,6 +34094,70 @@ export namespace Prisma {
     update?: ProjectDiscussionUpdateWithWhereUniqueWithoutProjectInput | ProjectDiscussionUpdateWithWhereUniqueWithoutProjectInput[]
     updateMany?: ProjectDiscussionUpdateManyWithWhereWithoutProjectInput | ProjectDiscussionUpdateManyWithWhereWithoutProjectInput[]
     deleteMany?: ProjectDiscussionScalarWhereInput | ProjectDiscussionScalarWhereInput[]
+  }
+
+  export type SimilarityResultUncheckedUpdateManyWithoutProjectANestedInput = {
+    create?: XOR<SimilarityResultCreateWithoutProjectAInput, SimilarityResultUncheckedCreateWithoutProjectAInput> | SimilarityResultCreateWithoutProjectAInput[] | SimilarityResultUncheckedCreateWithoutProjectAInput[]
+    connectOrCreate?: SimilarityResultCreateOrConnectWithoutProjectAInput | SimilarityResultCreateOrConnectWithoutProjectAInput[]
+    upsert?: SimilarityResultUpsertWithWhereUniqueWithoutProjectAInput | SimilarityResultUpsertWithWhereUniqueWithoutProjectAInput[]
+    createMany?: SimilarityResultCreateManyProjectAInputEnvelope
+    set?: SimilarityResultWhereUniqueInput | SimilarityResultWhereUniqueInput[]
+    disconnect?: SimilarityResultWhereUniqueInput | SimilarityResultWhereUniqueInput[]
+    delete?: SimilarityResultWhereUniqueInput | SimilarityResultWhereUniqueInput[]
+    connect?: SimilarityResultWhereUniqueInput | SimilarityResultWhereUniqueInput[]
+    update?: SimilarityResultUpdateWithWhereUniqueWithoutProjectAInput | SimilarityResultUpdateWithWhereUniqueWithoutProjectAInput[]
+    updateMany?: SimilarityResultUpdateManyWithWhereWithoutProjectAInput | SimilarityResultUpdateManyWithWhereWithoutProjectAInput[]
+    deleteMany?: SimilarityResultScalarWhereInput | SimilarityResultScalarWhereInput[]
+  }
+
+  export type SimilarityResultUncheckedUpdateManyWithoutProjectBNestedInput = {
+    create?: XOR<SimilarityResultCreateWithoutProjectBInput, SimilarityResultUncheckedCreateWithoutProjectBInput> | SimilarityResultCreateWithoutProjectBInput[] | SimilarityResultUncheckedCreateWithoutProjectBInput[]
+    connectOrCreate?: SimilarityResultCreateOrConnectWithoutProjectBInput | SimilarityResultCreateOrConnectWithoutProjectBInput[]
+    upsert?: SimilarityResultUpsertWithWhereUniqueWithoutProjectBInput | SimilarityResultUpsertWithWhereUniqueWithoutProjectBInput[]
+    createMany?: SimilarityResultCreateManyProjectBInputEnvelope
+    set?: SimilarityResultWhereUniqueInput | SimilarityResultWhereUniqueInput[]
+    disconnect?: SimilarityResultWhereUniqueInput | SimilarityResultWhereUniqueInput[]
+    delete?: SimilarityResultWhereUniqueInput | SimilarityResultWhereUniqueInput[]
+    connect?: SimilarityResultWhereUniqueInput | SimilarityResultWhereUniqueInput[]
+    update?: SimilarityResultUpdateWithWhereUniqueWithoutProjectBInput | SimilarityResultUpdateWithWhereUniqueWithoutProjectBInput[]
+    updateMany?: SimilarityResultUpdateManyWithWhereWithoutProjectBInput | SimilarityResultUpdateManyWithWhereWithoutProjectBInput[]
+    deleteMany?: SimilarityResultScalarWhereInput | SimilarityResultScalarWhereInput[]
+  }
+
+  export type ProjectCreateNestedOneWithoutSimilarityAsAInput = {
+    create?: XOR<ProjectCreateWithoutSimilarityAsAInput, ProjectUncheckedCreateWithoutSimilarityAsAInput>
+    connectOrCreate?: ProjectCreateOrConnectWithoutSimilarityAsAInput
+    connect?: ProjectWhereUniqueInput
+  }
+
+  export type ProjectCreateNestedOneWithoutSimilarityAsBInput = {
+    create?: XOR<ProjectCreateWithoutSimilarityAsBInput, ProjectUncheckedCreateWithoutSimilarityAsBInput>
+    connectOrCreate?: ProjectCreateOrConnectWithoutSimilarityAsBInput
+    connect?: ProjectWhereUniqueInput
+  }
+
+  export type FloatFieldUpdateOperationsInput = {
+    set?: number
+    increment?: number
+    decrement?: number
+    multiply?: number
+    divide?: number
+  }
+
+  export type ProjectUpdateOneRequiredWithoutSimilarityAsANestedInput = {
+    create?: XOR<ProjectCreateWithoutSimilarityAsAInput, ProjectUncheckedCreateWithoutSimilarityAsAInput>
+    connectOrCreate?: ProjectCreateOrConnectWithoutSimilarityAsAInput
+    upsert?: ProjectUpsertWithoutSimilarityAsAInput
+    connect?: ProjectWhereUniqueInput
+    update?: XOR<XOR<ProjectUpdateToOneWithWhereWithoutSimilarityAsAInput, ProjectUpdateWithoutSimilarityAsAInput>, ProjectUncheckedUpdateWithoutSimilarityAsAInput>
+  }
+
+  export type ProjectUpdateOneRequiredWithoutSimilarityAsBNestedInput = {
+    create?: XOR<ProjectCreateWithoutSimilarityAsBInput, ProjectUncheckedCreateWithoutSimilarityAsBInput>
+    connectOrCreate?: ProjectCreateOrConnectWithoutSimilarityAsBInput
+    upsert?: ProjectUpsertWithoutSimilarityAsBInput
+    connect?: ProjectWhereUniqueInput
+    update?: XOR<XOR<ProjectUpdateToOneWithWhereWithoutSimilarityAsBInput, ProjectUpdateWithoutSimilarityAsBInput>, ProjectUncheckedUpdateWithoutSimilarityAsBInput>
   }
 
   export type ProjectCreateNestedOneWithoutMembersInput = {
@@ -32822,14 +34522,6 @@ export namespace Prisma {
     create?: XOR<RubrikPenilaianCreateWithoutScoresInput, RubrikPenilaianUncheckedCreateWithoutScoresInput>
     connectOrCreate?: RubrikPenilaianCreateOrConnectWithoutScoresInput
     connect?: RubrikPenilaianWhereUniqueInput
-  }
-
-  export type FloatFieldUpdateOperationsInput = {
-    set?: number
-    increment?: number
-    decrement?: number
-    multiply?: number
-    divide?: number
   }
 
   export type ReviewUpdateOneRequiredWithoutScoresNestedInput = {
@@ -33352,6 +35044,33 @@ export namespace Prisma {
     _max?: NestedEnumProjectStatusFilter<$PrismaModel>
   }
 
+  export type NestedFloatFilter<$PrismaModel = never> = {
+    equals?: number | FloatFieldRefInput<$PrismaModel>
+    in?: number[] | ListFloatFieldRefInput<$PrismaModel>
+    notIn?: number[] | ListFloatFieldRefInput<$PrismaModel>
+    lt?: number | FloatFieldRefInput<$PrismaModel>
+    lte?: number | FloatFieldRefInput<$PrismaModel>
+    gt?: number | FloatFieldRefInput<$PrismaModel>
+    gte?: number | FloatFieldRefInput<$PrismaModel>
+    not?: NestedFloatFilter<$PrismaModel> | number
+  }
+
+  export type NestedFloatWithAggregatesFilter<$PrismaModel = never> = {
+    equals?: number | FloatFieldRefInput<$PrismaModel>
+    in?: number[] | ListFloatFieldRefInput<$PrismaModel>
+    notIn?: number[] | ListFloatFieldRefInput<$PrismaModel>
+    lt?: number | FloatFieldRefInput<$PrismaModel>
+    lte?: number | FloatFieldRefInput<$PrismaModel>
+    gt?: number | FloatFieldRefInput<$PrismaModel>
+    gte?: number | FloatFieldRefInput<$PrismaModel>
+    not?: NestedFloatWithAggregatesFilter<$PrismaModel> | number
+    _count?: NestedIntFilter<$PrismaModel>
+    _avg?: NestedFloatFilter<$PrismaModel>
+    _sum?: NestedFloatFilter<$PrismaModel>
+    _min?: NestedFloatFilter<$PrismaModel>
+    _max?: NestedFloatFilter<$PrismaModel>
+  }
+
   export type NestedIntWithAggregatesFilter<$PrismaModel = never> = {
     equals?: number | IntFieldRefInput<$PrismaModel>
     in?: number[] | ListIntFieldRefInput<$PrismaModel>
@@ -33366,17 +35085,6 @@ export namespace Prisma {
     _sum?: NestedIntFilter<$PrismaModel>
     _min?: NestedIntFilter<$PrismaModel>
     _max?: NestedIntFilter<$PrismaModel>
-  }
-
-  export type NestedFloatFilter<$PrismaModel = never> = {
-    equals?: number | FloatFieldRefInput<$PrismaModel>
-    in?: number[] | ListFloatFieldRefInput<$PrismaModel>
-    notIn?: number[] | ListFloatFieldRefInput<$PrismaModel>
-    lt?: number | FloatFieldRefInput<$PrismaModel>
-    lte?: number | FloatFieldRefInput<$PrismaModel>
-    gt?: number | FloatFieldRefInput<$PrismaModel>
-    gte?: number | FloatFieldRefInput<$PrismaModel>
-    not?: NestedFloatFilter<$PrismaModel> | number
   }
 
   export type NestedEnumStakeholderDocumentTypeFilter<$PrismaModel = never> = {
@@ -33446,22 +35154,6 @@ export namespace Prisma {
     _max?: NestedFloatNullableFilter<$PrismaModel>
   }
 
-  export type NestedFloatWithAggregatesFilter<$PrismaModel = never> = {
-    equals?: number | FloatFieldRefInput<$PrismaModel>
-    in?: number[] | ListFloatFieldRefInput<$PrismaModel>
-    notIn?: number[] | ListFloatFieldRefInput<$PrismaModel>
-    lt?: number | FloatFieldRefInput<$PrismaModel>
-    lte?: number | FloatFieldRefInput<$PrismaModel>
-    gt?: number | FloatFieldRefInput<$PrismaModel>
-    gte?: number | FloatFieldRefInput<$PrismaModel>
-    not?: NestedFloatWithAggregatesFilter<$PrismaModel> | number
-    _count?: NestedIntFilter<$PrismaModel>
-    _avg?: NestedFloatFilter<$PrismaModel>
-    _sum?: NestedFloatFilter<$PrismaModel>
-    _min?: NestedFloatFilter<$PrismaModel>
-    _max?: NestedFloatFilter<$PrismaModel>
-  }
-
   export type ProjectCreateWithoutMahasiswaInput = {
     id?: string
     title: string
@@ -33479,6 +35171,7 @@ export namespace Prisma {
     createdAt?: Date | string
     updatedAt?: Date | string
     submittedAt?: Date | string | null
+    similarityCheckedAt?: Date | string | null
     documents?: DocumentCreateNestedManyWithoutProjectInput
     reviews?: ReviewCreateNestedManyWithoutProjectInput
     assignments?: ProjectAssignmentCreateNestedManyWithoutProjectInput
@@ -33489,6 +35182,8 @@ export namespace Prisma {
     screenshots?: ProjectScreenshotCreateNestedManyWithoutProjectInput
     presentationSchedule?: PresentationScheduleCreateNestedOneWithoutProjectInput
     discussions?: ProjectDiscussionCreateNestedManyWithoutProjectInput
+    similarityAsA?: SimilarityResultCreateNestedManyWithoutProjectAInput
+    similarityAsB?: SimilarityResultCreateNestedManyWithoutProjectBInput
   }
 
   export type ProjectUncheckedCreateWithoutMahasiswaInput = {
@@ -33508,6 +35203,7 @@ export namespace Prisma {
     createdAt?: Date | string
     updatedAt?: Date | string
     submittedAt?: Date | string | null
+    similarityCheckedAt?: Date | string | null
     documents?: DocumentUncheckedCreateNestedManyWithoutProjectInput
     reviews?: ReviewUncheckedCreateNestedManyWithoutProjectInput
     assignments?: ProjectAssignmentUncheckedCreateNestedManyWithoutProjectInput
@@ -33518,6 +35214,8 @@ export namespace Prisma {
     screenshots?: ProjectScreenshotUncheckedCreateNestedManyWithoutProjectInput
     presentationSchedule?: PresentationScheduleUncheckedCreateNestedOneWithoutProjectInput
     discussions?: ProjectDiscussionUncheckedCreateNestedManyWithoutProjectInput
+    similarityAsA?: SimilarityResultUncheckedCreateNestedManyWithoutProjectAInput
+    similarityAsB?: SimilarityResultUncheckedCreateNestedManyWithoutProjectBInput
   }
 
   export type ProjectCreateOrConnectWithoutMahasiswaInput = {
@@ -33867,6 +35565,7 @@ export namespace Prisma {
     updatedAt?: DateTimeFilter<"Project"> | Date | string
     submittedAt?: DateTimeNullableFilter<"Project"> | Date | string | null
     mahasiswaId?: StringFilter<"Project"> | string
+    similarityCheckedAt?: DateTimeNullableFilter<"Project"> | Date | string | null
   }
 
   export type ReviewUpsertWithWhereUniqueWithoutReviewerInput = {
@@ -34742,6 +36441,66 @@ export namespace Prisma {
     skipDuplicates?: boolean
   }
 
+  export type SimilarityResultCreateWithoutProjectAInput = {
+    id?: string
+    codebertScore: number
+    winnowingScore: number
+    hybridScore: number
+    isPlagiarized: boolean
+    checkedAt?: Date | string
+    projectB: ProjectCreateNestedOneWithoutSimilarityAsBInput
+  }
+
+  export type SimilarityResultUncheckedCreateWithoutProjectAInput = {
+    id?: string
+    projectBId: string
+    codebertScore: number
+    winnowingScore: number
+    hybridScore: number
+    isPlagiarized: boolean
+    checkedAt?: Date | string
+  }
+
+  export type SimilarityResultCreateOrConnectWithoutProjectAInput = {
+    where: SimilarityResultWhereUniqueInput
+    create: XOR<SimilarityResultCreateWithoutProjectAInput, SimilarityResultUncheckedCreateWithoutProjectAInput>
+  }
+
+  export type SimilarityResultCreateManyProjectAInputEnvelope = {
+    data: SimilarityResultCreateManyProjectAInput | SimilarityResultCreateManyProjectAInput[]
+    skipDuplicates?: boolean
+  }
+
+  export type SimilarityResultCreateWithoutProjectBInput = {
+    id?: string
+    codebertScore: number
+    winnowingScore: number
+    hybridScore: number
+    isPlagiarized: boolean
+    checkedAt?: Date | string
+    projectA: ProjectCreateNestedOneWithoutSimilarityAsAInput
+  }
+
+  export type SimilarityResultUncheckedCreateWithoutProjectBInput = {
+    id?: string
+    projectAId: string
+    codebertScore: number
+    winnowingScore: number
+    hybridScore: number
+    isPlagiarized: boolean
+    checkedAt?: Date | string
+  }
+
+  export type SimilarityResultCreateOrConnectWithoutProjectBInput = {
+    where: SimilarityResultWhereUniqueInput
+    create: XOR<SimilarityResultCreateWithoutProjectBInput, SimilarityResultUncheckedCreateWithoutProjectBInput>
+  }
+
+  export type SimilarityResultCreateManyProjectBInputEnvelope = {
+    data: SimilarityResultCreateManyProjectBInput | SimilarityResultCreateManyProjectBInput[]
+    skipDuplicates?: boolean
+  }
+
   export type UserUpsertWithoutProjectsInput = {
     update: XOR<UserUpdateWithoutProjectsInput, UserUncheckedUpdateWithoutProjectsInput>
     create: XOR<UserCreateWithoutProjectsInput, UserUncheckedCreateWithoutProjectsInput>
@@ -35126,6 +36885,340 @@ export namespace Prisma {
     data: XOR<ProjectDiscussionUpdateManyMutationInput, ProjectDiscussionUncheckedUpdateManyWithoutProjectInput>
   }
 
+  export type SimilarityResultUpsertWithWhereUniqueWithoutProjectAInput = {
+    where: SimilarityResultWhereUniqueInput
+    update: XOR<SimilarityResultUpdateWithoutProjectAInput, SimilarityResultUncheckedUpdateWithoutProjectAInput>
+    create: XOR<SimilarityResultCreateWithoutProjectAInput, SimilarityResultUncheckedCreateWithoutProjectAInput>
+  }
+
+  export type SimilarityResultUpdateWithWhereUniqueWithoutProjectAInput = {
+    where: SimilarityResultWhereUniqueInput
+    data: XOR<SimilarityResultUpdateWithoutProjectAInput, SimilarityResultUncheckedUpdateWithoutProjectAInput>
+  }
+
+  export type SimilarityResultUpdateManyWithWhereWithoutProjectAInput = {
+    where: SimilarityResultScalarWhereInput
+    data: XOR<SimilarityResultUpdateManyMutationInput, SimilarityResultUncheckedUpdateManyWithoutProjectAInput>
+  }
+
+  export type SimilarityResultScalarWhereInput = {
+    AND?: SimilarityResultScalarWhereInput | SimilarityResultScalarWhereInput[]
+    OR?: SimilarityResultScalarWhereInput[]
+    NOT?: SimilarityResultScalarWhereInput | SimilarityResultScalarWhereInput[]
+    id?: StringFilter<"SimilarityResult"> | string
+    projectAId?: StringFilter<"SimilarityResult"> | string
+    projectBId?: StringFilter<"SimilarityResult"> | string
+    codebertScore?: FloatFilter<"SimilarityResult"> | number
+    winnowingScore?: FloatFilter<"SimilarityResult"> | number
+    hybridScore?: FloatFilter<"SimilarityResult"> | number
+    isPlagiarized?: BoolFilter<"SimilarityResult"> | boolean
+    checkedAt?: DateTimeFilter<"SimilarityResult"> | Date | string
+  }
+
+  export type SimilarityResultUpsertWithWhereUniqueWithoutProjectBInput = {
+    where: SimilarityResultWhereUniqueInput
+    update: XOR<SimilarityResultUpdateWithoutProjectBInput, SimilarityResultUncheckedUpdateWithoutProjectBInput>
+    create: XOR<SimilarityResultCreateWithoutProjectBInput, SimilarityResultUncheckedCreateWithoutProjectBInput>
+  }
+
+  export type SimilarityResultUpdateWithWhereUniqueWithoutProjectBInput = {
+    where: SimilarityResultWhereUniqueInput
+    data: XOR<SimilarityResultUpdateWithoutProjectBInput, SimilarityResultUncheckedUpdateWithoutProjectBInput>
+  }
+
+  export type SimilarityResultUpdateManyWithWhereWithoutProjectBInput = {
+    where: SimilarityResultScalarWhereInput
+    data: XOR<SimilarityResultUpdateManyMutationInput, SimilarityResultUncheckedUpdateManyWithoutProjectBInput>
+  }
+
+  export type ProjectCreateWithoutSimilarityAsAInput = {
+    id?: string
+    title: string
+    description?: string | null
+    status?: $Enums.ProjectStatus
+    githubRepoUrl?: string | null
+    githubRepoName?: string | null
+    productionUrl?: string | null
+    orgRepoUrl?: string | null
+    orgRepoName?: string | null
+    forkedAt?: Date | string | null
+    approvedAt?: Date | string | null
+    semester?: string
+    tahunAkademik?: string
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    submittedAt?: Date | string | null
+    similarityCheckedAt?: Date | string | null
+    mahasiswa: UserCreateNestedOneWithoutProjectsInput
+    documents?: DocumentCreateNestedManyWithoutProjectInput
+    reviews?: ReviewCreateNestedManyWithoutProjectInput
+    assignments?: ProjectAssignmentCreateNestedManyWithoutProjectInput
+    members?: ProjectMemberCreateNestedManyWithoutProjectInput
+    invitations?: TeamInvitationCreateNestedManyWithoutProjectInput
+    requirements?: ProjectRequirementsCreateNestedOneWithoutProjectInput
+    stakeholderDocuments?: StakeholderDocumentCreateNestedManyWithoutProjectInput
+    screenshots?: ProjectScreenshotCreateNestedManyWithoutProjectInput
+    presentationSchedule?: PresentationScheduleCreateNestedOneWithoutProjectInput
+    discussions?: ProjectDiscussionCreateNestedManyWithoutProjectInput
+    similarityAsB?: SimilarityResultCreateNestedManyWithoutProjectBInput
+  }
+
+  export type ProjectUncheckedCreateWithoutSimilarityAsAInput = {
+    id?: string
+    title: string
+    description?: string | null
+    status?: $Enums.ProjectStatus
+    githubRepoUrl?: string | null
+    githubRepoName?: string | null
+    productionUrl?: string | null
+    orgRepoUrl?: string | null
+    orgRepoName?: string | null
+    forkedAt?: Date | string | null
+    approvedAt?: Date | string | null
+    semester?: string
+    tahunAkademik?: string
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    submittedAt?: Date | string | null
+    mahasiswaId: string
+    similarityCheckedAt?: Date | string | null
+    documents?: DocumentUncheckedCreateNestedManyWithoutProjectInput
+    reviews?: ReviewUncheckedCreateNestedManyWithoutProjectInput
+    assignments?: ProjectAssignmentUncheckedCreateNestedManyWithoutProjectInput
+    members?: ProjectMemberUncheckedCreateNestedManyWithoutProjectInput
+    invitations?: TeamInvitationUncheckedCreateNestedManyWithoutProjectInput
+    requirements?: ProjectRequirementsUncheckedCreateNestedOneWithoutProjectInput
+    stakeholderDocuments?: StakeholderDocumentUncheckedCreateNestedManyWithoutProjectInput
+    screenshots?: ProjectScreenshotUncheckedCreateNestedManyWithoutProjectInput
+    presentationSchedule?: PresentationScheduleUncheckedCreateNestedOneWithoutProjectInput
+    discussions?: ProjectDiscussionUncheckedCreateNestedManyWithoutProjectInput
+    similarityAsB?: SimilarityResultUncheckedCreateNestedManyWithoutProjectBInput
+  }
+
+  export type ProjectCreateOrConnectWithoutSimilarityAsAInput = {
+    where: ProjectWhereUniqueInput
+    create: XOR<ProjectCreateWithoutSimilarityAsAInput, ProjectUncheckedCreateWithoutSimilarityAsAInput>
+  }
+
+  export type ProjectCreateWithoutSimilarityAsBInput = {
+    id?: string
+    title: string
+    description?: string | null
+    status?: $Enums.ProjectStatus
+    githubRepoUrl?: string | null
+    githubRepoName?: string | null
+    productionUrl?: string | null
+    orgRepoUrl?: string | null
+    orgRepoName?: string | null
+    forkedAt?: Date | string | null
+    approvedAt?: Date | string | null
+    semester?: string
+    tahunAkademik?: string
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    submittedAt?: Date | string | null
+    similarityCheckedAt?: Date | string | null
+    mahasiswa: UserCreateNestedOneWithoutProjectsInput
+    documents?: DocumentCreateNestedManyWithoutProjectInput
+    reviews?: ReviewCreateNestedManyWithoutProjectInput
+    assignments?: ProjectAssignmentCreateNestedManyWithoutProjectInput
+    members?: ProjectMemberCreateNestedManyWithoutProjectInput
+    invitations?: TeamInvitationCreateNestedManyWithoutProjectInput
+    requirements?: ProjectRequirementsCreateNestedOneWithoutProjectInput
+    stakeholderDocuments?: StakeholderDocumentCreateNestedManyWithoutProjectInput
+    screenshots?: ProjectScreenshotCreateNestedManyWithoutProjectInput
+    presentationSchedule?: PresentationScheduleCreateNestedOneWithoutProjectInput
+    discussions?: ProjectDiscussionCreateNestedManyWithoutProjectInput
+    similarityAsA?: SimilarityResultCreateNestedManyWithoutProjectAInput
+  }
+
+  export type ProjectUncheckedCreateWithoutSimilarityAsBInput = {
+    id?: string
+    title: string
+    description?: string | null
+    status?: $Enums.ProjectStatus
+    githubRepoUrl?: string | null
+    githubRepoName?: string | null
+    productionUrl?: string | null
+    orgRepoUrl?: string | null
+    orgRepoName?: string | null
+    forkedAt?: Date | string | null
+    approvedAt?: Date | string | null
+    semester?: string
+    tahunAkademik?: string
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    submittedAt?: Date | string | null
+    mahasiswaId: string
+    similarityCheckedAt?: Date | string | null
+    documents?: DocumentUncheckedCreateNestedManyWithoutProjectInput
+    reviews?: ReviewUncheckedCreateNestedManyWithoutProjectInput
+    assignments?: ProjectAssignmentUncheckedCreateNestedManyWithoutProjectInput
+    members?: ProjectMemberUncheckedCreateNestedManyWithoutProjectInput
+    invitations?: TeamInvitationUncheckedCreateNestedManyWithoutProjectInput
+    requirements?: ProjectRequirementsUncheckedCreateNestedOneWithoutProjectInput
+    stakeholderDocuments?: StakeholderDocumentUncheckedCreateNestedManyWithoutProjectInput
+    screenshots?: ProjectScreenshotUncheckedCreateNestedManyWithoutProjectInput
+    presentationSchedule?: PresentationScheduleUncheckedCreateNestedOneWithoutProjectInput
+    discussions?: ProjectDiscussionUncheckedCreateNestedManyWithoutProjectInput
+    similarityAsA?: SimilarityResultUncheckedCreateNestedManyWithoutProjectAInput
+  }
+
+  export type ProjectCreateOrConnectWithoutSimilarityAsBInput = {
+    where: ProjectWhereUniqueInput
+    create: XOR<ProjectCreateWithoutSimilarityAsBInput, ProjectUncheckedCreateWithoutSimilarityAsBInput>
+  }
+
+  export type ProjectUpsertWithoutSimilarityAsAInput = {
+    update: XOR<ProjectUpdateWithoutSimilarityAsAInput, ProjectUncheckedUpdateWithoutSimilarityAsAInput>
+    create: XOR<ProjectCreateWithoutSimilarityAsAInput, ProjectUncheckedCreateWithoutSimilarityAsAInput>
+    where?: ProjectWhereInput
+  }
+
+  export type ProjectUpdateToOneWithWhereWithoutSimilarityAsAInput = {
+    where?: ProjectWhereInput
+    data: XOR<ProjectUpdateWithoutSimilarityAsAInput, ProjectUncheckedUpdateWithoutSimilarityAsAInput>
+  }
+
+  export type ProjectUpdateWithoutSimilarityAsAInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    title?: StringFieldUpdateOperationsInput | string
+    description?: NullableStringFieldUpdateOperationsInput | string | null
+    status?: EnumProjectStatusFieldUpdateOperationsInput | $Enums.ProjectStatus
+    githubRepoUrl?: NullableStringFieldUpdateOperationsInput | string | null
+    githubRepoName?: NullableStringFieldUpdateOperationsInput | string | null
+    productionUrl?: NullableStringFieldUpdateOperationsInput | string | null
+    orgRepoUrl?: NullableStringFieldUpdateOperationsInput | string | null
+    orgRepoName?: NullableStringFieldUpdateOperationsInput | string | null
+    forkedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    approvedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    semester?: StringFieldUpdateOperationsInput | string
+    tahunAkademik?: StringFieldUpdateOperationsInput | string
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    submittedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    similarityCheckedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    mahasiswa?: UserUpdateOneRequiredWithoutProjectsNestedInput
+    documents?: DocumentUpdateManyWithoutProjectNestedInput
+    reviews?: ReviewUpdateManyWithoutProjectNestedInput
+    assignments?: ProjectAssignmentUpdateManyWithoutProjectNestedInput
+    members?: ProjectMemberUpdateManyWithoutProjectNestedInput
+    invitations?: TeamInvitationUpdateManyWithoutProjectNestedInput
+    requirements?: ProjectRequirementsUpdateOneWithoutProjectNestedInput
+    stakeholderDocuments?: StakeholderDocumentUpdateManyWithoutProjectNestedInput
+    screenshots?: ProjectScreenshotUpdateManyWithoutProjectNestedInput
+    presentationSchedule?: PresentationScheduleUpdateOneWithoutProjectNestedInput
+    discussions?: ProjectDiscussionUpdateManyWithoutProjectNestedInput
+    similarityAsB?: SimilarityResultUpdateManyWithoutProjectBNestedInput
+  }
+
+  export type ProjectUncheckedUpdateWithoutSimilarityAsAInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    title?: StringFieldUpdateOperationsInput | string
+    description?: NullableStringFieldUpdateOperationsInput | string | null
+    status?: EnumProjectStatusFieldUpdateOperationsInput | $Enums.ProjectStatus
+    githubRepoUrl?: NullableStringFieldUpdateOperationsInput | string | null
+    githubRepoName?: NullableStringFieldUpdateOperationsInput | string | null
+    productionUrl?: NullableStringFieldUpdateOperationsInput | string | null
+    orgRepoUrl?: NullableStringFieldUpdateOperationsInput | string | null
+    orgRepoName?: NullableStringFieldUpdateOperationsInput | string | null
+    forkedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    approvedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    semester?: StringFieldUpdateOperationsInput | string
+    tahunAkademik?: StringFieldUpdateOperationsInput | string
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    submittedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    mahasiswaId?: StringFieldUpdateOperationsInput | string
+    similarityCheckedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    documents?: DocumentUncheckedUpdateManyWithoutProjectNestedInput
+    reviews?: ReviewUncheckedUpdateManyWithoutProjectNestedInput
+    assignments?: ProjectAssignmentUncheckedUpdateManyWithoutProjectNestedInput
+    members?: ProjectMemberUncheckedUpdateManyWithoutProjectNestedInput
+    invitations?: TeamInvitationUncheckedUpdateManyWithoutProjectNestedInput
+    requirements?: ProjectRequirementsUncheckedUpdateOneWithoutProjectNestedInput
+    stakeholderDocuments?: StakeholderDocumentUncheckedUpdateManyWithoutProjectNestedInput
+    screenshots?: ProjectScreenshotUncheckedUpdateManyWithoutProjectNestedInput
+    presentationSchedule?: PresentationScheduleUncheckedUpdateOneWithoutProjectNestedInput
+    discussions?: ProjectDiscussionUncheckedUpdateManyWithoutProjectNestedInput
+    similarityAsB?: SimilarityResultUncheckedUpdateManyWithoutProjectBNestedInput
+  }
+
+  export type ProjectUpsertWithoutSimilarityAsBInput = {
+    update: XOR<ProjectUpdateWithoutSimilarityAsBInput, ProjectUncheckedUpdateWithoutSimilarityAsBInput>
+    create: XOR<ProjectCreateWithoutSimilarityAsBInput, ProjectUncheckedCreateWithoutSimilarityAsBInput>
+    where?: ProjectWhereInput
+  }
+
+  export type ProjectUpdateToOneWithWhereWithoutSimilarityAsBInput = {
+    where?: ProjectWhereInput
+    data: XOR<ProjectUpdateWithoutSimilarityAsBInput, ProjectUncheckedUpdateWithoutSimilarityAsBInput>
+  }
+
+  export type ProjectUpdateWithoutSimilarityAsBInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    title?: StringFieldUpdateOperationsInput | string
+    description?: NullableStringFieldUpdateOperationsInput | string | null
+    status?: EnumProjectStatusFieldUpdateOperationsInput | $Enums.ProjectStatus
+    githubRepoUrl?: NullableStringFieldUpdateOperationsInput | string | null
+    githubRepoName?: NullableStringFieldUpdateOperationsInput | string | null
+    productionUrl?: NullableStringFieldUpdateOperationsInput | string | null
+    orgRepoUrl?: NullableStringFieldUpdateOperationsInput | string | null
+    orgRepoName?: NullableStringFieldUpdateOperationsInput | string | null
+    forkedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    approvedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    semester?: StringFieldUpdateOperationsInput | string
+    tahunAkademik?: StringFieldUpdateOperationsInput | string
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    submittedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    similarityCheckedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    mahasiswa?: UserUpdateOneRequiredWithoutProjectsNestedInput
+    documents?: DocumentUpdateManyWithoutProjectNestedInput
+    reviews?: ReviewUpdateManyWithoutProjectNestedInput
+    assignments?: ProjectAssignmentUpdateManyWithoutProjectNestedInput
+    members?: ProjectMemberUpdateManyWithoutProjectNestedInput
+    invitations?: TeamInvitationUpdateManyWithoutProjectNestedInput
+    requirements?: ProjectRequirementsUpdateOneWithoutProjectNestedInput
+    stakeholderDocuments?: StakeholderDocumentUpdateManyWithoutProjectNestedInput
+    screenshots?: ProjectScreenshotUpdateManyWithoutProjectNestedInput
+    presentationSchedule?: PresentationScheduleUpdateOneWithoutProjectNestedInput
+    discussions?: ProjectDiscussionUpdateManyWithoutProjectNestedInput
+    similarityAsA?: SimilarityResultUpdateManyWithoutProjectANestedInput
+  }
+
+  export type ProjectUncheckedUpdateWithoutSimilarityAsBInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    title?: StringFieldUpdateOperationsInput | string
+    description?: NullableStringFieldUpdateOperationsInput | string | null
+    status?: EnumProjectStatusFieldUpdateOperationsInput | $Enums.ProjectStatus
+    githubRepoUrl?: NullableStringFieldUpdateOperationsInput | string | null
+    githubRepoName?: NullableStringFieldUpdateOperationsInput | string | null
+    productionUrl?: NullableStringFieldUpdateOperationsInput | string | null
+    orgRepoUrl?: NullableStringFieldUpdateOperationsInput | string | null
+    orgRepoName?: NullableStringFieldUpdateOperationsInput | string | null
+    forkedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    approvedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    semester?: StringFieldUpdateOperationsInput | string
+    tahunAkademik?: StringFieldUpdateOperationsInput | string
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    submittedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    mahasiswaId?: StringFieldUpdateOperationsInput | string
+    similarityCheckedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    documents?: DocumentUncheckedUpdateManyWithoutProjectNestedInput
+    reviews?: ReviewUncheckedUpdateManyWithoutProjectNestedInput
+    assignments?: ProjectAssignmentUncheckedUpdateManyWithoutProjectNestedInput
+    members?: ProjectMemberUncheckedUpdateManyWithoutProjectNestedInput
+    invitations?: TeamInvitationUncheckedUpdateManyWithoutProjectNestedInput
+    requirements?: ProjectRequirementsUncheckedUpdateOneWithoutProjectNestedInput
+    stakeholderDocuments?: StakeholderDocumentUncheckedUpdateManyWithoutProjectNestedInput
+    screenshots?: ProjectScreenshotUncheckedUpdateManyWithoutProjectNestedInput
+    presentationSchedule?: PresentationScheduleUncheckedUpdateOneWithoutProjectNestedInput
+    discussions?: ProjectDiscussionUncheckedUpdateManyWithoutProjectNestedInput
+    similarityAsA?: SimilarityResultUncheckedUpdateManyWithoutProjectANestedInput
+  }
+
   export type ProjectCreateWithoutMembersInput = {
     id?: string
     title: string
@@ -35143,6 +37236,7 @@ export namespace Prisma {
     createdAt?: Date | string
     updatedAt?: Date | string
     submittedAt?: Date | string | null
+    similarityCheckedAt?: Date | string | null
     mahasiswa: UserCreateNestedOneWithoutProjectsInput
     documents?: DocumentCreateNestedManyWithoutProjectInput
     reviews?: ReviewCreateNestedManyWithoutProjectInput
@@ -35153,6 +37247,8 @@ export namespace Prisma {
     screenshots?: ProjectScreenshotCreateNestedManyWithoutProjectInput
     presentationSchedule?: PresentationScheduleCreateNestedOneWithoutProjectInput
     discussions?: ProjectDiscussionCreateNestedManyWithoutProjectInput
+    similarityAsA?: SimilarityResultCreateNestedManyWithoutProjectAInput
+    similarityAsB?: SimilarityResultCreateNestedManyWithoutProjectBInput
   }
 
   export type ProjectUncheckedCreateWithoutMembersInput = {
@@ -35173,6 +37269,7 @@ export namespace Prisma {
     updatedAt?: Date | string
     submittedAt?: Date | string | null
     mahasiswaId: string
+    similarityCheckedAt?: Date | string | null
     documents?: DocumentUncheckedCreateNestedManyWithoutProjectInput
     reviews?: ReviewUncheckedCreateNestedManyWithoutProjectInput
     assignments?: ProjectAssignmentUncheckedCreateNestedManyWithoutProjectInput
@@ -35182,6 +37279,8 @@ export namespace Prisma {
     screenshots?: ProjectScreenshotUncheckedCreateNestedManyWithoutProjectInput
     presentationSchedule?: PresentationScheduleUncheckedCreateNestedOneWithoutProjectInput
     discussions?: ProjectDiscussionUncheckedCreateNestedManyWithoutProjectInput
+    similarityAsA?: SimilarityResultUncheckedCreateNestedManyWithoutProjectAInput
+    similarityAsB?: SimilarityResultUncheckedCreateNestedManyWithoutProjectBInput
   }
 
   export type ProjectCreateOrConnectWithoutMembersInput = {
@@ -35318,6 +37417,7 @@ export namespace Prisma {
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     submittedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    similarityCheckedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     mahasiswa?: UserUpdateOneRequiredWithoutProjectsNestedInput
     documents?: DocumentUpdateManyWithoutProjectNestedInput
     reviews?: ReviewUpdateManyWithoutProjectNestedInput
@@ -35328,6 +37428,8 @@ export namespace Prisma {
     screenshots?: ProjectScreenshotUpdateManyWithoutProjectNestedInput
     presentationSchedule?: PresentationScheduleUpdateOneWithoutProjectNestedInput
     discussions?: ProjectDiscussionUpdateManyWithoutProjectNestedInput
+    similarityAsA?: SimilarityResultUpdateManyWithoutProjectANestedInput
+    similarityAsB?: SimilarityResultUpdateManyWithoutProjectBNestedInput
   }
 
   export type ProjectUncheckedUpdateWithoutMembersInput = {
@@ -35348,6 +37450,7 @@ export namespace Prisma {
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     submittedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     mahasiswaId?: StringFieldUpdateOperationsInput | string
+    similarityCheckedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     documents?: DocumentUncheckedUpdateManyWithoutProjectNestedInput
     reviews?: ReviewUncheckedUpdateManyWithoutProjectNestedInput
     assignments?: ProjectAssignmentUncheckedUpdateManyWithoutProjectNestedInput
@@ -35357,6 +37460,8 @@ export namespace Prisma {
     screenshots?: ProjectScreenshotUncheckedUpdateManyWithoutProjectNestedInput
     presentationSchedule?: PresentationScheduleUncheckedUpdateOneWithoutProjectNestedInput
     discussions?: ProjectDiscussionUncheckedUpdateManyWithoutProjectNestedInput
+    similarityAsA?: SimilarityResultUncheckedUpdateManyWithoutProjectANestedInput
+    similarityAsB?: SimilarityResultUncheckedUpdateManyWithoutProjectBNestedInput
   }
 
   export type UserUpsertWithoutTeamMembershipsInput = {
@@ -35484,6 +37589,7 @@ export namespace Prisma {
     createdAt?: Date | string
     updatedAt?: Date | string
     submittedAt?: Date | string | null
+    similarityCheckedAt?: Date | string | null
     mahasiswa: UserCreateNestedOneWithoutProjectsInput
     documents?: DocumentCreateNestedManyWithoutProjectInput
     reviews?: ReviewCreateNestedManyWithoutProjectInput
@@ -35494,6 +37600,8 @@ export namespace Prisma {
     screenshots?: ProjectScreenshotCreateNestedManyWithoutProjectInput
     presentationSchedule?: PresentationScheduleCreateNestedOneWithoutProjectInput
     discussions?: ProjectDiscussionCreateNestedManyWithoutProjectInput
+    similarityAsA?: SimilarityResultCreateNestedManyWithoutProjectAInput
+    similarityAsB?: SimilarityResultCreateNestedManyWithoutProjectBInput
   }
 
   export type ProjectUncheckedCreateWithoutInvitationsInput = {
@@ -35514,6 +37622,7 @@ export namespace Prisma {
     updatedAt?: Date | string
     submittedAt?: Date | string | null
     mahasiswaId: string
+    similarityCheckedAt?: Date | string | null
     documents?: DocumentUncheckedCreateNestedManyWithoutProjectInput
     reviews?: ReviewUncheckedCreateNestedManyWithoutProjectInput
     assignments?: ProjectAssignmentUncheckedCreateNestedManyWithoutProjectInput
@@ -35523,6 +37632,8 @@ export namespace Prisma {
     screenshots?: ProjectScreenshotUncheckedCreateNestedManyWithoutProjectInput
     presentationSchedule?: PresentationScheduleUncheckedCreateNestedOneWithoutProjectInput
     discussions?: ProjectDiscussionUncheckedCreateNestedManyWithoutProjectInput
+    similarityAsA?: SimilarityResultUncheckedCreateNestedManyWithoutProjectAInput
+    similarityAsB?: SimilarityResultUncheckedCreateNestedManyWithoutProjectBInput
   }
 
   export type ProjectCreateOrConnectWithoutInvitationsInput = {
@@ -35704,6 +37815,7 @@ export namespace Prisma {
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     submittedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    similarityCheckedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     mahasiswa?: UserUpdateOneRequiredWithoutProjectsNestedInput
     documents?: DocumentUpdateManyWithoutProjectNestedInput
     reviews?: ReviewUpdateManyWithoutProjectNestedInput
@@ -35714,6 +37826,8 @@ export namespace Prisma {
     screenshots?: ProjectScreenshotUpdateManyWithoutProjectNestedInput
     presentationSchedule?: PresentationScheduleUpdateOneWithoutProjectNestedInput
     discussions?: ProjectDiscussionUpdateManyWithoutProjectNestedInput
+    similarityAsA?: SimilarityResultUpdateManyWithoutProjectANestedInput
+    similarityAsB?: SimilarityResultUpdateManyWithoutProjectBNestedInput
   }
 
   export type ProjectUncheckedUpdateWithoutInvitationsInput = {
@@ -35734,6 +37848,7 @@ export namespace Prisma {
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     submittedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     mahasiswaId?: StringFieldUpdateOperationsInput | string
+    similarityCheckedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     documents?: DocumentUncheckedUpdateManyWithoutProjectNestedInput
     reviews?: ReviewUncheckedUpdateManyWithoutProjectNestedInput
     assignments?: ProjectAssignmentUncheckedUpdateManyWithoutProjectNestedInput
@@ -35743,6 +37858,8 @@ export namespace Prisma {
     screenshots?: ProjectScreenshotUncheckedUpdateManyWithoutProjectNestedInput
     presentationSchedule?: PresentationScheduleUncheckedUpdateOneWithoutProjectNestedInput
     discussions?: ProjectDiscussionUncheckedUpdateManyWithoutProjectNestedInput
+    similarityAsA?: SimilarityResultUncheckedUpdateManyWithoutProjectANestedInput
+    similarityAsB?: SimilarityResultUncheckedUpdateManyWithoutProjectBNestedInput
   }
 
   export type UserUpsertWithoutInvitationsSentInput = {
@@ -35920,6 +38037,7 @@ export namespace Prisma {
     createdAt?: Date | string
     updatedAt?: Date | string
     submittedAt?: Date | string | null
+    similarityCheckedAt?: Date | string | null
     mahasiswa: UserCreateNestedOneWithoutProjectsInput
     documents?: DocumentCreateNestedManyWithoutProjectInput
     reviews?: ReviewCreateNestedManyWithoutProjectInput
@@ -35930,6 +38048,8 @@ export namespace Prisma {
     screenshots?: ProjectScreenshotCreateNestedManyWithoutProjectInput
     presentationSchedule?: PresentationScheduleCreateNestedOneWithoutProjectInput
     discussions?: ProjectDiscussionCreateNestedManyWithoutProjectInput
+    similarityAsA?: SimilarityResultCreateNestedManyWithoutProjectAInput
+    similarityAsB?: SimilarityResultCreateNestedManyWithoutProjectBInput
   }
 
   export type ProjectUncheckedCreateWithoutRequirementsInput = {
@@ -35950,6 +38070,7 @@ export namespace Prisma {
     updatedAt?: Date | string
     submittedAt?: Date | string | null
     mahasiswaId: string
+    similarityCheckedAt?: Date | string | null
     documents?: DocumentUncheckedCreateNestedManyWithoutProjectInput
     reviews?: ReviewUncheckedCreateNestedManyWithoutProjectInput
     assignments?: ProjectAssignmentUncheckedCreateNestedManyWithoutProjectInput
@@ -35959,6 +38080,8 @@ export namespace Prisma {
     screenshots?: ProjectScreenshotUncheckedCreateNestedManyWithoutProjectInput
     presentationSchedule?: PresentationScheduleUncheckedCreateNestedOneWithoutProjectInput
     discussions?: ProjectDiscussionUncheckedCreateNestedManyWithoutProjectInput
+    similarityAsA?: SimilarityResultUncheckedCreateNestedManyWithoutProjectAInput
+    similarityAsB?: SimilarityResultUncheckedCreateNestedManyWithoutProjectBInput
   }
 
   export type ProjectCreateOrConnectWithoutRequirementsInput = {
@@ -35994,6 +38117,7 @@ export namespace Prisma {
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     submittedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    similarityCheckedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     mahasiswa?: UserUpdateOneRequiredWithoutProjectsNestedInput
     documents?: DocumentUpdateManyWithoutProjectNestedInput
     reviews?: ReviewUpdateManyWithoutProjectNestedInput
@@ -36004,6 +38128,8 @@ export namespace Prisma {
     screenshots?: ProjectScreenshotUpdateManyWithoutProjectNestedInput
     presentationSchedule?: PresentationScheduleUpdateOneWithoutProjectNestedInput
     discussions?: ProjectDiscussionUpdateManyWithoutProjectNestedInput
+    similarityAsA?: SimilarityResultUpdateManyWithoutProjectANestedInput
+    similarityAsB?: SimilarityResultUpdateManyWithoutProjectBNestedInput
   }
 
   export type ProjectUncheckedUpdateWithoutRequirementsInput = {
@@ -36024,6 +38150,7 @@ export namespace Prisma {
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     submittedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     mahasiswaId?: StringFieldUpdateOperationsInput | string
+    similarityCheckedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     documents?: DocumentUncheckedUpdateManyWithoutProjectNestedInput
     reviews?: ReviewUncheckedUpdateManyWithoutProjectNestedInput
     assignments?: ProjectAssignmentUncheckedUpdateManyWithoutProjectNestedInput
@@ -36033,6 +38160,8 @@ export namespace Prisma {
     screenshots?: ProjectScreenshotUncheckedUpdateManyWithoutProjectNestedInput
     presentationSchedule?: PresentationScheduleUncheckedUpdateOneWithoutProjectNestedInput
     discussions?: ProjectDiscussionUncheckedUpdateManyWithoutProjectNestedInput
+    similarityAsA?: SimilarityResultUncheckedUpdateManyWithoutProjectANestedInput
+    similarityAsB?: SimilarityResultUncheckedUpdateManyWithoutProjectBNestedInput
   }
 
   export type ProjectCreateWithoutStakeholderDocumentsInput = {
@@ -36052,6 +38181,7 @@ export namespace Prisma {
     createdAt?: Date | string
     updatedAt?: Date | string
     submittedAt?: Date | string | null
+    similarityCheckedAt?: Date | string | null
     mahasiswa: UserCreateNestedOneWithoutProjectsInput
     documents?: DocumentCreateNestedManyWithoutProjectInput
     reviews?: ReviewCreateNestedManyWithoutProjectInput
@@ -36062,6 +38192,8 @@ export namespace Prisma {
     screenshots?: ProjectScreenshotCreateNestedManyWithoutProjectInput
     presentationSchedule?: PresentationScheduleCreateNestedOneWithoutProjectInput
     discussions?: ProjectDiscussionCreateNestedManyWithoutProjectInput
+    similarityAsA?: SimilarityResultCreateNestedManyWithoutProjectAInput
+    similarityAsB?: SimilarityResultCreateNestedManyWithoutProjectBInput
   }
 
   export type ProjectUncheckedCreateWithoutStakeholderDocumentsInput = {
@@ -36082,6 +38214,7 @@ export namespace Prisma {
     updatedAt?: Date | string
     submittedAt?: Date | string | null
     mahasiswaId: string
+    similarityCheckedAt?: Date | string | null
     documents?: DocumentUncheckedCreateNestedManyWithoutProjectInput
     reviews?: ReviewUncheckedCreateNestedManyWithoutProjectInput
     assignments?: ProjectAssignmentUncheckedCreateNestedManyWithoutProjectInput
@@ -36091,6 +38224,8 @@ export namespace Prisma {
     screenshots?: ProjectScreenshotUncheckedCreateNestedManyWithoutProjectInput
     presentationSchedule?: PresentationScheduleUncheckedCreateNestedOneWithoutProjectInput
     discussions?: ProjectDiscussionUncheckedCreateNestedManyWithoutProjectInput
+    similarityAsA?: SimilarityResultUncheckedCreateNestedManyWithoutProjectAInput
+    similarityAsB?: SimilarityResultUncheckedCreateNestedManyWithoutProjectBInput
   }
 
   export type ProjectCreateOrConnectWithoutStakeholderDocumentsInput = {
@@ -36126,6 +38261,7 @@ export namespace Prisma {
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     submittedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    similarityCheckedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     mahasiswa?: UserUpdateOneRequiredWithoutProjectsNestedInput
     documents?: DocumentUpdateManyWithoutProjectNestedInput
     reviews?: ReviewUpdateManyWithoutProjectNestedInput
@@ -36136,6 +38272,8 @@ export namespace Prisma {
     screenshots?: ProjectScreenshotUpdateManyWithoutProjectNestedInput
     presentationSchedule?: PresentationScheduleUpdateOneWithoutProjectNestedInput
     discussions?: ProjectDiscussionUpdateManyWithoutProjectNestedInput
+    similarityAsA?: SimilarityResultUpdateManyWithoutProjectANestedInput
+    similarityAsB?: SimilarityResultUpdateManyWithoutProjectBNestedInput
   }
 
   export type ProjectUncheckedUpdateWithoutStakeholderDocumentsInput = {
@@ -36156,6 +38294,7 @@ export namespace Prisma {
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     submittedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     mahasiswaId?: StringFieldUpdateOperationsInput | string
+    similarityCheckedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     documents?: DocumentUncheckedUpdateManyWithoutProjectNestedInput
     reviews?: ReviewUncheckedUpdateManyWithoutProjectNestedInput
     assignments?: ProjectAssignmentUncheckedUpdateManyWithoutProjectNestedInput
@@ -36165,6 +38304,8 @@ export namespace Prisma {
     screenshots?: ProjectScreenshotUncheckedUpdateManyWithoutProjectNestedInput
     presentationSchedule?: PresentationScheduleUncheckedUpdateOneWithoutProjectNestedInput
     discussions?: ProjectDiscussionUncheckedUpdateManyWithoutProjectNestedInput
+    similarityAsA?: SimilarityResultUncheckedUpdateManyWithoutProjectANestedInput
+    similarityAsB?: SimilarityResultUncheckedUpdateManyWithoutProjectBNestedInput
   }
 
   export type ProjectCreateWithoutScreenshotsInput = {
@@ -36184,6 +38325,7 @@ export namespace Prisma {
     createdAt?: Date | string
     updatedAt?: Date | string
     submittedAt?: Date | string | null
+    similarityCheckedAt?: Date | string | null
     mahasiswa: UserCreateNestedOneWithoutProjectsInput
     documents?: DocumentCreateNestedManyWithoutProjectInput
     reviews?: ReviewCreateNestedManyWithoutProjectInput
@@ -36194,6 +38336,8 @@ export namespace Prisma {
     stakeholderDocuments?: StakeholderDocumentCreateNestedManyWithoutProjectInput
     presentationSchedule?: PresentationScheduleCreateNestedOneWithoutProjectInput
     discussions?: ProjectDiscussionCreateNestedManyWithoutProjectInput
+    similarityAsA?: SimilarityResultCreateNestedManyWithoutProjectAInput
+    similarityAsB?: SimilarityResultCreateNestedManyWithoutProjectBInput
   }
 
   export type ProjectUncheckedCreateWithoutScreenshotsInput = {
@@ -36214,6 +38358,7 @@ export namespace Prisma {
     updatedAt?: Date | string
     submittedAt?: Date | string | null
     mahasiswaId: string
+    similarityCheckedAt?: Date | string | null
     documents?: DocumentUncheckedCreateNestedManyWithoutProjectInput
     reviews?: ReviewUncheckedCreateNestedManyWithoutProjectInput
     assignments?: ProjectAssignmentUncheckedCreateNestedManyWithoutProjectInput
@@ -36223,6 +38368,8 @@ export namespace Prisma {
     stakeholderDocuments?: StakeholderDocumentUncheckedCreateNestedManyWithoutProjectInput
     presentationSchedule?: PresentationScheduleUncheckedCreateNestedOneWithoutProjectInput
     discussions?: ProjectDiscussionUncheckedCreateNestedManyWithoutProjectInput
+    similarityAsA?: SimilarityResultUncheckedCreateNestedManyWithoutProjectAInput
+    similarityAsB?: SimilarityResultUncheckedCreateNestedManyWithoutProjectBInput
   }
 
   export type ProjectCreateOrConnectWithoutScreenshotsInput = {
@@ -36258,6 +38405,7 @@ export namespace Prisma {
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     submittedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    similarityCheckedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     mahasiswa?: UserUpdateOneRequiredWithoutProjectsNestedInput
     documents?: DocumentUpdateManyWithoutProjectNestedInput
     reviews?: ReviewUpdateManyWithoutProjectNestedInput
@@ -36268,6 +38416,8 @@ export namespace Prisma {
     stakeholderDocuments?: StakeholderDocumentUpdateManyWithoutProjectNestedInput
     presentationSchedule?: PresentationScheduleUpdateOneWithoutProjectNestedInput
     discussions?: ProjectDiscussionUpdateManyWithoutProjectNestedInput
+    similarityAsA?: SimilarityResultUpdateManyWithoutProjectANestedInput
+    similarityAsB?: SimilarityResultUpdateManyWithoutProjectBNestedInput
   }
 
   export type ProjectUncheckedUpdateWithoutScreenshotsInput = {
@@ -36288,6 +38438,7 @@ export namespace Prisma {
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     submittedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     mahasiswaId?: StringFieldUpdateOperationsInput | string
+    similarityCheckedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     documents?: DocumentUncheckedUpdateManyWithoutProjectNestedInput
     reviews?: ReviewUncheckedUpdateManyWithoutProjectNestedInput
     assignments?: ProjectAssignmentUncheckedUpdateManyWithoutProjectNestedInput
@@ -36297,6 +38448,8 @@ export namespace Prisma {
     stakeholderDocuments?: StakeholderDocumentUncheckedUpdateManyWithoutProjectNestedInput
     presentationSchedule?: PresentationScheduleUncheckedUpdateOneWithoutProjectNestedInput
     discussions?: ProjectDiscussionUncheckedUpdateManyWithoutProjectNestedInput
+    similarityAsA?: SimilarityResultUncheckedUpdateManyWithoutProjectANestedInput
+    similarityAsB?: SimilarityResultUncheckedUpdateManyWithoutProjectBNestedInput
   }
 
   export type ProjectCreateWithoutDocumentsInput = {
@@ -36316,6 +38469,7 @@ export namespace Prisma {
     createdAt?: Date | string
     updatedAt?: Date | string
     submittedAt?: Date | string | null
+    similarityCheckedAt?: Date | string | null
     mahasiswa: UserCreateNestedOneWithoutProjectsInput
     reviews?: ReviewCreateNestedManyWithoutProjectInput
     assignments?: ProjectAssignmentCreateNestedManyWithoutProjectInput
@@ -36326,6 +38480,8 @@ export namespace Prisma {
     screenshots?: ProjectScreenshotCreateNestedManyWithoutProjectInput
     presentationSchedule?: PresentationScheduleCreateNestedOneWithoutProjectInput
     discussions?: ProjectDiscussionCreateNestedManyWithoutProjectInput
+    similarityAsA?: SimilarityResultCreateNestedManyWithoutProjectAInput
+    similarityAsB?: SimilarityResultCreateNestedManyWithoutProjectBInput
   }
 
   export type ProjectUncheckedCreateWithoutDocumentsInput = {
@@ -36346,6 +38502,7 @@ export namespace Prisma {
     updatedAt?: Date | string
     submittedAt?: Date | string | null
     mahasiswaId: string
+    similarityCheckedAt?: Date | string | null
     reviews?: ReviewUncheckedCreateNestedManyWithoutProjectInput
     assignments?: ProjectAssignmentUncheckedCreateNestedManyWithoutProjectInput
     members?: ProjectMemberUncheckedCreateNestedManyWithoutProjectInput
@@ -36355,6 +38512,8 @@ export namespace Prisma {
     screenshots?: ProjectScreenshotUncheckedCreateNestedManyWithoutProjectInput
     presentationSchedule?: PresentationScheduleUncheckedCreateNestedOneWithoutProjectInput
     discussions?: ProjectDiscussionUncheckedCreateNestedManyWithoutProjectInput
+    similarityAsA?: SimilarityResultUncheckedCreateNestedManyWithoutProjectAInput
+    similarityAsB?: SimilarityResultUncheckedCreateNestedManyWithoutProjectBInput
   }
 
   export type ProjectCreateOrConnectWithoutDocumentsInput = {
@@ -36390,6 +38549,7 @@ export namespace Prisma {
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     submittedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    similarityCheckedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     mahasiswa?: UserUpdateOneRequiredWithoutProjectsNestedInput
     reviews?: ReviewUpdateManyWithoutProjectNestedInput
     assignments?: ProjectAssignmentUpdateManyWithoutProjectNestedInput
@@ -36400,6 +38560,8 @@ export namespace Prisma {
     screenshots?: ProjectScreenshotUpdateManyWithoutProjectNestedInput
     presentationSchedule?: PresentationScheduleUpdateOneWithoutProjectNestedInput
     discussions?: ProjectDiscussionUpdateManyWithoutProjectNestedInput
+    similarityAsA?: SimilarityResultUpdateManyWithoutProjectANestedInput
+    similarityAsB?: SimilarityResultUpdateManyWithoutProjectBNestedInput
   }
 
   export type ProjectUncheckedUpdateWithoutDocumentsInput = {
@@ -36420,6 +38582,7 @@ export namespace Prisma {
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     submittedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     mahasiswaId?: StringFieldUpdateOperationsInput | string
+    similarityCheckedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     reviews?: ReviewUncheckedUpdateManyWithoutProjectNestedInput
     assignments?: ProjectAssignmentUncheckedUpdateManyWithoutProjectNestedInput
     members?: ProjectMemberUncheckedUpdateManyWithoutProjectNestedInput
@@ -36429,6 +38592,8 @@ export namespace Prisma {
     screenshots?: ProjectScreenshotUncheckedUpdateManyWithoutProjectNestedInput
     presentationSchedule?: PresentationScheduleUncheckedUpdateOneWithoutProjectNestedInput
     discussions?: ProjectDiscussionUncheckedUpdateManyWithoutProjectNestedInput
+    similarityAsA?: SimilarityResultUncheckedUpdateManyWithoutProjectANestedInput
+    similarityAsB?: SimilarityResultUncheckedUpdateManyWithoutProjectBNestedInput
   }
 
   export type ProjectCreateWithoutReviewsInput = {
@@ -36448,6 +38613,7 @@ export namespace Prisma {
     createdAt?: Date | string
     updatedAt?: Date | string
     submittedAt?: Date | string | null
+    similarityCheckedAt?: Date | string | null
     mahasiswa: UserCreateNestedOneWithoutProjectsInput
     documents?: DocumentCreateNestedManyWithoutProjectInput
     assignments?: ProjectAssignmentCreateNestedManyWithoutProjectInput
@@ -36458,6 +38624,8 @@ export namespace Prisma {
     screenshots?: ProjectScreenshotCreateNestedManyWithoutProjectInput
     presentationSchedule?: PresentationScheduleCreateNestedOneWithoutProjectInput
     discussions?: ProjectDiscussionCreateNestedManyWithoutProjectInput
+    similarityAsA?: SimilarityResultCreateNestedManyWithoutProjectAInput
+    similarityAsB?: SimilarityResultCreateNestedManyWithoutProjectBInput
   }
 
   export type ProjectUncheckedCreateWithoutReviewsInput = {
@@ -36478,6 +38646,7 @@ export namespace Prisma {
     updatedAt?: Date | string
     submittedAt?: Date | string | null
     mahasiswaId: string
+    similarityCheckedAt?: Date | string | null
     documents?: DocumentUncheckedCreateNestedManyWithoutProjectInput
     assignments?: ProjectAssignmentUncheckedCreateNestedManyWithoutProjectInput
     members?: ProjectMemberUncheckedCreateNestedManyWithoutProjectInput
@@ -36487,6 +38656,8 @@ export namespace Prisma {
     screenshots?: ProjectScreenshotUncheckedCreateNestedManyWithoutProjectInput
     presentationSchedule?: PresentationScheduleUncheckedCreateNestedOneWithoutProjectInput
     discussions?: ProjectDiscussionUncheckedCreateNestedManyWithoutProjectInput
+    similarityAsA?: SimilarityResultUncheckedCreateNestedManyWithoutProjectAInput
+    similarityAsB?: SimilarityResultUncheckedCreateNestedManyWithoutProjectBInput
   }
 
   export type ProjectCreateOrConnectWithoutReviewsInput = {
@@ -36679,6 +38850,7 @@ export namespace Prisma {
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     submittedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    similarityCheckedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     mahasiswa?: UserUpdateOneRequiredWithoutProjectsNestedInput
     documents?: DocumentUpdateManyWithoutProjectNestedInput
     assignments?: ProjectAssignmentUpdateManyWithoutProjectNestedInput
@@ -36689,6 +38861,8 @@ export namespace Prisma {
     screenshots?: ProjectScreenshotUpdateManyWithoutProjectNestedInput
     presentationSchedule?: PresentationScheduleUpdateOneWithoutProjectNestedInput
     discussions?: ProjectDiscussionUpdateManyWithoutProjectNestedInput
+    similarityAsA?: SimilarityResultUpdateManyWithoutProjectANestedInput
+    similarityAsB?: SimilarityResultUpdateManyWithoutProjectBNestedInput
   }
 
   export type ProjectUncheckedUpdateWithoutReviewsInput = {
@@ -36709,6 +38883,7 @@ export namespace Prisma {
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     submittedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     mahasiswaId?: StringFieldUpdateOperationsInput | string
+    similarityCheckedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     documents?: DocumentUncheckedUpdateManyWithoutProjectNestedInput
     assignments?: ProjectAssignmentUncheckedUpdateManyWithoutProjectNestedInput
     members?: ProjectMemberUncheckedUpdateManyWithoutProjectNestedInput
@@ -36718,6 +38893,8 @@ export namespace Prisma {
     screenshots?: ProjectScreenshotUncheckedUpdateManyWithoutProjectNestedInput
     presentationSchedule?: PresentationScheduleUncheckedUpdateOneWithoutProjectNestedInput
     discussions?: ProjectDiscussionUncheckedUpdateManyWithoutProjectNestedInput
+    similarityAsA?: SimilarityResultUncheckedUpdateManyWithoutProjectANestedInput
+    similarityAsB?: SimilarityResultUncheckedUpdateManyWithoutProjectBNestedInput
   }
 
   export type UserUpsertWithoutReviewsInput = {
@@ -37384,6 +39561,7 @@ export namespace Prisma {
     createdAt?: Date | string
     updatedAt?: Date | string
     submittedAt?: Date | string | null
+    similarityCheckedAt?: Date | string | null
     mahasiswa: UserCreateNestedOneWithoutProjectsInput
     documents?: DocumentCreateNestedManyWithoutProjectInput
     reviews?: ReviewCreateNestedManyWithoutProjectInput
@@ -37394,6 +39572,8 @@ export namespace Prisma {
     screenshots?: ProjectScreenshotCreateNestedManyWithoutProjectInput
     presentationSchedule?: PresentationScheduleCreateNestedOneWithoutProjectInput
     discussions?: ProjectDiscussionCreateNestedManyWithoutProjectInput
+    similarityAsA?: SimilarityResultCreateNestedManyWithoutProjectAInput
+    similarityAsB?: SimilarityResultCreateNestedManyWithoutProjectBInput
   }
 
   export type ProjectUncheckedCreateWithoutAssignmentsInput = {
@@ -37414,6 +39594,7 @@ export namespace Prisma {
     updatedAt?: Date | string
     submittedAt?: Date | string | null
     mahasiswaId: string
+    similarityCheckedAt?: Date | string | null
     documents?: DocumentUncheckedCreateNestedManyWithoutProjectInput
     reviews?: ReviewUncheckedCreateNestedManyWithoutProjectInput
     members?: ProjectMemberUncheckedCreateNestedManyWithoutProjectInput
@@ -37423,6 +39604,8 @@ export namespace Prisma {
     screenshots?: ProjectScreenshotUncheckedCreateNestedManyWithoutProjectInput
     presentationSchedule?: PresentationScheduleUncheckedCreateNestedOneWithoutProjectInput
     discussions?: ProjectDiscussionUncheckedCreateNestedManyWithoutProjectInput
+    similarityAsA?: SimilarityResultUncheckedCreateNestedManyWithoutProjectAInput
+    similarityAsB?: SimilarityResultUncheckedCreateNestedManyWithoutProjectBInput
   }
 
   export type ProjectCreateOrConnectWithoutAssignmentsInput = {
@@ -37531,6 +39714,7 @@ export namespace Prisma {
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     submittedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    similarityCheckedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     mahasiswa?: UserUpdateOneRequiredWithoutProjectsNestedInput
     documents?: DocumentUpdateManyWithoutProjectNestedInput
     reviews?: ReviewUpdateManyWithoutProjectNestedInput
@@ -37541,6 +39725,8 @@ export namespace Prisma {
     screenshots?: ProjectScreenshotUpdateManyWithoutProjectNestedInput
     presentationSchedule?: PresentationScheduleUpdateOneWithoutProjectNestedInput
     discussions?: ProjectDiscussionUpdateManyWithoutProjectNestedInput
+    similarityAsA?: SimilarityResultUpdateManyWithoutProjectANestedInput
+    similarityAsB?: SimilarityResultUpdateManyWithoutProjectBNestedInput
   }
 
   export type ProjectUncheckedUpdateWithoutAssignmentsInput = {
@@ -37561,6 +39747,7 @@ export namespace Prisma {
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     submittedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     mahasiswaId?: StringFieldUpdateOperationsInput | string
+    similarityCheckedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     documents?: DocumentUncheckedUpdateManyWithoutProjectNestedInput
     reviews?: ReviewUncheckedUpdateManyWithoutProjectNestedInput
     members?: ProjectMemberUncheckedUpdateManyWithoutProjectNestedInput
@@ -37570,6 +39757,8 @@ export namespace Prisma {
     screenshots?: ProjectScreenshotUncheckedUpdateManyWithoutProjectNestedInput
     presentationSchedule?: PresentationScheduleUncheckedUpdateOneWithoutProjectNestedInput
     discussions?: ProjectDiscussionUncheckedUpdateManyWithoutProjectNestedInput
+    similarityAsA?: SimilarityResultUncheckedUpdateManyWithoutProjectANestedInput
+    similarityAsB?: SimilarityResultUncheckedUpdateManyWithoutProjectBNestedInput
   }
 
   export type UserUpsertWithoutAssignedProjectsInput = {
@@ -37893,6 +40082,7 @@ export namespace Prisma {
     createdAt?: Date | string
     updatedAt?: Date | string
     submittedAt?: Date | string | null
+    similarityCheckedAt?: Date | string | null
     mahasiswa: UserCreateNestedOneWithoutProjectsInput
     documents?: DocumentCreateNestedManyWithoutProjectInput
     reviews?: ReviewCreateNestedManyWithoutProjectInput
@@ -37903,6 +40093,8 @@ export namespace Prisma {
     stakeholderDocuments?: StakeholderDocumentCreateNestedManyWithoutProjectInput
     screenshots?: ProjectScreenshotCreateNestedManyWithoutProjectInput
     discussions?: ProjectDiscussionCreateNestedManyWithoutProjectInput
+    similarityAsA?: SimilarityResultCreateNestedManyWithoutProjectAInput
+    similarityAsB?: SimilarityResultCreateNestedManyWithoutProjectBInput
   }
 
   export type ProjectUncheckedCreateWithoutPresentationScheduleInput = {
@@ -37923,6 +40115,7 @@ export namespace Prisma {
     updatedAt?: Date | string
     submittedAt?: Date | string | null
     mahasiswaId: string
+    similarityCheckedAt?: Date | string | null
     documents?: DocumentUncheckedCreateNestedManyWithoutProjectInput
     reviews?: ReviewUncheckedCreateNestedManyWithoutProjectInput
     assignments?: ProjectAssignmentUncheckedCreateNestedManyWithoutProjectInput
@@ -37932,6 +40125,8 @@ export namespace Prisma {
     stakeholderDocuments?: StakeholderDocumentUncheckedCreateNestedManyWithoutProjectInput
     screenshots?: ProjectScreenshotUncheckedCreateNestedManyWithoutProjectInput
     discussions?: ProjectDiscussionUncheckedCreateNestedManyWithoutProjectInput
+    similarityAsA?: SimilarityResultUncheckedCreateNestedManyWithoutProjectAInput
+    similarityAsB?: SimilarityResultUncheckedCreateNestedManyWithoutProjectBInput
   }
 
   export type ProjectCreateOrConnectWithoutPresentationScheduleInput = {
@@ -38046,6 +40241,7 @@ export namespace Prisma {
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     submittedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    similarityCheckedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     mahasiswa?: UserUpdateOneRequiredWithoutProjectsNestedInput
     documents?: DocumentUpdateManyWithoutProjectNestedInput
     reviews?: ReviewUpdateManyWithoutProjectNestedInput
@@ -38056,6 +40252,8 @@ export namespace Prisma {
     stakeholderDocuments?: StakeholderDocumentUpdateManyWithoutProjectNestedInput
     screenshots?: ProjectScreenshotUpdateManyWithoutProjectNestedInput
     discussions?: ProjectDiscussionUpdateManyWithoutProjectNestedInput
+    similarityAsA?: SimilarityResultUpdateManyWithoutProjectANestedInput
+    similarityAsB?: SimilarityResultUpdateManyWithoutProjectBNestedInput
   }
 
   export type ProjectUncheckedUpdateWithoutPresentationScheduleInput = {
@@ -38076,6 +40274,7 @@ export namespace Prisma {
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     submittedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     mahasiswaId?: StringFieldUpdateOperationsInput | string
+    similarityCheckedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     documents?: DocumentUncheckedUpdateManyWithoutProjectNestedInput
     reviews?: ReviewUncheckedUpdateManyWithoutProjectNestedInput
     assignments?: ProjectAssignmentUncheckedUpdateManyWithoutProjectNestedInput
@@ -38085,6 +40284,8 @@ export namespace Prisma {
     stakeholderDocuments?: StakeholderDocumentUncheckedUpdateManyWithoutProjectNestedInput
     screenshots?: ProjectScreenshotUncheckedUpdateManyWithoutProjectNestedInput
     discussions?: ProjectDiscussionUncheckedUpdateManyWithoutProjectNestedInput
+    similarityAsA?: SimilarityResultUncheckedUpdateManyWithoutProjectANestedInput
+    similarityAsB?: SimilarityResultUncheckedUpdateManyWithoutProjectBNestedInput
   }
 
   export type ProjectCreateWithoutDiscussionsInput = {
@@ -38104,6 +40305,7 @@ export namespace Prisma {
     createdAt?: Date | string
     updatedAt?: Date | string
     submittedAt?: Date | string | null
+    similarityCheckedAt?: Date | string | null
     mahasiswa: UserCreateNestedOneWithoutProjectsInput
     documents?: DocumentCreateNestedManyWithoutProjectInput
     reviews?: ReviewCreateNestedManyWithoutProjectInput
@@ -38114,6 +40316,8 @@ export namespace Prisma {
     stakeholderDocuments?: StakeholderDocumentCreateNestedManyWithoutProjectInput
     screenshots?: ProjectScreenshotCreateNestedManyWithoutProjectInput
     presentationSchedule?: PresentationScheduleCreateNestedOneWithoutProjectInput
+    similarityAsA?: SimilarityResultCreateNestedManyWithoutProjectAInput
+    similarityAsB?: SimilarityResultCreateNestedManyWithoutProjectBInput
   }
 
   export type ProjectUncheckedCreateWithoutDiscussionsInput = {
@@ -38134,6 +40338,7 @@ export namespace Prisma {
     updatedAt?: Date | string
     submittedAt?: Date | string | null
     mahasiswaId: string
+    similarityCheckedAt?: Date | string | null
     documents?: DocumentUncheckedCreateNestedManyWithoutProjectInput
     reviews?: ReviewUncheckedCreateNestedManyWithoutProjectInput
     assignments?: ProjectAssignmentUncheckedCreateNestedManyWithoutProjectInput
@@ -38143,6 +40348,8 @@ export namespace Prisma {
     stakeholderDocuments?: StakeholderDocumentUncheckedCreateNestedManyWithoutProjectInput
     screenshots?: ProjectScreenshotUncheckedCreateNestedManyWithoutProjectInput
     presentationSchedule?: PresentationScheduleUncheckedCreateNestedOneWithoutProjectInput
+    similarityAsA?: SimilarityResultUncheckedCreateNestedManyWithoutProjectAInput
+    similarityAsB?: SimilarityResultUncheckedCreateNestedManyWithoutProjectBInput
   }
 
   export type ProjectCreateOrConnectWithoutDiscussionsInput = {
@@ -38310,6 +40517,7 @@ export namespace Prisma {
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     submittedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    similarityCheckedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     mahasiswa?: UserUpdateOneRequiredWithoutProjectsNestedInput
     documents?: DocumentUpdateManyWithoutProjectNestedInput
     reviews?: ReviewUpdateManyWithoutProjectNestedInput
@@ -38320,6 +40528,8 @@ export namespace Prisma {
     stakeholderDocuments?: StakeholderDocumentUpdateManyWithoutProjectNestedInput
     screenshots?: ProjectScreenshotUpdateManyWithoutProjectNestedInput
     presentationSchedule?: PresentationScheduleUpdateOneWithoutProjectNestedInput
+    similarityAsA?: SimilarityResultUpdateManyWithoutProjectANestedInput
+    similarityAsB?: SimilarityResultUpdateManyWithoutProjectBNestedInput
   }
 
   export type ProjectUncheckedUpdateWithoutDiscussionsInput = {
@@ -38340,6 +40550,7 @@ export namespace Prisma {
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     submittedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     mahasiswaId?: StringFieldUpdateOperationsInput | string
+    similarityCheckedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     documents?: DocumentUncheckedUpdateManyWithoutProjectNestedInput
     reviews?: ReviewUncheckedUpdateManyWithoutProjectNestedInput
     assignments?: ProjectAssignmentUncheckedUpdateManyWithoutProjectNestedInput
@@ -38349,6 +40560,8 @@ export namespace Prisma {
     stakeholderDocuments?: StakeholderDocumentUncheckedUpdateManyWithoutProjectNestedInput
     screenshots?: ProjectScreenshotUncheckedUpdateManyWithoutProjectNestedInput
     presentationSchedule?: PresentationScheduleUncheckedUpdateOneWithoutProjectNestedInput
+    similarityAsA?: SimilarityResultUncheckedUpdateManyWithoutProjectANestedInput
+    similarityAsB?: SimilarityResultUncheckedUpdateManyWithoutProjectBNestedInput
   }
 
   export type UserUpsertWithoutDiscussionsInput = {
@@ -38496,6 +40709,7 @@ export namespace Prisma {
     createdAt?: Date | string
     updatedAt?: Date | string
     submittedAt?: Date | string | null
+    similarityCheckedAt?: Date | string | null
   }
 
   export type ReviewCreateManyReviewerInput = {
@@ -38615,6 +40829,7 @@ export namespace Prisma {
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     submittedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    similarityCheckedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     documents?: DocumentUpdateManyWithoutProjectNestedInput
     reviews?: ReviewUpdateManyWithoutProjectNestedInput
     assignments?: ProjectAssignmentUpdateManyWithoutProjectNestedInput
@@ -38625,6 +40840,8 @@ export namespace Prisma {
     screenshots?: ProjectScreenshotUpdateManyWithoutProjectNestedInput
     presentationSchedule?: PresentationScheduleUpdateOneWithoutProjectNestedInput
     discussions?: ProjectDiscussionUpdateManyWithoutProjectNestedInput
+    similarityAsA?: SimilarityResultUpdateManyWithoutProjectANestedInput
+    similarityAsB?: SimilarityResultUpdateManyWithoutProjectBNestedInput
   }
 
   export type ProjectUncheckedUpdateWithoutMahasiswaInput = {
@@ -38644,6 +40861,7 @@ export namespace Prisma {
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     submittedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    similarityCheckedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     documents?: DocumentUncheckedUpdateManyWithoutProjectNestedInput
     reviews?: ReviewUncheckedUpdateManyWithoutProjectNestedInput
     assignments?: ProjectAssignmentUncheckedUpdateManyWithoutProjectNestedInput
@@ -38654,6 +40872,8 @@ export namespace Prisma {
     screenshots?: ProjectScreenshotUncheckedUpdateManyWithoutProjectNestedInput
     presentationSchedule?: PresentationScheduleUncheckedUpdateOneWithoutProjectNestedInput
     discussions?: ProjectDiscussionUncheckedUpdateManyWithoutProjectNestedInput
+    similarityAsA?: SimilarityResultUncheckedUpdateManyWithoutProjectANestedInput
+    similarityAsB?: SimilarityResultUncheckedUpdateManyWithoutProjectBNestedInput
   }
 
   export type ProjectUncheckedUpdateManyWithoutMahasiswaInput = {
@@ -38673,6 +40893,7 @@ export namespace Prisma {
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     submittedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    similarityCheckedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   }
 
   export type ReviewUpdateWithoutReviewerInput = {
@@ -39076,6 +41297,26 @@ export namespace Prisma {
     updatedAt?: Date | string
   }
 
+  export type SimilarityResultCreateManyProjectAInput = {
+    id?: string
+    projectBId: string
+    codebertScore: number
+    winnowingScore: number
+    hybridScore: number
+    isPlagiarized: boolean
+    checkedAt?: Date | string
+  }
+
+  export type SimilarityResultCreateManyProjectBInput = {
+    id?: string
+    projectAId: string
+    codebertScore: number
+    winnowingScore: number
+    hybridScore: number
+    isPlagiarized: boolean
+    checkedAt?: Date | string
+  }
+
   export type DocumentUpdateWithoutProjectInput = {
     id?: StringFieldUpdateOperationsInput | string
     type?: EnumDocumentTypeFieldUpdateOperationsInput | $Enums.DocumentType
@@ -39357,6 +41598,66 @@ export namespace Prisma {
     isEdited?: BoolFieldUpdateOperationsInput | boolean
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type SimilarityResultUpdateWithoutProjectAInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    codebertScore?: FloatFieldUpdateOperationsInput | number
+    winnowingScore?: FloatFieldUpdateOperationsInput | number
+    hybridScore?: FloatFieldUpdateOperationsInput | number
+    isPlagiarized?: BoolFieldUpdateOperationsInput | boolean
+    checkedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    projectB?: ProjectUpdateOneRequiredWithoutSimilarityAsBNestedInput
+  }
+
+  export type SimilarityResultUncheckedUpdateWithoutProjectAInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    projectBId?: StringFieldUpdateOperationsInput | string
+    codebertScore?: FloatFieldUpdateOperationsInput | number
+    winnowingScore?: FloatFieldUpdateOperationsInput | number
+    hybridScore?: FloatFieldUpdateOperationsInput | number
+    isPlagiarized?: BoolFieldUpdateOperationsInput | boolean
+    checkedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type SimilarityResultUncheckedUpdateManyWithoutProjectAInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    projectBId?: StringFieldUpdateOperationsInput | string
+    codebertScore?: FloatFieldUpdateOperationsInput | number
+    winnowingScore?: FloatFieldUpdateOperationsInput | number
+    hybridScore?: FloatFieldUpdateOperationsInput | number
+    isPlagiarized?: BoolFieldUpdateOperationsInput | boolean
+    checkedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type SimilarityResultUpdateWithoutProjectBInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    codebertScore?: FloatFieldUpdateOperationsInput | number
+    winnowingScore?: FloatFieldUpdateOperationsInput | number
+    hybridScore?: FloatFieldUpdateOperationsInput | number
+    isPlagiarized?: BoolFieldUpdateOperationsInput | boolean
+    checkedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    projectA?: ProjectUpdateOneRequiredWithoutSimilarityAsANestedInput
+  }
+
+  export type SimilarityResultUncheckedUpdateWithoutProjectBInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    projectAId?: StringFieldUpdateOperationsInput | string
+    codebertScore?: FloatFieldUpdateOperationsInput | number
+    winnowingScore?: FloatFieldUpdateOperationsInput | number
+    hybridScore?: FloatFieldUpdateOperationsInput | number
+    isPlagiarized?: BoolFieldUpdateOperationsInput | boolean
+    checkedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type SimilarityResultUncheckedUpdateManyWithoutProjectBInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    projectAId?: StringFieldUpdateOperationsInput | string
+    codebertScore?: FloatFieldUpdateOperationsInput | number
+    winnowingScore?: FloatFieldUpdateOperationsInput | number
+    hybridScore?: FloatFieldUpdateOperationsInput | number
+    isPlagiarized?: BoolFieldUpdateOperationsInput | boolean
+    checkedAt?: DateTimeFieldUpdateOperationsInput | Date | string
   }
 
   export type MemberReviewScoreCreateManyMemberInput = {

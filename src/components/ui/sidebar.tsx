@@ -1,35 +1,34 @@
 'use client';
 
-import { useState, useEffect } from 'react';
-import Link from 'next/link';
-import Image from 'next/image';
-import { usePathname } from 'next/navigation';
-import { useSession } from 'next-auth/react';
+import { cn, getSimakPhotoUrl } from '@/lib/utils';
 import {
-  Button,
   Avatar,
+  Button,
   Tooltip,
 } from '@heroui/react';
 import {
-  LayoutDashboard,
-  FolderGit2,
-  FileText,
-  Users,
-  ClipboardCheck,
+  BarChart3,
+  BookOpen,
+  Bot,
+  CalendarCheck,
   ChevronLeft,
   ChevronRight,
+  ClipboardCheck,
+  FolderGit2,
+  GitCompare,
   GraduationCap,
-  UserCog,
-  BookOpen,
-  GitBranch,
-  X,
-  Menu,
+  LayoutDashboard,
   Mail,
-  Bot,
-  BarChart3,
-  CalendarCheck,
+  Menu,
+  UserCog,
+  Users,
+  X
 } from 'lucide-react';
-import { cn, getSimakPhotoUrl } from '@/lib/utils';
+import { useSession } from 'next-auth/react';
+import Image from 'next/image';
+import Link from 'next/link';
+import { usePathname } from 'next/navigation';
+import { useEffect, useState } from 'react';
 
 interface SidebarItem {
   title: string;
@@ -63,6 +62,8 @@ const mahasiswaMenuItems: SidebarItem[] = [
     href: '/mahasiswa/reviews',
     icon: <ClipboardCheck size={20} />,
   },
+
+  { title: 'Kemiripan', href: '/mahasiswa/similarity', icon: GitCompare },
 ];
 
 const dosenMenuItems: SidebarItem[] = [
@@ -91,6 +92,7 @@ const dosenMenuItems: SidebarItem[] = [
     href: '/dosen/auto-review',
     icon: <Bot size={20} />,
   },
+  { title: 'Kemiripan', href: '/dosen/similarity', icon: GitCompare },
 ];
 
 const adminMenuItems: SidebarItem[] = [
@@ -129,6 +131,7 @@ const adminMenuItems: SidebarItem[] = [
     href: '/admin/semesters',
     icon: <GraduationCap size={20} />,
   },
+  { title: 'Kemiripan', href: '/admin/similarity', icon: GitCompare },
 ];
 
 interface SidebarProps {

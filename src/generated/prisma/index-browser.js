@@ -177,7 +177,19 @@ exports.Prisma.ProjectScalarFieldEnum = {
   createdAt: 'createdAt',
   updatedAt: 'updatedAt',
   submittedAt: 'submittedAt',
-  mahasiswaId: 'mahasiswaId'
+  mahasiswaId: 'mahasiswaId',
+  similarityCheckedAt: 'similarityCheckedAt'
+};
+
+exports.Prisma.SimilarityResultScalarFieldEnum = {
+  id: 'id',
+  projectAId: 'projectAId',
+  projectBId: 'projectBId',
+  codebertScore: 'codebertScore',
+  winnowingScore: 'winnowingScore',
+  hybridScore: 'hybridScore',
+  isPlagiarized: 'isPlagiarized',
+  checkedAt: 'checkedAt'
 };
 
 exports.Prisma.ProjectMemberScalarFieldEnum = {
@@ -453,6 +465,7 @@ exports.Prisma.ModelName = {
   User: 'User',
   Account: 'Account',
   Project: 'Project',
+  SimilarityResult: 'SimilarityResult',
   ProjectMember: 'ProjectMember',
   TeamInvitation: 'TeamInvitation',
   ProjectRequirements: 'ProjectRequirements',
