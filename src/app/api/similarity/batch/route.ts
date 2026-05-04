@@ -4,9 +4,7 @@ import { NextRequest, NextResponse } from "next/server";
 const PYTHON_SERVICE_URL = process.env.SIMILARITY_SERVICE_URL || "http://localhost:8000";
 
 // Threshold sesuai proposal skripsi (Tabel 3)
-const THRESHOLD_CODEBERT  = 0.80; // Akbar dkk. 2025
-const THRESHOLD_WINNOWING = 0.75; // Ramli et al. 2021
-const ALPHA = 0.6;
+const ALPHA = 0.6; // Akbar dkk. 2025
 
 function getClassification(
   sg: number,
@@ -27,43 +25,75 @@ function getClassification(
   return { label: "Normal / Aman", level: "success", description: "Tidak terindikasi plagiarisme" };
 }
 
-async function fetchGitHubCode(repoUrl: string): Promise<{ code: string; snippets: Record<string, string> } | null> {
+/**
+ * Fetch kode sumber dari GitHub repo.
+ * - Mencoba branch: main, master, dev, development
+ * - Jika tidak ada file kode, tetap return string kosong (bukan null)
+ *   sehingga pasangan tetap bisa diproses
+ */
+async function fetchGitHubCode(
+  repoUrl: string
+): Promise<{ code: string; snippets: Record<string, string>; branch: string } | null> {
   try {
     const match = repoUrl.match(/github\.com\/([^/]+)\/([^/]+)/);
     if (!match) return null;
     const [, owner, repo] = match;
     const cleanRepo = repo.replace(/\.git$/, "");
-    const headers: Record<string, string> = { Accept: "application/vnd.github.v3+json" };
-    if (process.env.GITHUB_TOKEN) headers["Authorization"] = `token ${process.env.GITHUB_TOKEN}`;
 
-    let treeRes = await fetch(`https://api.github.com/repos/${owner}/${cleanRepo}/git/trees/main?recursive=1`, { headers });
-    if (!treeRes.ok) {
-      treeRes = await fetch(`https://api.github.com/repos/${owner}/${cleanRepo}/git/trees/master?recursive=1`, { headers });
+    const headers: Record<string, string> = {
+      Accept: "application/vnd.github.v3+json",
+    };
+    if (process.env.GITHUB_TOKEN) {
+      headers["Authorization"] = `token ${process.env.GITHUB_TOKEN}`;
     }
-    if (!treeRes.ok) return null;
 
-    const tree = await treeRes.json();
-    const branch = treeRes.url.includes("main") ? "main" : "master";
-    const codeExts = [".py", ".js", ".ts", ".jsx", ".tsx", ".java", ".cpp", ".c", ".go", ".php"];
-    const codeFiles = (tree.tree ?? [])
-      .filter((f: { type: string; path: string }) => f.type === "blob" && codeExts.some((ext) => f.path.endsWith(ext)))
-      .slice(0, 10);
+    // Coba beberapa branch umum
+    const branches = ["main", "master", "dev", "development"];
+    let treeData: any = null;
+    let activeBranch = "main";
 
-    if (!codeFiles.length) return null;
+    for (const br of branches) {
+      const res = await fetch(
+        `https://api.github.com/repos/${owner}/${cleanRepo}/git/trees/${br}?recursive=1`,
+        { headers }
+      );
+      if (res.ok) {
+        treeData = await res.json();
+        activeBranch = br;
+        break;
+      }
+    }
+
+    // Kalau semua branch gagal, return null (repo tidak bisa diakses)
+    if (!treeData) return null;
+
+    const codeExts = [".py", ".js", ".ts", ".jsx", ".tsx", ".java", ".cpp", ".c", ".go", ".php", ".rb", ".cs"];
+    const codeFiles = ((treeData.tree ?? []) as { type: string; path: string }[])
+      .filter((f) => f.type === "blob" && codeExts.some((ext) => f.path.endsWith(ext)))
+      .slice(0, 20); // Naikkan dari 10 ke 20 untuk representasi lebih baik
 
     const contents: string[] = [];
     const snippets: Record<string, string> = {};
-    for (const file of codeFiles) {
-      const rawUrl = `https://raw.githubusercontent.com/${owner}/${cleanRepo}/${branch}/${file.path}`;
-      const r = await fetch(rawUrl, { headers });
-      if (r.ok) {
-        const text = await r.text();
-        contents.push(text);
-        snippets[file.path] = text.split("\n").slice(0, 20).join("\n");
+
+    if (codeFiles.length > 0) {
+      for (const file of codeFiles) {
+        const rawUrl = `https://raw.githubusercontent.com/${owner}/${cleanRepo}/${activeBranch}/${file.path}`;
+        const r = await fetch(rawUrl, { headers });
+        if (r.ok) {
+          const text = await r.text();
+          contents.push(text);
+          snippets[file.path] = text.split("\n").slice(0, 20).join("\n");
+        }
       }
     }
-    return contents.length ? { code: contents.join("\n\n"), snippets } : null;
-  } catch {
+
+    // Jika tidak ada file kode ditemukan, gunakan placeholder
+    // sehingga proyek tetap ikut dipasangkan (skor akan 0)
+    const finalCode = contents.length > 0 ? contents.join("\n\n") : `# Repo: ${cleanRepo} - tidak ada file kode terdeteksi`;
+
+    return { code: finalCode, snippets, branch: activeBranch };
+  } catch (err) {
+    console.error("fetchGitHubCode error:", err);
     return null;
   }
 }
@@ -73,54 +103,102 @@ export async function POST(req: NextRequest) {
     const body = await req.json().catch(() => ({}));
     const { projectIds } = body;
 
+    // Ambil SEMUA proyek - tidak hanya yang punya githubRepoUrl
+    // Proyek tanpa URL akan tetap dipasangkan dengan skor 0
     const whereClause = projectIds?.length
-      ? { id: { in: projectIds }, githubRepoUrl: { not: null } }
-      : { githubRepoUrl: { not: null } };
+      ? { id: { in: projectIds } }
+      : {};
 
     const projects = await prisma.project.findMany({
       where: whereClause,
-      select: { id: true, title: true, githubRepoUrl: true, mahasiswa: { select: { name: true, nim: true } } },
+      select: {
+        id: true,
+        title: true,
+        githubRepoUrl: true,
+        mahasiswa: { select: { name: true, nim: true } },
+      },
     });
 
-    if (projects.length < 2)
-      return NextResponse.json({ error: "Minimal 2 project dengan GitHub URL diperlukan" }, { status: 400 });
+    if (projects.length < 2) {
+      return NextResponse.json(
+        { error: "Minimal 2 project diperlukan untuk analisis" },
+        { status: 400 }
+      );
+    }
 
+    console.log(`[Batch] Memproses ${projects.length} proyek → ${(projects.length * (projects.length - 1)) / 2} pasangan`);
+
+    // Fetch kode untuk setiap proyek
     const projectData: Record<string, { code: string; snippets: Record<string, string> }> = {};
+    const fetchErrors: string[] = [];
+
     for (const p of projects) {
       if (p.githubRepoUrl) {
         const data = await fetchGitHubCode(p.githubRepoUrl);
-        if (data) projectData[p.id] = data;
+        if (data) {
+          projectData[p.id] = { code: data.code, snippets: data.snippets };
+          console.log(`[Batch] ✓ ${p.title} (branch: ${data.branch}, snippets: ${Object.keys(data.snippets).length})`);
+        } else {
+          // Repo tidak bisa diakses - tetap masukkan dengan kode placeholder
+          projectData[p.id] = { code: `# Proyek: ${p.title} - repo tidak dapat diakses`, snippets: {} };
+          fetchErrors.push(p.title);
+          console.warn(`[Batch] ✗ Gagal fetch: ${p.title} (${p.githubRepoUrl})`);
+        }
+      } else {
+        // Proyek tanpa GitHub URL - tetap ikut dengan kode placeholder
+        projectData[p.id] = { code: `# Proyek: ${p.title} - tidak ada GitHub URL`, snippets: {} };
+        console.warn(`[Batch] ⚠ Tidak ada GitHub URL: ${p.title}`);
       }
     }
 
     const results = [];
+    let pairCount = 0;
+    let errorCount = 0;
 
     for (let i = 0; i < projects.length; i++) {
       for (let j = i + 1; j < projects.length; j++) {
         const a = projects[i];
         const b = projects[j];
-        if (!projectData[a.id] || !projectData[b.id]) continue;
+        pairCount++;
 
-        const res = await fetch(`${PYTHON_SERVICE_URL}/similarity`, {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ code1: projectData[a.id].code, code2: projectData[b.id].code, alpha: ALPHA }),
-        });
-        if (!res.ok) continue;
+        const codeA = projectData[a.id]?.code ?? "";
+        const codeB = projectData[b.id]?.code ?? "";
 
-        const sim = await res.json();
-        const scb = sim.codebert_score ?? 0;
-        const sw  = sim.winnowing_score ?? 0;
-        const sg  = ALPHA * scb + (1 - ALPHA) * sw;
+        let scb = 0;
+        let sw = 0;
+
+        try {
+          const res = await fetch(`${PYTHON_SERVICE_URL}/similarity`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ code1: codeA, code2: codeB, alpha: ALPHA }),
+          });
+
+          if (res.ok) {
+            const sim = await res.json();
+            scb = sim.codebert_score ?? 0;
+            sw = sim.winnowing_score ?? 0;
+          } else {
+            errorCount++;
+            console.warn(`[Batch] Python service error untuk pasangan ${a.title} x ${b.title}`);
+          }
+        } catch (e) {
+          errorCount++;
+          console.warn(`[Batch] Timeout/error pasangan ${a.title} x ${b.title}:`, e);
+        }
+
+        const sg = ALPHA * scb + (1 - ALPHA) * sw;
         const classification = getClassification(sg, scb, sw);
         const isPlagiarized = classification.level !== "success";
 
-        // Simpan snippet ke database
-        const snippetAData = projectData[a.id].snippets;
-        const snippetBData = projectData[b.id].snippets;
+        const snippetAData = projectData[a.id]?.snippets ?? {};
+        const snippetBData = projectData[b.id]?.snippets ?? {};
 
+        // Simpan/update ke database
         await prisma.similarityResult.upsert({
-          where: { projectAId_projectBId: { projectAId: a.id, projectBId: b.id } },
+          where: {
+            projectAId_projectBId: { projectAId: a.id, projectBId: b.id },
+          },
           update: {
             codebertScore: scb,
             winnowingScore: sw,
@@ -156,6 +234,8 @@ export async function POST(req: NextRequest) {
       }
     }
 
+    console.log(`[Batch] Selesai: ${pairCount} pasangan diproses, ${errorCount} error`);
+
     const levelOrder: Record<string, number> = { danger: 0, warning: 1, secondary: 2, success: 3 };
     results.sort(
       (a, b) =>
@@ -163,10 +243,18 @@ export async function POST(req: NextRequest) {
         b.hybrid_score - a.hybrid_score
     );
 
-    return NextResponse.json({ total: results.length, results });
+    return NextResponse.json({
+      total: results.length,
+      totalProjects: projects.length,
+      fetchErrors,
+      results,
+    });
   } catch (error) {
     console.error("Batch similarity error:", error);
-    return NextResponse.json({ error: "Gagal menjalankan batch analisis kemiripan" }, { status: 500 });
+    return NextResponse.json(
+      { error: "Gagal menjalankan batch analisis kemiripan" },
+      { status: 500 }
+    );
   }
 }
 
@@ -174,8 +262,22 @@ export async function GET() {
   try {
     const rows = await prisma.similarityResult.findMany({
       include: {
-        projectA: { select: { id: true, title: true, githubRepoUrl: true, mahasiswa: { select: { name: true, nim: true } } } },
-        projectB: { select: { id: true, title: true, githubRepoUrl: true, mahasiswa: { select: { name: true, nim: true } } } },
+        projectA: {
+          select: {
+            id: true,
+            title: true,
+            githubRepoUrl: true,
+            mahasiswa: { select: { name: true, nim: true } },
+          },
+        },
+        projectB: {
+          select: {
+            id: true,
+            title: true,
+            githubRepoUrl: true,
+            mahasiswa: { select: { name: true, nim: true } },
+          },
+        },
       },
       orderBy: { hybridScore: "desc" },
     });
@@ -186,12 +288,10 @@ export async function GET() {
       winnowing_score: r.winnowingScore,
       hybrid_score: r.hybridScore,
       classification: getClassification(r.hybridScore, r.codebertScore, r.winnowingScore),
-      // snippetA dan snippetB sudah ada di r (dari DB)
       snippetA: r.snippetA as Record<string, string> | null,
       snippetB: r.snippetB as Record<string, string> | null,
     }));
 
-    // Sort: danger > warning > secondary > success, lalu hybrid desc
     const levelOrder: Record<string, number> = { danger: 0, warning: 1, secondary: 2, success: 3 };
     results.sort(
       (a, b) =>
@@ -202,6 +302,9 @@ export async function GET() {
     return NextResponse.json({ total: results.length, results });
   } catch (error) {
     console.error("GET similarity error:", error);
-    return NextResponse.json({ error: "Gagal mengambil data kemiripan" }, { status: 500 });
+    return NextResponse.json(
+      { error: "Gagal mengambil data kemiripan" },
+      { status: 500 }
+    );
   }
 }
