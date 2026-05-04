@@ -13,6 +13,8 @@ interface SimilarityResult {
   checkedAt: string | null;
   snippetA?: Record<string, string>;
   snippetB?: Record<string, string>;
+  projectA?: { title: string; mahasiswa: { name: string; nim: string } | null };
+  projectB?: { title: string; mahasiswa: { name: string; nim: string } | null };
 }
 
 export default function SimilarityPage() {
@@ -24,14 +26,42 @@ export default function SimilarityPage() {
   const [search, setSearch] = useState("");
   const [filterStatus, setFilterStatus] = useState("all");
   const [sortBy, setSortBy] = useState("hybrid");
+  const [error, setError] = useState<string | null>(null);
 
   const fetchResults = async () => {
     setLoading(true);
+    setError(null);
     try {
-      const res = await fetch("/api/similarity");
+      const res = await fetch("/api/similarity/batch");
       const data = await res.json();
-      setResults(data.results || []);
+      if (data.error) {
+        setError(data.error);
+        setResults([]);
+      } else {
+        const mapped = (data.results || []).map((r: any) => ({
+          id: r.id,
+          mahasiswaA: {
+            nim: r.projectA?.mahasiswa?.nim || "-",
+            nama: r.projectA?.mahasiswa?.name || r.projectA?.title || "-",
+            judul: r.projectA?.title || "-",
+          },
+          mahasiswaB: {
+            nim: r.projectB?.mahasiswa?.nim || "-",
+            nama: r.projectB?.mahasiswa?.name || r.projectB?.title || "-",
+            judul: r.projectB?.title || "-",
+          },
+          codebertScore: (r.codebertScore ?? r.codebert_score ?? 0) * 100,
+          winnowingScore: (r.winnowingScore ?? r.winnowing_score ?? 0) * 100,
+          hybridScore: (r.hybridScore ?? r.hybrid_score ?? 0) * 100,
+          status: r.classification?.label || "-",
+          checkedAt: r.checkedAt || null,
+          snippetA: r.snippetA,
+          snippetB: r.snippetB,
+        }));
+        setResults(mapped);
+      }
     } catch (e) {
+      setError("Gagal mengambil data. Pastikan server berjalan.");
       console.error(e);
     } finally {
       setLoading(false);
@@ -44,10 +74,17 @@ export default function SimilarityPage() {
 
   const runBatchAnalysis = async () => {
     setRunning(true);
+    setError(null);
     try {
-      await fetch("/api/similarity/batch", { method: "POST" });
-      await fetchResults();
+      const res = await fetch("/api/similarity/batch", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({}) });
+      const data = await res.json();
+      if (data.error) {
+        setError(data.error);
+      } else {
+        await fetchResults();
+      }
     } catch (e) {
+      setError("Gagal menjalankan analisis batch.");
       console.error(e);
     } finally {
       setRunning(false);
@@ -129,6 +166,13 @@ export default function SimilarityPage() {
             </button>
           </div>
         </div>
+
+        {/* Error Banner */}
+        {error && (
+          <div className="bg-red-50 border border-red-200 text-red-700 rounded-xl px-4 py-3 text-sm">
+            ⚠️ {error}
+          </div>
+        )}
 
         {/* Summary Cards */}
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
