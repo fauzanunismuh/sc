@@ -1,6 +1,9 @@
 "use client";
 
-import { Accordion, AccordionItem, Card, CardBody, CardHeader, Chip, Progress, Spinner } from "@nextui-org/react";
+import {
+  Accordion, AccordionItem,
+  Card, CardBody, CardHeader, Chip, Progress, Spinner
+} from "@heroui/react";
 import { useSession } from "next-auth/react";
 import { useEffect, useState } from "react";
 
@@ -25,7 +28,6 @@ export default function MahasiswaSimilarityPage() {
       const res = await fetch("/api/similarity/batch");
       const data = await res.json();
       const allResults: SimilarityResult[] = data.results || [];
-      // Filter hanya yang melibatkan mahasiswa ini
       const myNim = (session?.user as { nim?: string })?.nim;
       const myName = session?.user?.name;
       const filtered = allResults.filter(r =>
@@ -44,18 +46,19 @@ export default function MahasiswaSimilarityPage() {
     return () => clearInterval(iv);
   }, [session]);
 
-  const getChipColor = (level?: string) => {
-    if (level === "danger") return "danger" as const;
-    if (level === "warning") return "warning" as const;
-    if (level === "secondary") return "secondary" as const;
-    return "success" as const;
+  const getChipColor = (level?: string): "danger" | "warning" | "secondary" | "success" | "default" => {
+    if (level === "danger") return "danger";
+    if (level === "warning") return "warning";
+    if (level === "secondary") return "secondary";
+    if (level === "success") return "success";
+    return "default";
   };
 
   return (
     <div className="space-y-6">
       <div>
         <h1 className="text-2xl font-bold">Kemiripan Project Saya</h1>
-        <p className="text-sm text-default-500">Perbandingan kode project kamu dengan project lain · Live otomatis</p>
+        <p className="text-sm text-default-500">Perbandingan kode project kamu dengan project lain - Live otomatis</p>
       </div>
 
       {loading && results.length === 0 ? (
@@ -68,16 +71,17 @@ export default function MahasiswaSimilarityPage() {
         </Card>
       ) : (
         <Card>
-          <CardHeader className="flex justify-between items-center">
-            <h2 className="font-semibold text-lg">Hasil Perbandingan</h2>
-            {loading && <Spinner size="sm" />}
+          <CardHeader>
+            <div className="flex justify-between items-center w-full">
+              <h2 className="font-semibold text-lg">Hasil Perbandingan</h2>
+              {loading && <Spinner size="sm" />}
+            </div>
           </CardHeader>
           <CardBody className="p-0">
             <Accordion>
               {results.map((r, i) => {
                 const hybrid = r.hybrid_score ?? r.hybridScore ?? 0;
                 const cls = r.classification ?? { label: "Normal / Aman", level: "success" };
-                // Tentukan mana project sendiri vs project lain
                 const myNim = (session?.user as { nim?: string })?.nim;
                 const isA = r.projectA.mahasiswa.nim === myNim;
                 const myProject = isA ? r.projectA : r.projectB;
@@ -90,7 +94,7 @@ export default function MahasiswaSimilarityPage() {
                     key={i}
                     title={
                       <div className="flex items-center gap-3 w-full">
-                        <div className="flex-1">
+                        <div className="flex-1 min-w-0">
                           <span className="text-sm font-medium">{myProject.title}</span>
                           <span className="text-xs text-default-400 mx-2">mirip dengan</span>
                           <span className="text-sm font-medium">{otherProject.title}</span>
@@ -102,7 +106,6 @@ export default function MahasiswaSimilarityPage() {
                     }
                   >
                     <div className="px-2 pb-4 space-y-4">
-                      {/* Mahasiswa hanya lihat hybrid score */}
                       <div className="p-4 rounded-lg bg-default-50 border border-default-200">
                         <p className="text-xs text-default-500 mb-2">Skor Kemiripan (Hybrid)</p>
                         <Progress value={hybrid * 100} color={getChipColor(cls.level)} />
@@ -111,35 +114,31 @@ export default function MahasiswaSimilarityPage() {
                           <span className="text-lg font-bold">{(hybrid * 100).toFixed(1)}%</span>
                         </div>
                       </div>
-
-                      {/* Info project */}
                       <div className="grid grid-cols-2 gap-3">
                         <div className="p-3 rounded-lg bg-blue-50 border border-blue-200">
                           <p className="text-xs font-semibold text-blue-600">PROJECT KAMU</p>
                           <p className="text-sm font-medium">{myProject.title}</p>
-                          <p className="text-xs text-default-500">{myProject.mahasiswa.name} · {myProject.mahasiswa.nim}</p>
+                          <p className="text-xs text-default-500">{myProject.mahasiswa.name} - {myProject.mahasiswa.nim}</p>
                         </div>
                         <div className="p-3 rounded-lg bg-orange-50 border border-orange-200">
                           <p className="text-xs font-semibold text-orange-600">MIRIP DENGAN</p>
                           <p className="text-sm font-medium">{otherProject.title}</p>
-                          <p className="text-xs text-default-500">{otherProject.mahasiswa.name} · {otherProject.mahasiswa.nim}</p>
+                          <p className="text-xs text-default-500">{otherProject.mahasiswa.name} - {otherProject.mahasiswa.nim}</p>
                         </div>
                       </div>
-
-                      {/* Code Snippets - mahasiswa bisa lihat snippet kedua project */}
                       {(mySnippet || otherSnippet) && (
                         <div className="space-y-2">
                           <p className="text-xs font-semibold text-default-600">SNIPPET KODE</p>
                           <div className="grid grid-cols-2 gap-3">
                             {mySnippet && Object.entries(mySnippet).slice(0, 1).map(([file, code]) => (
                               <div key={file} className="rounded-lg border border-blue-200 overflow-hidden">
-                                <p className="text-[10px] font-mono bg-blue-50 px-2 py-1 text-blue-700 truncate">📁 {file}</p>
+                                <p className="text-[10px] font-mono bg-blue-50 px-2 py-1 text-blue-700 truncate">{file}</p>
                                 <pre className="text-[10px] font-mono p-2 overflow-auto max-h-32 text-default-700 bg-white">{code}</pre>
                               </div>
                             ))}
                             {otherSnippet && Object.entries(otherSnippet).slice(0, 1).map(([file, code]) => (
                               <div key={file} className="rounded-lg border border-orange-200 overflow-hidden">
-                                <p className="text-[10px] font-mono bg-orange-50 px-2 py-1 text-orange-700 truncate">📁 {file}</p>
+                                <p className="text-[10px] font-mono bg-orange-50 px-2 py-1 text-orange-700 truncate">{file}</p>
                                 <pre className="text-[10px] font-mono p-2 overflow-auto max-h-32 text-default-700 bg-white">{code}</pre>
                               </div>
                             ))}
