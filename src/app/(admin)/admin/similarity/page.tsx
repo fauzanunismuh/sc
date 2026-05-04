@@ -1,15 +1,14 @@
 "use client";
 
 import {
-    Accordion, AccordionItem,
-    Card, CardBody, CardHeader, Chip, Progress, Spinner
-} from "@nextui-org/react";
+  Accordion, AccordionItem,
+  Card, CardBody, CardHeader, Chip, Progress, Spinner
+} from "@heroui/react";
 import { useEffect, useState } from "react";
 
 type Classification = { label: string; level: "danger" | "warning" | "secondary" | "success" };
 
 interface SimilarityResult {
-  id?: string;
   projectA: { id: string; title: string; mahasiswa: { name: string; nim: string } };
   projectB: { id: string; title: string; mahasiswa: { name: string; nim: string } };
   codebert_score?: number; codebertScore?: number;
@@ -21,8 +20,6 @@ interface SimilarityResult {
   snippetB?: Record<string, string>;
   checkedAt?: string;
 }
-
-const COLOR_MAP = { danger: "bg-red-50 border-red-200", warning: "bg-orange-50 border-orange-200", secondary: "bg-purple-50 border-purple-200", success: "bg-green-50 border-green-200" };
 
 export default function AdminSimilarityPage() {
   const [results, setResults] = useState<SimilarityResult[]>([]);
@@ -44,30 +41,34 @@ export default function AdminSimilarityPage() {
     } finally { setLoading(false); }
   };
 
-  useEffect(() => { fetchResults(); const iv = setInterval(fetchResults, 60000); return () => clearInterval(iv); }, []);
+  useEffect(() => {
+    fetchResults();
+    const iv = setInterval(fetchResults, 60000);
+    return () => clearInterval(iv);
+  }, []);
 
-  const getChipColor = (level?: string) => {
+  const getChipColor = (level?: string): "danger" | "warning" | "secondary" | "success" | "default" => {
     if (level === "danger") return "danger";
     if (level === "warning") return "warning";
     if (level === "secondary") return "secondary";
-    return "success";
+    if (level === "success") return "success";
+    return "default";
   };
 
   return (
     <div className="space-y-6">
       <div>
         <h1 className="text-2xl font-bold">Deteksi Kemiripan Kode</h1>
-        <p className="text-sm text-default-500">Analisis otomatis menggunakan CodeBERT + Winnowing · Diperbarui setiap 60 detik</p>
+        <p className="text-sm text-default-500">Analisis otomatis CodeBERT + Winnowing &middot; Live setiap 60 detik</p>
       </div>
 
-      {/* Stats Cards */}
       <div className="grid grid-cols-2 md:grid-cols-5 gap-3">
         {[
-          { label: "Total Pasang", value: stats.total, color: "default" },
-          { label: "🔴 Plagiat Tinggi (≥85%)", value: stats.high, color: "danger" },
-          { label: "🟠 Kemiripan Signifikan (65-84%)", value: stats.significant, color: "warning" },
-          { label: "🟣 Kemiripan Sedang (45-64%)", value: stats.moderate, color: "secondary" },
-          { label: "🟢 Normal (<45%)", value: stats.normal, color: "success" },
+          { label: "Total Pasang", value: stats.total },
+          { label: "Plagiat Tinggi (>=85%)", value: stats.high },
+          { label: "Kemiripan Signifikan (65-84%)", value: stats.significant },
+          { label: "Kemiripan Sedang (45-64%)", value: stats.moderate },
+          { label: "Normal (<45%)", value: stats.normal },
         ].map((s, i) => (
           <Card key={i} className="shadow-sm">
             <CardBody className="py-3 px-4">
@@ -78,15 +79,18 @@ export default function AdminSimilarityPage() {
         ))}
       </div>
 
-      {/* Results */}
       <Card>
-        <CardHeader className="flex justify-between items-center">
-          <h2 className="font-semibold text-lg">Hasil Analisis Kemiripan</h2>
-          {loading && <Spinner size="sm" />}
+        <CardHeader>
+          <div className="flex justify-between items-center w-full">
+            <h2 className="font-semibold text-lg">Hasil Analisis Kemiripan</h2>
+            {loading && <Spinner size="sm" />}
+          </div>
         </CardHeader>
         <CardBody className="p-0">
           {loading && results.length === 0 ? (
             <div className="flex justify-center py-12"><Spinner label="Menganalisis..." /></div>
+          ) : results.length === 0 ? (
+            <p className="text-center text-default-400 py-12">Belum ada data kemiripan</p>
           ) : (
             <Accordion>
               {results.map((r, i) => {
@@ -108,41 +112,32 @@ export default function AdminSimilarityPage() {
                     }
                   >
                     <div className="px-2 pb-4 space-y-4">
-                      {/* Score breakdown */}
                       <div className="grid grid-cols-3 gap-3">
-                        <div>
-                          <p className="text-xs text-default-500 mb-1">CodeBERT (Semantik)</p>
-                          <Progress value={codebert * 100} color={getChipColor(cls.level)} size="sm" />
-                          <p className="text-sm font-semibold mt-1">{(codebert * 100).toFixed(1)}%</p>
-                        </div>
-                        <div>
-                          <p className="text-xs text-default-500 mb-1">Winnowing (Tekstual)</p>
-                          <Progress value={winnowing * 100} color={getChipColor(cls.level)} size="sm" />
-                          <p className="text-sm font-semibold mt-1">{(winnowing * 100).toFixed(1)}%</p>
-                        </div>
-                        <div>
-                          <p className="text-xs text-default-500 mb-1">Hybrid Score (α=0.6)</p>
-                          <Progress value={hybrid * 100} color={getChipColor(cls.level)} size="sm" />
-                          <p className="text-sm font-semibold mt-1">{(hybrid * 100).toFixed(1)}%</p>
-                        </div>
+                        {[
+                          { label: "CodeBERT (Semantik)", value: codebert },
+                          { label: "Winnowing (Tekstual)", value: winnowing },
+                          { label: "Hybrid Score (a=0.6)", value: hybrid },
+                        ].map((s, idx) => (
+                          <div key={idx}>
+                            <p className="text-xs text-default-500 mb-1">{s.label}</p>
+                            <Progress value={s.value * 100} color={getChipColor(cls.level)} size="sm" />
+                            <p className="text-sm font-semibold mt-1">{(s.value * 100).toFixed(1)}%</p>
+                          </div>
+                        ))}
                       </div>
-                      <p className="text-xs text-default-400">Formula: 0.6 × CodeBERT + 0.4 × Winnowing</p>
-
-                      {/* Project info */}
+                      <p className="text-xs text-default-400">Formula: 0.6 x CodeBERT + 0.4 x Winnowing</p>
                       <div className="grid grid-cols-2 gap-3">
-                        <div className="p-3 rounded-lg bg-default-50 border border-default-200">
-                          <p className="text-xs font-semibold text-default-600">PROJECT A</p>
-                          <p className="text-sm font-medium">{r.projectA.title}</p>
-                          <p className="text-xs text-default-500">{r.projectA.mahasiswa.name} · {r.projectA.mahasiswa.nim}</p>
-                        </div>
-                        <div className="p-3 rounded-lg bg-default-50 border border-default-200">
-                          <p className="text-xs font-semibold text-default-600">PROJECT B</p>
-                          <p className="text-sm font-medium">{r.projectB.title}</p>
-                          <p className="text-xs text-default-500">{r.projectB.mahasiswa.name} · {r.projectB.mahasiswa.nim}</p>
-                        </div>
+                        {[
+                          { label: "PROJECT A", project: r.projectA },
+                          { label: "PROJECT B", project: r.projectB },
+                        ].map(({ label, project }) => (
+                          <div key={label} className="p-3 rounded-lg bg-default-50 border border-default-200">
+                            <p className="text-xs font-semibold text-default-600">{label}</p>
+                            <p className="text-sm font-medium">{project.title}</p>
+                            <p className="text-xs text-default-500">{project.mahasiswa.name} &middot; {project.mahasiswa.nim}</p>
+                          </div>
+                        ))}
                       </div>
-
-                      {/* Code Snippets */}
                       {(r.snippetA || r.snippetB) && (
                         <div className="space-y-2">
                           <p className="text-xs font-semibold text-default-600">SNIPPET KODE TERDETEKSI</p>
