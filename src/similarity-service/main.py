@@ -14,7 +14,7 @@ import re
 # Winnowing: k=5 (k-gram), w=4 (window size) - Ramli et al. 2021
 # ============================================================
 
-THRESHOLD_CODEBERT  = 0.80
+THRESHOLD_CODEBERT  = 0.30
 THRESHOLD_WINNOWING = 0.75
 ALPHA_DEFAULT       = 0.6
 K_GRAM_DEFAULT      = 5
@@ -29,15 +29,19 @@ def get_classification(sg: float, scb: float, sw: float) -> dict:
     3. Mirip Semantik     : 0.45 <= SG < 0.65, atau CodeBERT dominan
     4. Normal / Aman      : SG < 0.45
     """
-    if sg >= 0.80:
+    # 1. Plagiarisme Kuat
+    if scb >= 0.80 and sw >= 0.75:
         return {"label": "Plagiarisme Kuat", "level": "danger"}
-    if sg >= 0.65:
-        if sw >= scb:
-            return {"label": "Mirip Tekstual", "level": "warning"}
-        else:
-            return {"label": "Mirip Semantik", "level": "warning"}
-    if sg >= 0.45:
-        return {"label": "Mirip Semantik", "level": "secondary"}
+    
+    # 2. Mirip Tekstual
+    if scb < 0.80 and sw >= 0.75:
+        return {"label": "Mirip Tekstual", "level": "warning"}
+    
+    # 3. Mirip Semantik
+    if scb >= 0.80 and sw < 0.75:
+        return {"label": "Mirip Semantik", "level": "warning"}
+    
+    # 4. Normal
     return {"label": "Normal / Aman", "level": "success"}
 
 

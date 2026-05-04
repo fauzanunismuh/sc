@@ -7380,6 +7380,8 @@ export namespace Prisma {
     winnowingScore: number
     hybridScore: number
     isPlagiarized: number
+    snippetA: number
+    snippetB: number
     checkedAt: number
     _all: number
   }
@@ -7427,6 +7429,8 @@ export namespace Prisma {
     winnowingScore?: true
     hybridScore?: true
     isPlagiarized?: true
+    snippetA?: true
+    snippetB?: true
     checkedAt?: true
     _all?: true
   }
@@ -7525,6 +7529,8 @@ export namespace Prisma {
     winnowingScore: number
     hybridScore: number
     isPlagiarized: boolean
+    snippetA: JsonValue | null
+    snippetB: JsonValue | null
     checkedAt: Date
     _count: SimilarityResultCountAggregateOutputType | null
     _avg: SimilarityResultAvgAggregateOutputType | null
@@ -7555,6 +7561,8 @@ export namespace Prisma {
     winnowingScore?: boolean
     hybridScore?: boolean
     isPlagiarized?: boolean
+    snippetA?: boolean
+    snippetB?: boolean
     checkedAt?: boolean
     projectA?: boolean | ProjectDefaultArgs<ExtArgs>
     projectB?: boolean | ProjectDefaultArgs<ExtArgs>
@@ -7568,6 +7576,8 @@ export namespace Prisma {
     winnowingScore?: boolean
     hybridScore?: boolean
     isPlagiarized?: boolean
+    snippetA?: boolean
+    snippetB?: boolean
     checkedAt?: boolean
     projectA?: boolean | ProjectDefaultArgs<ExtArgs>
     projectB?: boolean | ProjectDefaultArgs<ExtArgs>
@@ -7581,6 +7591,8 @@ export namespace Prisma {
     winnowingScore?: boolean
     hybridScore?: boolean
     isPlagiarized?: boolean
+    snippetA?: boolean
+    snippetB?: boolean
     checkedAt?: boolean
     projectA?: boolean | ProjectDefaultArgs<ExtArgs>
     projectB?: boolean | ProjectDefaultArgs<ExtArgs>
@@ -7594,10 +7606,12 @@ export namespace Prisma {
     winnowingScore?: boolean
     hybridScore?: boolean
     isPlagiarized?: boolean
+    snippetA?: boolean
+    snippetB?: boolean
     checkedAt?: boolean
   }
 
-  export type SimilarityResultOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"id" | "projectAId" | "projectBId" | "codebertScore" | "winnowingScore" | "hybridScore" | "isPlagiarized" | "checkedAt", ExtArgs["result"]["similarityResult"]>
+  export type SimilarityResultOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"id" | "projectAId" | "projectBId" | "codebertScore" | "winnowingScore" | "hybridScore" | "isPlagiarized" | "snippetA" | "snippetB" | "checkedAt", ExtArgs["result"]["similarityResult"]>
   export type SimilarityResultInclude<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
     projectA?: boolean | ProjectDefaultArgs<ExtArgs>
     projectB?: boolean | ProjectDefaultArgs<ExtArgs>
@@ -7625,6 +7639,8 @@ export namespace Prisma {
       winnowingScore: number
       hybridScore: number
       isPlagiarized: boolean
+      snippetA: Prisma.JsonValue | null
+      snippetB: Prisma.JsonValue | null
       checkedAt: Date
     }, ExtArgs["result"]["similarityResult"]>
     composites: {}
@@ -8058,6 +8074,8 @@ export namespace Prisma {
     readonly winnowingScore: FieldRef<"SimilarityResult", 'Float'>
     readonly hybridScore: FieldRef<"SimilarityResult", 'Float'>
     readonly isPlagiarized: FieldRef<"SimilarityResult", 'Boolean'>
+    readonly snippetA: FieldRef<"SimilarityResult", 'Json'>
+    readonly snippetB: FieldRef<"SimilarityResult", 'Json'>
     readonly checkedAt: FieldRef<"SimilarityResult", 'DateTime'>
   }
     
@@ -27203,6 +27221,8 @@ export namespace Prisma {
     winnowingScore: 'winnowingScore',
     hybridScore: 'hybridScore',
     isPlagiarized: 'isPlagiarized',
+    snippetA: 'snippetA',
+    snippetB: 'snippetB',
     checkedAt: 'checkedAt'
   };
 
@@ -27480,6 +27500,14 @@ export namespace Prisma {
   export type SortOrder = (typeof SortOrder)[keyof typeof SortOrder]
 
 
+  export const NullableJsonNullValueInput: {
+    DbNull: typeof DbNull,
+    JsonNull: typeof JsonNull
+  };
+
+  export type NullableJsonNullValueInput = (typeof NullableJsonNullValueInput)[keyof typeof NullableJsonNullValueInput]
+
+
   export const QueryMode: {
     default: 'default',
     insensitive: 'insensitive'
@@ -27494,6 +27522,15 @@ export namespace Prisma {
   };
 
   export type NullsOrder = (typeof NullsOrder)[keyof typeof NullsOrder]
+
+
+  export const JsonNullValueFilter: {
+    DbNull: typeof DbNull,
+    JsonNull: typeof JsonNull,
+    AnyNull: typeof AnyNull
+  };
+
+  export type JsonNullValueFilter = (typeof JsonNullValueFilter)[keyof typeof JsonNullValueFilter]
 
 
   /**
@@ -27589,6 +27626,20 @@ export namespace Prisma {
    * Reference to a field of type 'Float[]'
    */
   export type ListFloatFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'Float[]'>
+    
+
+
+  /**
+   * Reference to a field of type 'Json'
+   */
+  export type JsonFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'Json'>
+    
+
+
+  /**
+   * Reference to a field of type 'QueryMode'
+   */
+  export type EnumQueryModeFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'QueryMode'>
     
 
 
@@ -28064,6 +28115,8 @@ export namespace Prisma {
     winnowingScore?: FloatFilter<"SimilarityResult"> | number
     hybridScore?: FloatFilter<"SimilarityResult"> | number
     isPlagiarized?: BoolFilter<"SimilarityResult"> | boolean
+    snippetA?: JsonNullableFilter<"SimilarityResult">
+    snippetB?: JsonNullableFilter<"SimilarityResult">
     checkedAt?: DateTimeFilter<"SimilarityResult"> | Date | string
     projectA?: XOR<ProjectScalarRelationFilter, ProjectWhereInput>
     projectB?: XOR<ProjectScalarRelationFilter, ProjectWhereInput>
@@ -28077,6 +28130,8 @@ export namespace Prisma {
     winnowingScore?: SortOrder
     hybridScore?: SortOrder
     isPlagiarized?: SortOrder
+    snippetA?: SortOrderInput | SortOrder
+    snippetB?: SortOrderInput | SortOrder
     checkedAt?: SortOrder
     projectA?: ProjectOrderByWithRelationInput
     projectB?: ProjectOrderByWithRelationInput
@@ -28094,6 +28149,8 @@ export namespace Prisma {
     winnowingScore?: FloatFilter<"SimilarityResult"> | number
     hybridScore?: FloatFilter<"SimilarityResult"> | number
     isPlagiarized?: BoolFilter<"SimilarityResult"> | boolean
+    snippetA?: JsonNullableFilter<"SimilarityResult">
+    snippetB?: JsonNullableFilter<"SimilarityResult">
     checkedAt?: DateTimeFilter<"SimilarityResult"> | Date | string
     projectA?: XOR<ProjectScalarRelationFilter, ProjectWhereInput>
     projectB?: XOR<ProjectScalarRelationFilter, ProjectWhereInput>
@@ -28107,6 +28164,8 @@ export namespace Prisma {
     winnowingScore?: SortOrder
     hybridScore?: SortOrder
     isPlagiarized?: SortOrder
+    snippetA?: SortOrderInput | SortOrder
+    snippetB?: SortOrderInput | SortOrder
     checkedAt?: SortOrder
     _count?: SimilarityResultCountOrderByAggregateInput
     _avg?: SimilarityResultAvgOrderByAggregateInput
@@ -28126,6 +28185,8 @@ export namespace Prisma {
     winnowingScore?: FloatWithAggregatesFilter<"SimilarityResult"> | number
     hybridScore?: FloatWithAggregatesFilter<"SimilarityResult"> | number
     isPlagiarized?: BoolWithAggregatesFilter<"SimilarityResult"> | boolean
+    snippetA?: JsonNullableWithAggregatesFilter<"SimilarityResult">
+    snippetB?: JsonNullableWithAggregatesFilter<"SimilarityResult">
     checkedAt?: DateTimeWithAggregatesFilter<"SimilarityResult"> | Date | string
   }
 
@@ -30036,6 +30097,8 @@ export namespace Prisma {
     winnowingScore: number
     hybridScore: number
     isPlagiarized: boolean
+    snippetA?: NullableJsonNullValueInput | InputJsonValue
+    snippetB?: NullableJsonNullValueInput | InputJsonValue
     checkedAt?: Date | string
     projectA: ProjectCreateNestedOneWithoutSimilarityAsAInput
     projectB: ProjectCreateNestedOneWithoutSimilarityAsBInput
@@ -30049,6 +30112,8 @@ export namespace Prisma {
     winnowingScore: number
     hybridScore: number
     isPlagiarized: boolean
+    snippetA?: NullableJsonNullValueInput | InputJsonValue
+    snippetB?: NullableJsonNullValueInput | InputJsonValue
     checkedAt?: Date | string
   }
 
@@ -30058,6 +30123,8 @@ export namespace Prisma {
     winnowingScore?: FloatFieldUpdateOperationsInput | number
     hybridScore?: FloatFieldUpdateOperationsInput | number
     isPlagiarized?: BoolFieldUpdateOperationsInput | boolean
+    snippetA?: NullableJsonNullValueInput | InputJsonValue
+    snippetB?: NullableJsonNullValueInput | InputJsonValue
     checkedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     projectA?: ProjectUpdateOneRequiredWithoutSimilarityAsANestedInput
     projectB?: ProjectUpdateOneRequiredWithoutSimilarityAsBNestedInput
@@ -30071,6 +30138,8 @@ export namespace Prisma {
     winnowingScore?: FloatFieldUpdateOperationsInput | number
     hybridScore?: FloatFieldUpdateOperationsInput | number
     isPlagiarized?: BoolFieldUpdateOperationsInput | boolean
+    snippetA?: NullableJsonNullValueInput | InputJsonValue
+    snippetB?: NullableJsonNullValueInput | InputJsonValue
     checkedAt?: DateTimeFieldUpdateOperationsInput | Date | string
   }
 
@@ -30082,6 +30151,8 @@ export namespace Prisma {
     winnowingScore: number
     hybridScore: number
     isPlagiarized: boolean
+    snippetA?: NullableJsonNullValueInput | InputJsonValue
+    snippetB?: NullableJsonNullValueInput | InputJsonValue
     checkedAt?: Date | string
   }
 
@@ -30091,6 +30162,8 @@ export namespace Prisma {
     winnowingScore?: FloatFieldUpdateOperationsInput | number
     hybridScore?: FloatFieldUpdateOperationsInput | number
     isPlagiarized?: BoolFieldUpdateOperationsInput | boolean
+    snippetA?: NullableJsonNullValueInput | InputJsonValue
+    snippetB?: NullableJsonNullValueInput | InputJsonValue
     checkedAt?: DateTimeFieldUpdateOperationsInput | Date | string
   }
 
@@ -30102,6 +30175,8 @@ export namespace Prisma {
     winnowingScore?: FloatFieldUpdateOperationsInput | number
     hybridScore?: FloatFieldUpdateOperationsInput | number
     isPlagiarized?: BoolFieldUpdateOperationsInput | boolean
+    snippetA?: NullableJsonNullValueInput | InputJsonValue
+    snippetB?: NullableJsonNullValueInput | InputJsonValue
     checkedAt?: DateTimeFieldUpdateOperationsInput | Date | string
   }
 
@@ -32159,6 +32234,29 @@ export namespace Prisma {
     gte?: number | FloatFieldRefInput<$PrismaModel>
     not?: NestedFloatFilter<$PrismaModel> | number
   }
+  export type JsonNullableFilter<$PrismaModel = never> =
+    | PatchUndefined<
+        Either<Required<JsonNullableFilterBase<$PrismaModel>>, Exclude<keyof Required<JsonNullableFilterBase<$PrismaModel>>, 'path'>>,
+        Required<JsonNullableFilterBase<$PrismaModel>>
+      >
+    | OptionalFlat<Omit<Required<JsonNullableFilterBase<$PrismaModel>>, 'path'>>
+
+  export type JsonNullableFilterBase<$PrismaModel = never> = {
+    equals?: InputJsonValue | JsonFieldRefInput<$PrismaModel> | JsonNullValueFilter
+    path?: string[]
+    mode?: QueryMode | EnumQueryModeFieldRefInput<$PrismaModel>
+    string_contains?: string | StringFieldRefInput<$PrismaModel>
+    string_starts_with?: string | StringFieldRefInput<$PrismaModel>
+    string_ends_with?: string | StringFieldRefInput<$PrismaModel>
+    array_starts_with?: InputJsonValue | JsonFieldRefInput<$PrismaModel> | null
+    array_ends_with?: InputJsonValue | JsonFieldRefInput<$PrismaModel> | null
+    array_contains?: InputJsonValue | JsonFieldRefInput<$PrismaModel> | null
+    lt?: InputJsonValue | JsonFieldRefInput<$PrismaModel>
+    lte?: InputJsonValue | JsonFieldRefInput<$PrismaModel>
+    gt?: InputJsonValue | JsonFieldRefInput<$PrismaModel>
+    gte?: InputJsonValue | JsonFieldRefInput<$PrismaModel>
+    not?: InputJsonValue | JsonFieldRefInput<$PrismaModel> | JsonNullValueFilter
+  }
 
   export type ProjectScalarRelationFilter = {
     is?: ProjectWhereInput
@@ -32178,6 +32276,8 @@ export namespace Prisma {
     winnowingScore?: SortOrder
     hybridScore?: SortOrder
     isPlagiarized?: SortOrder
+    snippetA?: SortOrder
+    snippetB?: SortOrder
     checkedAt?: SortOrder
   }
 
@@ -32229,6 +32329,32 @@ export namespace Prisma {
     _sum?: NestedFloatFilter<$PrismaModel>
     _min?: NestedFloatFilter<$PrismaModel>
     _max?: NestedFloatFilter<$PrismaModel>
+  }
+  export type JsonNullableWithAggregatesFilter<$PrismaModel = never> =
+    | PatchUndefined<
+        Either<Required<JsonNullableWithAggregatesFilterBase<$PrismaModel>>, Exclude<keyof Required<JsonNullableWithAggregatesFilterBase<$PrismaModel>>, 'path'>>,
+        Required<JsonNullableWithAggregatesFilterBase<$PrismaModel>>
+      >
+    | OptionalFlat<Omit<Required<JsonNullableWithAggregatesFilterBase<$PrismaModel>>, 'path'>>
+
+  export type JsonNullableWithAggregatesFilterBase<$PrismaModel = never> = {
+    equals?: InputJsonValue | JsonFieldRefInput<$PrismaModel> | JsonNullValueFilter
+    path?: string[]
+    mode?: QueryMode | EnumQueryModeFieldRefInput<$PrismaModel>
+    string_contains?: string | StringFieldRefInput<$PrismaModel>
+    string_starts_with?: string | StringFieldRefInput<$PrismaModel>
+    string_ends_with?: string | StringFieldRefInput<$PrismaModel>
+    array_starts_with?: InputJsonValue | JsonFieldRefInput<$PrismaModel> | null
+    array_ends_with?: InputJsonValue | JsonFieldRefInput<$PrismaModel> | null
+    array_contains?: InputJsonValue | JsonFieldRefInput<$PrismaModel> | null
+    lt?: InputJsonValue | JsonFieldRefInput<$PrismaModel>
+    lte?: InputJsonValue | JsonFieldRefInput<$PrismaModel>
+    gt?: InputJsonValue | JsonFieldRefInput<$PrismaModel>
+    gte?: InputJsonValue | JsonFieldRefInput<$PrismaModel>
+    not?: InputJsonValue | JsonFieldRefInput<$PrismaModel> | JsonNullValueFilter
+    _count?: NestedIntNullableFilter<$PrismaModel>
+    _min?: NestedJsonNullableFilter<$PrismaModel>
+    _max?: NestedJsonNullableFilter<$PrismaModel>
   }
 
   export type UserNullableScalarRelationFilter = {
@@ -35070,6 +35196,29 @@ export namespace Prisma {
     _min?: NestedFloatFilter<$PrismaModel>
     _max?: NestedFloatFilter<$PrismaModel>
   }
+  export type NestedJsonNullableFilter<$PrismaModel = never> =
+    | PatchUndefined<
+        Either<Required<NestedJsonNullableFilterBase<$PrismaModel>>, Exclude<keyof Required<NestedJsonNullableFilterBase<$PrismaModel>>, 'path'>>,
+        Required<NestedJsonNullableFilterBase<$PrismaModel>>
+      >
+    | OptionalFlat<Omit<Required<NestedJsonNullableFilterBase<$PrismaModel>>, 'path'>>
+
+  export type NestedJsonNullableFilterBase<$PrismaModel = never> = {
+    equals?: InputJsonValue | JsonFieldRefInput<$PrismaModel> | JsonNullValueFilter
+    path?: string[]
+    mode?: QueryMode | EnumQueryModeFieldRefInput<$PrismaModel>
+    string_contains?: string | StringFieldRefInput<$PrismaModel>
+    string_starts_with?: string | StringFieldRefInput<$PrismaModel>
+    string_ends_with?: string | StringFieldRefInput<$PrismaModel>
+    array_starts_with?: InputJsonValue | JsonFieldRefInput<$PrismaModel> | null
+    array_ends_with?: InputJsonValue | JsonFieldRefInput<$PrismaModel> | null
+    array_contains?: InputJsonValue | JsonFieldRefInput<$PrismaModel> | null
+    lt?: InputJsonValue | JsonFieldRefInput<$PrismaModel>
+    lte?: InputJsonValue | JsonFieldRefInput<$PrismaModel>
+    gt?: InputJsonValue | JsonFieldRefInput<$PrismaModel>
+    gte?: InputJsonValue | JsonFieldRefInput<$PrismaModel>
+    not?: InputJsonValue | JsonFieldRefInput<$PrismaModel> | JsonNullValueFilter
+  }
 
   export type NestedIntWithAggregatesFilter<$PrismaModel = never> = {
     equals?: number | IntFieldRefInput<$PrismaModel>
@@ -36447,6 +36596,8 @@ export namespace Prisma {
     winnowingScore: number
     hybridScore: number
     isPlagiarized: boolean
+    snippetA?: NullableJsonNullValueInput | InputJsonValue
+    snippetB?: NullableJsonNullValueInput | InputJsonValue
     checkedAt?: Date | string
     projectB: ProjectCreateNestedOneWithoutSimilarityAsBInput
   }
@@ -36458,6 +36609,8 @@ export namespace Prisma {
     winnowingScore: number
     hybridScore: number
     isPlagiarized: boolean
+    snippetA?: NullableJsonNullValueInput | InputJsonValue
+    snippetB?: NullableJsonNullValueInput | InputJsonValue
     checkedAt?: Date | string
   }
 
@@ -36477,6 +36630,8 @@ export namespace Prisma {
     winnowingScore: number
     hybridScore: number
     isPlagiarized: boolean
+    snippetA?: NullableJsonNullValueInput | InputJsonValue
+    snippetB?: NullableJsonNullValueInput | InputJsonValue
     checkedAt?: Date | string
     projectA: ProjectCreateNestedOneWithoutSimilarityAsAInput
   }
@@ -36488,6 +36643,8 @@ export namespace Prisma {
     winnowingScore: number
     hybridScore: number
     isPlagiarized: boolean
+    snippetA?: NullableJsonNullValueInput | InputJsonValue
+    snippetB?: NullableJsonNullValueInput | InputJsonValue
     checkedAt?: Date | string
   }
 
@@ -36912,6 +37069,8 @@ export namespace Prisma {
     winnowingScore?: FloatFilter<"SimilarityResult"> | number
     hybridScore?: FloatFilter<"SimilarityResult"> | number
     isPlagiarized?: BoolFilter<"SimilarityResult"> | boolean
+    snippetA?: JsonNullableFilter<"SimilarityResult">
+    snippetB?: JsonNullableFilter<"SimilarityResult">
     checkedAt?: DateTimeFilter<"SimilarityResult"> | Date | string
   }
 
@@ -41304,6 +41463,8 @@ export namespace Prisma {
     winnowingScore: number
     hybridScore: number
     isPlagiarized: boolean
+    snippetA?: NullableJsonNullValueInput | InputJsonValue
+    snippetB?: NullableJsonNullValueInput | InputJsonValue
     checkedAt?: Date | string
   }
 
@@ -41314,6 +41475,8 @@ export namespace Prisma {
     winnowingScore: number
     hybridScore: number
     isPlagiarized: boolean
+    snippetA?: NullableJsonNullValueInput | InputJsonValue
+    snippetB?: NullableJsonNullValueInput | InputJsonValue
     checkedAt?: Date | string
   }
 
@@ -41606,6 +41769,8 @@ export namespace Prisma {
     winnowingScore?: FloatFieldUpdateOperationsInput | number
     hybridScore?: FloatFieldUpdateOperationsInput | number
     isPlagiarized?: BoolFieldUpdateOperationsInput | boolean
+    snippetA?: NullableJsonNullValueInput | InputJsonValue
+    snippetB?: NullableJsonNullValueInput | InputJsonValue
     checkedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     projectB?: ProjectUpdateOneRequiredWithoutSimilarityAsBNestedInput
   }
@@ -41617,6 +41782,8 @@ export namespace Prisma {
     winnowingScore?: FloatFieldUpdateOperationsInput | number
     hybridScore?: FloatFieldUpdateOperationsInput | number
     isPlagiarized?: BoolFieldUpdateOperationsInput | boolean
+    snippetA?: NullableJsonNullValueInput | InputJsonValue
+    snippetB?: NullableJsonNullValueInput | InputJsonValue
     checkedAt?: DateTimeFieldUpdateOperationsInput | Date | string
   }
 
@@ -41627,6 +41794,8 @@ export namespace Prisma {
     winnowingScore?: FloatFieldUpdateOperationsInput | number
     hybridScore?: FloatFieldUpdateOperationsInput | number
     isPlagiarized?: BoolFieldUpdateOperationsInput | boolean
+    snippetA?: NullableJsonNullValueInput | InputJsonValue
+    snippetB?: NullableJsonNullValueInput | InputJsonValue
     checkedAt?: DateTimeFieldUpdateOperationsInput | Date | string
   }
 
@@ -41636,6 +41805,8 @@ export namespace Prisma {
     winnowingScore?: FloatFieldUpdateOperationsInput | number
     hybridScore?: FloatFieldUpdateOperationsInput | number
     isPlagiarized?: BoolFieldUpdateOperationsInput | boolean
+    snippetA?: NullableJsonNullValueInput | InputJsonValue
+    snippetB?: NullableJsonNullValueInput | InputJsonValue
     checkedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     projectA?: ProjectUpdateOneRequiredWithoutSimilarityAsANestedInput
   }
@@ -41647,6 +41818,8 @@ export namespace Prisma {
     winnowingScore?: FloatFieldUpdateOperationsInput | number
     hybridScore?: FloatFieldUpdateOperationsInput | number
     isPlagiarized?: BoolFieldUpdateOperationsInput | boolean
+    snippetA?: NullableJsonNullValueInput | InputJsonValue
+    snippetB?: NullableJsonNullValueInput | InputJsonValue
     checkedAt?: DateTimeFieldUpdateOperationsInput | Date | string
   }
 
@@ -41657,6 +41830,8 @@ export namespace Prisma {
     winnowingScore?: FloatFieldUpdateOperationsInput | number
     hybridScore?: FloatFieldUpdateOperationsInput | number
     isPlagiarized?: BoolFieldUpdateOperationsInput | boolean
+    snippetA?: NullableJsonNullValueInput | InputJsonValue
+    snippetB?: NullableJsonNullValueInput | InputJsonValue
     checkedAt?: DateTimeFieldUpdateOperationsInput | Date | string
   }
 
