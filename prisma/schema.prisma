@@ -166,6 +166,8 @@ model SimilarityResult {
   winnowingScore  Float
   hybridScore     Float
   isPlagiarized   Boolean
+  snippetA     Json?            // Snippet kode project A
+  snippetB     Json?            // Snippet kode project B
   checkedAt       DateTime @default(now())
 
   projectA        Project  @relation("SimilarityA", fields: [projectAId], references: [id], onDelete: Cascade)
