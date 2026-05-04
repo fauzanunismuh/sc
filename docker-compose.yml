@@ -1,20 +1,20 @@
 services:
   db:
     image: postgres:16-alpine
-    container_name: capstone-db
+    container_name: capstone-db-penelitian
     restart: unless-stopped
     environment:
       POSTGRES_USER: postgres
       POSTGRES_PASSWORD: ifbumm
-      POSTGRES_DB: capstone
+      POSTGRES_DB: capstone_penelitian
     ports:
-      - "5401:5432"
+      - "5402:5432"
     volumes:
-      - capstone-db-data:/var/lib/postgresql/data
+      - capstone-db-data-penelitian:/var/lib/postgresql/data
     networks:
-      - capstone-network
+      - capstone-network-penelitian
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U postgres -d capstone"]
+      test: ["CMD-SHELL", "pg_isready -U postgres -d capstone_penelitian"]
       interval: 5s
       timeout: 5s
       retries: 5
@@ -23,24 +23,24 @@ services:
     build:
       context: .
       dockerfile: Dockerfile
-    container_name: capstone-app
+    container_name: capstone-app-penelitian
     restart: unless-stopped
     ports:
-      - "3012:3012"
+      - "3013:3012"
     env_file:
       - .env
     environment:
       - NODE_ENV=production
-      - DATABASE_URL=postgresql://postgres:ifbumm@db:5432/capstone?schema=public
+      - DATABASE_URL=postgresql://postgres:ifbumm@db:5432/capstone_penelitian?schema=public
     depends_on:
       db:
         condition: service_healthy
     networks:
-      - capstone-network
+      - capstone-network-penelitian
 
 volumes:
-  capstone-db-data:
+  capstone-db-data-penelitian:
 
 networks:
-  capstone-network:
+  capstone-network-penelitian:
     driver: bridge
