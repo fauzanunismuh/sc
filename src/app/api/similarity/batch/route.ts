@@ -6,15 +6,8 @@ const PYTHON_SERVICE_URL = process.env.SIMILARITY_SERVICE_URL || "http://localho
 // Threshold sesuai proposal skripsi (Tabel 3)
 const THRESHOLD_CODEBERT  = 0.80; // Akbar dkk. 2025
 const THRESHOLD_WINNOWING = 0.75; // Ramli et al. 2021
-const ALPHA = 0.6; // bobot CodeBERT (semantik lebih dominan)
+const ALPHA = 0.6;
 
-// ============================================================
-// Klasifikasi 4 kategori sesuai proposal - berdasarkan SG (hybrid score)
-// Plagiarisme Kuat  : SG >= 0.80
-// Mirip Tekstual    : 0.65 <= SG < 0.80, SW dominan (SW >= SCB)
-// Mirip Semantik    : 0.45 <= SG < 0.65, atau SCB dominan
-// Normal / Aman     : SG < 0.45
-// ============================================================
 function getClassification(
   sg: number,
   scb: number,
@@ -24,11 +17,9 @@ function getClassification(
     return { label: "Plagiarisme Kuat", level: "danger", description: "Kemiripan tinggi secara semantik DAN tekstual" };
   }
   if (sg >= 0.65) {
-    if (sw >= scb) {
-      return { label: "Mirip Tekstual", level: "warning", description: "Struktur teks sangat mirip (copy-paste)" };
-    } else {
-      return { label: "Mirip Semantik", level: "warning", description: "Logika serupa meski teks berbeda (refactoring)" };
-    }
+    return sw >= scb
+      ? { label: "Mirip Tekstual", level: "warning", description: "Struktur teks sangat mirip (copy-paste terdeteksi)" }
+      : { label: "Mirip Semantik", level: "warning", description: "Logika serupa meski teks berbeda (refactoring)" };
   }
   if (sg >= 0.45) {
     return { label: "Mirip Semantik", level: "secondary", description: "Sedikit mirip secara semantik, perlu ditinjau" };
@@ -36,7 +27,6 @@ function getClassification(
   return { label: "Normal / Aman", level: "success", description: "Tidak terindikasi plagiarisme" };
 }
 
-// Ambil kode dari GitHub repo beserta snippets
 async function fetchGitHubCode(repoUrl: string): Promise<{ code: string; snippets: Record<string, string> } | null> {
   try {
     const match = repoUrl.match(/github\.com\/([^/]+)\/([^/]+)/);
@@ -46,7 +36,6 @@ async function fetchGitHubCode(repoUrl: string): Promise<{ code: string; snippet
     const headers: Record<string, string> = { Accept: "application/vnd.github.v3+json" };
     if (process.env.GITHUB_TOKEN) headers["Authorization"] = `token ${process.env.GITHUB_TOKEN}`;
 
-    // Coba branch main dulu, fallback ke master
     let treeRes = await fetch(`https://api.github.com/repos/${owner}/${cleanRepo}/git/trees/main?recursive=1`, { headers });
     if (!treeRes.ok) {
       treeRes = await fetch(`https://api.github.com/repos/${owner}/${cleanRepo}/git/trees/master?recursive=1`, { headers });
@@ -79,7 +68,6 @@ async function fetchGitHubCode(repoUrl: string): Promise<{ code: string; snippet
   }
 }
 
-// POST: Jalankan analisis batch
 export async function POST(req: NextRequest) {
   try {
     const body = await req.json().catch(() => ({}));
@@ -91,18 +79,12 @@ export async function POST(req: NextRequest) {
 
     const projects = await prisma.project.findMany({
       where: whereClause,
-      select: {
-        id: true,
-        title: true,
-        githubRepoUrl: true,
-        mahasiswa: { select: { name: true, nim: true } },
-      },
+      select: { id: true, title: true, githubRepoUrl: true, mahasiswa: { select: { name: true, nim: true } } },
     });
 
     if (projects.length < 2)
       return NextResponse.json({ error: "Minimal 2 project dengan GitHub URL diperlukan" }, { status: 400 });
 
-    // Fetch kode semua project
     const projectData: Record<string, { code: string; snippets: Record<string, string> }> = {};
     for (const p of projects) {
       if (p.githubRepoUrl) {
@@ -113,7 +95,6 @@ export async function POST(req: NextRequest) {
 
     const results = [];
 
-    // Buat semua kombinasi pasang (n choose 2)
     for (let i = 0; i < projects.length; i++) {
       for (let j = i + 1; j < projects.length; j++) {
         const a = projects[i];
@@ -130,12 +111,13 @@ export async function POST(req: NextRequest) {
         const sim = await res.json();
         const scb = sim.codebert_score ?? 0;
         const sw  = sim.winnowing_score ?? 0;
-        // SG = alpha*SCB + (1-alpha)*SW (formula dari proposal)
         const sg  = ALPHA * scb + (1 - ALPHA) * sw;
-
-        // Klasifikasi berdasarkan SG (hybrid score)
         const classification = getClassification(sg, scb, sw);
         const isPlagiarized = classification.level !== "success";
+
+        // Simpan snippet ke database
+        const snippetAData = projectData[a.id].snippets;
+        const snippetBData = projectData[b.id].snippets;
 
         await prisma.similarityResult.upsert({
           where: { projectAId_projectBId: { projectAId: a.id, projectBId: b.id } },
@@ -144,6 +126,8 @@ export async function POST(req: NextRequest) {
             winnowingScore: sw,
             hybridScore: sg,
             isPlagiarized,
+            snippetA: snippetAData,
+            snippetB: snippetBData,
             checkedAt: new Date(),
           },
           create: {
@@ -153,6 +137,8 @@ export async function POST(req: NextRequest) {
             winnowingScore: sw,
             hybridScore: sg,
             isPlagiarized,
+            snippetA: snippetAData,
+            snippetB: snippetBData,
           },
         });
 
@@ -163,14 +149,13 @@ export async function POST(req: NextRequest) {
           winnowing_score: sw,
           hybrid_score: sg,
           classification,
-          snippetA: projectData[a.id].snippets,
-          snippetB: projectData[b.id].snippets,
+          snippetA: snippetAData,
+          snippetB: snippetBData,
           checkedAt: new Date().toISOString(),
         });
       }
     }
 
-    // Urutkan: level danger > warning > secondary > success, lalu by hybrid_score desc
     const levelOrder: Record<string, number> = { danger: 0, warning: 1, secondary: 2, success: 3 };
     results.sort(
       (a, b) =>
@@ -185,7 +170,6 @@ export async function POST(req: NextRequest) {
   }
 }
 
-// GET: Ambil hasil dari database, sudah diurutkan
 export async function GET() {
   try {
     const rows = await prisma.similarityResult.findMany({
@@ -201,9 +185,19 @@ export async function GET() {
       codebert_score: r.codebertScore,
       winnowing_score: r.winnowingScore,
       hybrid_score: r.hybridScore,
-      // Klasifikasi berdasarkan hybrid score (SG)
       classification: getClassification(r.hybridScore, r.codebertScore, r.winnowingScore),
+      // snippetA dan snippetB sudah ada di r (dari DB)
+      snippetA: r.snippetA as Record<string, string> | null,
+      snippetB: r.snippetB as Record<string, string> | null,
     }));
+
+    // Sort: danger > warning > secondary > success, lalu hybrid desc
+    const levelOrder: Record<string, number> = { danger: 0, warning: 1, secondary: 2, success: 3 };
+    results.sort(
+      (a, b) =>
+        levelOrder[a.classification.level] - levelOrder[b.classification.level] ||
+        b.hybrid_score - a.hybrid_score
+    );
 
     return NextResponse.json({ total: results.length, results });
   } catch (error) {
