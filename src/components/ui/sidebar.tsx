@@ -63,7 +63,7 @@ const mahasiswaMenuItems: SidebarItem[] = [
     icon: <ClipboardCheck size={20} />,
   },
 
-  { title: 'Kemiripan', href: '/mahasiswa/similarity', icon: GitCompare },
+  { title: 'Kemiripan', href: '/mahasiswa/similarity', icon: <GitCompare size={20} /> },
 ];
 
 const dosenMenuItems: SidebarItem[] = [
@@ -92,7 +92,7 @@ const dosenMenuItems: SidebarItem[] = [
     href: '/dosen/auto-review',
     icon: <Bot size={20} />,
   },
-  { title: 'Kemiripan', href: '/dosen/similarity', icon: GitCompare },
+  { title: 'Kemiripan', href: '/dosen/similarity', icon: <GitCompare size={20} /> },
 ];
 
 const adminMenuItems: SidebarItem[] = [
@@ -131,7 +131,7 @@ const adminMenuItems: SidebarItem[] = [
     href: '/admin/semesters',
     icon: <GraduationCap size={20} />,
   },
-  { title: 'Kemiripan', href: '/admin/similarity', icon: GitCompare },
+  { title: 'Kemiripan', href: '/admin/similarity', icon: <GitCompare size={20} /> },
 ];
 
 interface SidebarProps {
