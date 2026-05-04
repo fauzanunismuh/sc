@@ -152,8 +152,27 @@ model Project {
   screenshots           ProjectScreenshot[]
   presentationSchedule  PresentationSchedule?
   discussions           ProjectDiscussion[]
-
+  similarityCheckedAt  DateTime?
+  similarityAsA        SimilarityResult[] @relation("SimilarityA")
+  similarityAsB        SimilarityResult[] @relation("SimilarityB")
   @@map("projects")
+}
+
+model SimilarityResult {
+  id              String   @id @default(cuid())
+  projectAId      String
+  projectBId      String
+  codebertScore   Float
+  winnowingScore  Float
+  hybridScore     Float
+  isPlagiarized   Boolean
+  checkedAt       DateTime @default(now())
+
+  projectA        Project  @relation("SimilarityA", fields: [projectAId], references: [id], onDelete: Cascade)
+  projectB        Project  @relation("SimilarityB", fields: [projectBId], references: [id], onDelete: Cascade)
+
+  @@unique([projectAId, projectBId])
+  @@map("similarity_results")
 }
 
 // Tim Project / Anggota Kelompok
