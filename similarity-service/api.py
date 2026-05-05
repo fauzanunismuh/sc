@@ -156,4 +156,60 @@ async def analyze_winnowing_only(code_pair: CodePair):
         raise HTTPException(status_code=500, detail=f"Error in Winnowing analysis: {str(e)}")
 
 if __name__ == "__main__":
+
+    # ======================================
+# ANTAR MAHASISWA: Project Comparison
+# ======================================
+
+class ProjectSubmission(BaseModel):
+    project_id: str
+    student_name: str
+    code: str
+
+@app.post("/compare/students")
+async def compare_student_projects(projects: List[ProjectSubmission]):
+    """
+    Compare ANTAR MAHASISWA (Project A vs B vs C).
+    Dosen deteksi plagiarisme antar mahasiswa berbeda.
+    
+    Input: List of projects dari mahasiswa yang berbeda
+    Output: Matrix similarity + suspicious pairs
+    """
+    results = []
+    suspicious = []
+    
+    for i in range(len(projects)):
+        for j in range(i + 1, len(projects)):
+            proj_a = projects[i]
+            proj_b = projects[j]
+            
+            analysis = detector.analyze(proj_a.code, proj_b.code)
+            
+            comparison = {
+                "student_a": proj_a.student_name,
+                "student_b": proj_b.student_name,
+                "scores": analysis['scores'],
+                "category": analysis['category'],
+                "is_plagiarism": analysis['is_plagiarism']
+            }
+            
+            results.append(comparison)
+            
+            # Flag jika suspicious (>= 0.70)
+            if analysis['scores']['sg'] >= 0.70:
+                suspicious.append({
+                    **comparison,
+                    "snippets": analysis['snippets'][:3]
+                })
+    
+    suspicious.sort(key=lambda x: x['scores']['sg'], reverse=True)
+    
+    return {
+        "total_students": len(projects),
+        "total_comparisons": len(results),
+        "suspicious_pairs": suspicious,
+        "all_comparisons": results
+    }
+
+
     uvicorn.run(app, host="0.0.0.0", port=8000)
