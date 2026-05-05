@@ -1,259 +1,456 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import {
+    AlertTriangle,
+    BarChart,
+    CheckCircle2,
+    ChevronDown,
+    FileText,
+    RefreshCw,
+    Search,
+} from "lucide-react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 
-// ============ Types ============
-type ClassLevel = "danger" | "warning" | "secondary" | "success";
-type Classification = { label: string; level: ClassLevel; description?: string };
-
-interface SimilarityResult {
-  projectA: { id: string; title: string; mahasiswa: { name: string; nim: string } };
-  projectB: { id: string; title: string; mahasiswa: { name: string; nim: string } };
-  codebert_score?: number; codebertScore?: number;
-  winnowing_score?: number; winnowingScore?: number;
-  hybrid_score?: number; hybridScore?: number;
-  classification?: Classification;
-  snippetA?: Record<string, string> | null;
-  snippetB?: Record<string, string> | null;
-  checkedAt?: string;
-}
-
-// ============ Helpers ============
-function getClassification(sg: number, scb: number, sw: number): Classification {
-  if (sg >= 0.80) return { label: "Plagiarisme Kuat", level: "danger", description: "Kemiripan tinggi secara semantik dan tekstual" };
-  if (sg >= 0.65) return sw >= scb
-    ? { label: "Mirip Tekstual", level: "warning", description: "Struktur kode sangat mirip (copy-paste)" }
-    : { label: "Mirip Semantik", level: "warning", description: "Logika serupa, teks berbeda (refactoring)" };
-  if (sg >= 0.45) return { label: "Mirip Semantik", level: "secondary", description: "Sedikit mirip secara semantik" };
-  return { label: "Normal / Aman", level: "success", description: "Tidak terindikasi plagiarisme" };
-}
-
-const LEVEL_STYLE: Record<ClassLevel, { bg: string; text: string; badge: string; bar: string; border: string }> = {
-  danger:    { bg: "bg-red-50",    text: "text-red-700",    badge: "bg-red-600 text-white",          bar: "bg-red-500",    border: "border-red-200" },
-  warning:   { bg: "bg-orange-50", text: "text-orange-700", badge: "bg-orange-500 text-white",        bar: "bg-orange-400", border: "border-orange-200" },
-  secondary: { bg: "bg-purple-50", text: "text-purple-700", badge: "bg-purple-500 text-white",        bar: "bg-purple-400", border: "border-purple-200" },
-  success:   { bg: "bg-green-50",  text: "text-green-700",  badge: "bg-green-600 text-white",         bar: "bg-green-500",  border: "border-green-200" },
+type CompareSnippet = {
+  student_a: string;
+  student_b: string;
+  project_a: string;
+  project_b: string;
+  code_a: string;
+  code_b: string;
+  similarity: number;
 };
 
-// ============ Component ============
+type SuspiciousPair = {
+  student_a: string;
+  student_b: string;
+  project_a: string;
+  project_b: string;
+  scores: { scb: number; sw: number; sg: number };
+  category: string;
+  snippets: CompareSnippet[];
+};
+
+type CompareStudentsResponse = {
+  suspicious_pairs?: SuspiciousPair[];
+  error?: string;
+};
+
+function asPercent(value: number) {
+  return value <= 1 ? value * 100 : value;
+}
+
+function classifyCategory(category: string) {
+  const normalized = category.toLowerCase();
+
+  if (normalized.includes("tekstual")) {
+    return { label: "Mirip Tekstual", icon: AlertTriangle, className: "border-amber-500/30 bg-amber-500/10 text-amber-700 dark:text-amber-100" };
+  }
+  if (normalized.includes("semantik")) {
+    return { label: "Mirip Semantik", icon: AlertTriangle, className: "border-amber-500/30 bg-amber-500/10 text-amber-700 dark:text-amber-100" };
+  }
+  return { label: "Normal", icon: CheckCircle2, className: "border-emerald-500/30 bg-emerald-500/10 text-emerald-700 dark:text-emerald-100" };
+}
+
+function getSnippetNote(category: string, similarity: number) {
+  const normalized = category.toLowerCase();
+  if (normalized.includes("semantik") && normalized.includes("tekstual")) {
+    return `Mirip secara semantik dan tekstual (${similarity.toFixed(0)}%)`;
+  }
+  if (normalized.includes("semantik")) {
+    return `Mirip secara semantik (${similarity.toFixed(0)}%)`;
+  }
+  if (normalized.includes("tekstual")) {
+    return `Mirip secara tekstual (${similarity.toFixed(0)}%)`;
+  }
+  return `Potongan terdeteksi mirip (${similarity.toFixed(0)}%)`;
+}
+
+function formatCodeLabel(student: string, project: string) {
+  return `[${student} - ${project}]`;
+}
+
+function ScoreInline({ label, score }: { label: string; score: number }) {
+  const percent = asPercent(score);
+  return (
+    <div className="flex items-center justify-between gap-3 rounded-xl border border-zinc-200 bg-white/90 px-4 py-3 text-zinc-900 shadow-sm dark:border-zinc-800 dark:bg-zinc-900/70 dark:text-white">
+      <div className="flex items-center gap-2 text-sm font-medium">
+        <BarChart className="h-4 w-4 text-cyan-600 dark:text-cyan-300" />
+        <span>{label}</span>
+      </div>
+      <div className="text-sm font-semibold text-cyan-700 dark:text-cyan-200">{percent.toFixed(1)}%</div>
+    </div>
+  );
+}
+
+function CodeSnippet({ snippet }: { snippet: CompareSnippet }) {
+  return (
+    <div className="overflow-hidden rounded-2xl border border-zinc-200 bg-white/90 shadow-sm backdrop-blur dark:border-zinc-800 dark:bg-zinc-900/70">
+      <div className="flex items-center justify-between gap-3 border-b border-zinc-200 bg-zinc-50 px-4 py-3 dark:border-zinc-800 dark:bg-zinc-950/30">
+        <div className="flex items-center gap-2 text-sm font-semibold text-zinc-900 dark:text-white">
+          <FileText className="h-4 w-4 text-cyan-600 dark:text-cyan-300" />
+          Potongan kode yang mirip
+        </div>
+        <span className="rounded-full border border-cyan-400/20 bg-cyan-400/10 px-3 py-1 text-xs font-semibold text-cyan-700 dark:text-cyan-100">
+          Similarity {asPercent(snippet.similarity).toFixed(0)}%
+        </span>
+      </div>
+
+      <div className="grid gap-4 p-4 lg:grid-cols-2">
+        <div className="overflow-hidden rounded-xl border border-cyan-500/20 bg-cyan-500/5">
+          <div className="border-b border-cyan-500/20 bg-cyan-500/10 px-4 py-2 text-xs font-semibold text-cyan-900 dark:text-cyan-100">
+            {formatCodeLabel(snippet.student_a, snippet.project_a)}
+          </div>
+          <pre className="max-h-72 overflow-x-auto p-4 text-xs leading-relaxed whitespace-pre-wrap break-words text-zinc-900 dark:text-cyan-50">
+            <code>{snippet.code_a}</code>
+          </pre>
+        </div>
+
+        <div className="overflow-hidden rounded-xl border border-fuchsia-500/20 bg-fuchsia-500/5">
+          <div className="border-b border-fuchsia-500/20 bg-fuchsia-500/10 px-4 py-2 text-xs font-semibold text-fuchsia-900 dark:text-fuchsia-100">
+            {formatCodeLabel(snippet.student_b, snippet.project_b)}
+          </div>
+          <pre className="max-h-72 overflow-x-auto p-4 text-xs leading-relaxed whitespace-pre-wrap break-words text-zinc-900 dark:text-fuchsia-50">
+            <code>{snippet.code_b}</code>
+          </pre>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 export default function AdminSimilarityPage() {
-  const [results, setResults] = useState<SimilarityResult[]>([]);
+  const [results, setResults] = useState<SuspiciousPair[]>([]);
   const [loading, setLoading] = useState(true);
-  const [expanded, setExpanded] = useState<number | null>(null);
-  const [stats, setStats] = useState({ total: 0, kuat: 0, tekstual: 0, semantik: 0, normal: 0 });
-  const [lastUpdate, setLastUpdate] = useState<string>("");
+  const [running, setRunning] = useState(false);
+  const [expanded, setExpanded] = useState<string | null>(null);
+  const [search, setSearch] = useState("");
+  const [filterStatus, setFilterStatus] = useState("all");
+  const [sortBy, setSortBy] = useState<"sg" | "scb" | "sw">("sg");
+  const [error, setError] = useState<string | null>(null);
 
-  const fetchResults = async () => {
+  const fetchResults = useCallback(async () => {
     setLoading(true);
-    try {
-      const res = await fetch("/api/similarity/batch");
-      const data = await res.json();
-      const r: SimilarityResult[] = data.results || [];
-      setResults(r);
-      setLastUpdate(new Date().toLocaleString("id-ID"));
-      setStats({
-        total: r.length,
-        kuat:    r.filter(x => (x.hybrid_score ?? x.hybridScore ?? 0) >= 0.80).length,
-        tekstual:r.filter(x => { const s = x.hybrid_score ?? x.hybridScore ?? 0; return s >= 0.65 && s < 0.80; }).length,
-        semantik:r.filter(x => { const s = x.hybrid_score ?? x.hybridScore ?? 0; return s >= 0.45 && s < 0.65; }).length,
-        normal:  r.filter(x => (x.hybrid_score ?? x.hybridScore ?? 0) < 0.45).length,
-      });
-    } finally { setLoading(false); }
-  };
+    setError(null);
 
-  useEffect(() => {
-    fetchResults();
-    const iv = setInterval(fetchResults, 60000);
-    return () => clearInterval(iv);
+    try {
+      const response = await fetch("/api/compare/students", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({}),
+      });
+
+      const data = (await response.json()) as CompareStudentsResponse;
+
+      if (!response.ok || data.error) {
+        setResults([]);
+        setError(data.error || "Gagal mengambil hasil perbandingan mahasiswa.");
+        return;
+      }
+
+      setResults(data.suspicious_pairs || []);
+    } catch (requestError) {
+      console.error(requestError);
+      setError("Gagal mengambil data. Pastikan server berjalan.");
+      setResults([]);
+    } finally {
+      setLoading(false);
+    }
   }, []);
 
+  const runComparison = useCallback(async () => {
+    setRunning(true);
+    setError(null);
+
+    try {
+      const response = await fetch("/api/compare/students", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({}),
+      });
+
+      const data = (await response.json()) as CompareStudentsResponse;
+
+      if (!response.ok || data.error) {
+        setError(data.error || "Gagal menjalankan analisis batch.");
+        return;
+      }
+
+      setResults(data.suspicious_pairs || []);
+    } catch (requestError) {
+      console.error(requestError);
+      setError("Gagal menjalankan analisis batch.");
+    } finally {
+      setRunning(false);
+      setLoading(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    runComparison();
+  }, [runComparison]);
+
+  const filtered = useMemo(() => {
+    return results
+      .filter((pair) => {
+        const query = search.toLowerCase();
+        const matchSearch =
+          pair.student_a.toLowerCase().includes(query) ||
+          pair.student_b.toLowerCase().includes(query) ||
+          pair.project_a.toLowerCase().includes(query) ||
+          pair.project_b.toLowerCase().includes(query) ||
+          pair.category.toLowerCase().includes(query);
+
+        const status = pair.category.toLowerCase();
+        const matchStatus =
+          filterStatus === "all" ||
+          (filterStatus === "kuat" && status.includes("kuat")) ||
+          (filterStatus === "tekstual" && status.includes("tekstual")) ||
+          (filterStatus === "semantik" && status.includes("semantik")) ||
+          (filterStatus === "normal" && status.includes("normal"));
+
+        return matchSearch && matchStatus;
+      })
+      .sort((left, right) => {
+        if (sortBy === "scb") return asPercent(right.scores.scb) - asPercent(left.scores.scb);
+        if (sortBy === "sw") return asPercent(right.scores.sw) - asPercent(left.scores.sw);
+        return asPercent(right.scores.sg) - asPercent(left.scores.sg);
+      });
+  }, [filterStatus, results, search, sortBy]);
+  const totalKuat = results.filter((pair) => pair.category.toLowerCase().includes("kuat")).length;
+
+  const totalTekstual = results.filter((pair) => pair.category.toLowerCase().includes("tekstual")).length;
+  const totalSemantik = results.filter((pair) => pair.category.toLowerCase().includes("semantik")).length;
+  const totalNormal = results.filter((pair) => pair.category.toLowerCase().includes("normal")).length;
+
   return (
-    <div className="min-h-screen bg-gray-50 p-6 space-y-6">
-      {/* Header */}
-      <div className="flex items-start justify-between">
-        <div>
-          <h1 className="text-3xl font-extrabold text-gray-900 tracking-tight">Deteksi Kemiripan Kode</h1>
-          <p className="mt-1 text-sm text-gray-500">
-            Hybrid <span className="font-semibold text-blue-600">CodeBERT</span> + <span className="font-semibold text-indigo-600">Winnowing</span>
-            &nbsp;&middot;&nbsp;α&nbsp;=&nbsp;0.6&nbsp;&middot;&nbsp;Otomatis setiap 60 detik
-          </p>
-        </div>
-        <div className="text-right text-xs text-gray-400">
-          {loading ? (
-            <span className="inline-flex items-center gap-1 text-blue-500">
-              <span className="w-2 h-2 bg-blue-500 rounded-full animate-pulse" />
-              Memperbarui...
-            </span>
-          ) : (
-            <span>Diperbarui: {lastUpdate}</span>
-          )}
-        </div>
-      </div>
+    <div className="min-h-screen bg-[var(--background)] px-4 py-8 text-[var(--foreground)] md:px-8">
+      <div className="mx-auto max-w-7xl space-y-8">
+        <header className="rounded-3xl border border-zinc-200 bg-white/85 p-6 shadow-sm backdrop-blur-xl dark:border-zinc-800 dark:bg-zinc-900/70 md:p-8">
+          <div className="flex flex-col gap-6 lg:flex-row lg:items-start lg:justify-between">
+            <div className="space-y-4">
+              <div className="inline-flex items-center gap-2 rounded-full border border-cyan-400/20 bg-cyan-400/10 px-4 py-2 text-sm font-semibold text-cyan-700 dark:text-cyan-100">
+                <BarChart className="h-4 w-4" />
+                Analisis Kemiripan Antar Mahasiswa
+              </div>
+              <div>
+                <h1 className="text-3xl font-bold tracking-tight text-zinc-900 dark:text-white md:text-5xl">Deteksi plagiarisme capstone</h1>
+                <p className="mt-3 max-w-3xl text-sm leading-6 text-zinc-600 dark:text-slate-300 md:text-base">
+                  Admin melihat seluruh pasangan yang mencurigakan, lengkap dengan skor gabungan, CodeBERT, Winnowing, dan potongan snippet yang sudah dilabeli nama mahasiswa serta project sumbernya.
+                </p>
+              </div>
+            </div>
 
-      {/* Statistik 4 Kategori */}
-      <div className="grid grid-cols-2 md:grid-cols-5 gap-3">
-        {[
-          { label: "Total Pasang",            value: stats.total,    icon: "📂", cls: "bg-white border border-gray-200 text-gray-700" },
-          { label: "Plagiarisme Kuat",         value: stats.kuat,     icon: "🚨", cls: "bg-red-600 text-white" },
-          { label: "Mirip Tekstual",           value: stats.tekstual, icon: "⚠️", cls: "bg-orange-500 text-white" },
-          { label: "Mirip Semantik",           value: stats.semantik, icon: "🔍", cls: "bg-purple-600 text-white" },
-          { label: "Normal / Aman",            value: stats.normal,   icon: "✅", cls: "bg-green-600 text-white" },
-        ].map((s, i) => (
-          <div key={i} className={`rounded-xl p-4 shadow-sm ${s.cls}`}>
-            <div className="text-2xl mb-1">{s.icon}</div>
-            <div className="text-3xl font-extrabold">{s.value}</div>
-            <div className="text-xs font-medium mt-1 opacity-90">{s.label}</div>
+            <div className="flex flex-wrap items-center gap-3">
+              <button
+                onClick={fetchResults}
+                className="inline-flex items-center gap-2 rounded-xl border border-zinc-200 bg-white/80 px-4 py-2.5 text-sm font-medium text-zinc-900 transition hover:bg-zinc-50 dark:border-zinc-700 dark:bg-zinc-900/70 dark:text-white dark:hover:bg-zinc-800"
+              >
+                <RefreshCw className="h-4 w-4" />
+                Refresh
+              </button>
+              <button
+                onClick={runComparison}
+                disabled={running}
+                className="inline-flex items-center gap-2 rounded-xl bg-gradient-to-r from-cyan-500 to-indigo-500 px-5 py-2.5 text-sm font-semibold text-white shadow-lg transition hover:from-cyan-400 hover:to-indigo-400 disabled:cursor-not-allowed disabled:opacity-60"
+              >
+                {running ? <RefreshCw className="h-4 w-4 animate-spin" /> : <CheckCircle2 className="h-4 w-4" />}
+                {running ? "Memproses..." : "Jalankan Analisis"}
+              </button>
+            </div>
           </div>
-        ))}
-      </div>
+        </header>
 
-      {/* Tabel Hasil */}
-      <div className="bg-white rounded-2xl shadow-sm border border-gray-200 overflow-hidden">
-        <div className="px-6 py-4 border-b border-gray-100 flex items-center justify-between">
-          <h2 className="text-lg font-bold text-gray-800">Hasil Analisis Kemiripan</h2>
-          <span className="text-xs text-gray-400">{results.length} pasangan project</span>
-        </div>
-
-        {loading && results.length === 0 ? (
-          <div className="flex flex-col items-center justify-center py-16 gap-3">
-            <div className="w-8 h-8 border-4 border-blue-500 border-t-transparent rounded-full animate-spin" />
-            <p className="text-sm text-gray-500">Menganalisis kemiripan kode...</p>
+        {error && (
+          <div className="flex items-center gap-3 rounded-2xl border border-red-500/30 bg-red-500/10 px-5 py-4 text-red-700 shadow-sm dark:text-red-100">
+            <AlertTriangle className="h-5 w-5 text-red-300" />
+            <span className="text-sm">{error}</span>
           </div>
-        ) : results.length === 0 ? (
-          <div className="text-center py-16 text-gray-400">
-            <div className="text-4xl mb-3">📂</div>
-            <p>Belum ada data kemiripan</p>
+        )}
+
+        <section className="grid grid-cols-1 gap-4 md:grid-cols-4">
+          <div className="rounded-2xl border border-zinc-200 bg-white/80 p-5 shadow-sm backdrop-blur-xl dark:border-zinc-800 dark:bg-zinc-900/70">
+            <div className="mb-3 flex items-center justify-between text-zinc-600 dark:text-slate-300">
+              <span className="text-sm font-medium">Total Pasangan</span>
+              <FileText className="h-5 w-5" />
+            </div>
+            <div className="text-3xl font-bold text-zinc-900 dark:text-white">{results.length}</div>
+            <p className="mt-1 text-xs text-zinc-500 dark:text-slate-400">Data yang berhasil dibaca</p>
+          </div>
+
+          <div className="rounded-2xl border border-amber-500/20 bg-amber-500/10 p-5 shadow-sm backdrop-blur-xl">
+            <div className="mb-3 flex items-center justify-between text-amber-700 dark:text-amber-100">
+              <span className="text-sm font-medium">Mirip Tekstual</span>
+              <AlertTriangle className="h-5 w-5 text-amber-300" />
+            </div>
+            <div className="text-3xl font-bold text-amber-700 dark:text-amber-100">{totalTekstual}</div>
+            <p className="mt-1 text-xs text-amber-700/70 dark:text-amber-100/70">Kemiripan berbasis pola teks/kode</p>
+          </div>
+
+          <div className="rounded-2xl border border-amber-500/20 bg-amber-500/10 p-5 shadow-sm backdrop-blur-xl">
+            <div className="mb-3 flex items-center justify-between text-amber-700 dark:text-amber-100">
+              <span className="text-sm font-medium">Mirip Semantik</span>
+              <AlertTriangle className="h-5 w-5 text-amber-300" />
+            </div>
+            <div className="text-3xl font-bold text-amber-700 dark:text-amber-100">{totalSemantik}</div>
+            <p className="mt-1 text-xs text-amber-700/70 dark:text-amber-100/70">Kemiripan makna/konteks kode</p>
+          </div>
+
+          <div className="rounded-2xl border border-emerald-500/20 bg-emerald-500/10 p-5 shadow-sm backdrop-blur-xl">
+            <div className="mb-3 flex items-center justify-between text-emerald-700 dark:text-emerald-100">
+              <span className="text-sm font-medium">Normal</span>
+              <CheckCircle2 className="h-5 w-5 text-emerald-300" />
+            </div>
+            <div className="text-3xl font-bold text-emerald-700 dark:text-emerald-100">{totalNormal}</div>
+            <p className="mt-1 text-xs text-emerald-700/70 dark:text-emerald-100/70">Tidak melewati ambang deteksi</p>
+          </div>
+        </section>
+
+        <section className="grid grid-cols-1 gap-4 rounded-3xl border border-zinc-200 bg-white/80 p-5 shadow-sm backdrop-blur-xl dark:border-zinc-800 dark:bg-zinc-900/70 md:grid-cols-3">
+          <div>
+            <label className="mb-2 block text-sm font-medium text-zinc-700 dark:text-slate-300">Cari data</label>
+            <div className="relative">
+              <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-zinc-400 dark:text-slate-400" />
+              <input
+                type="text"
+                placeholder="Nama mahasiswa, project, atau kategori..."
+                value={search}
+                onChange={(event) => setSearch(event.target.value)}
+                className="w-full rounded-xl border border-zinc-200 bg-white/90 py-3 pl-10 pr-4 text-sm text-zinc-900 outline-none transition placeholder:text-zinc-400 focus:border-cyan-400/40 focus:ring-2 focus:ring-cyan-400/20 dark:border-zinc-700 dark:bg-zinc-950/70 dark:text-white dark:placeholder:text-slate-500"
+              />
+            </div>
+          </div>
+
+          <div>
+            <label className="mb-2 block text-sm font-medium text-zinc-700 dark:text-slate-300">Filter status</label>
+            <select
+              value={filterStatus}
+              onChange={(event) => setFilterStatus(event.target.value)}
+              className="w-full rounded-xl border border-zinc-200 bg-white/90 px-4 py-3 text-sm text-zinc-900 outline-none transition focus:border-cyan-400/40 focus:ring-2 focus:ring-cyan-400/20 dark:border-zinc-700 dark:bg-zinc-950/70 dark:text-white"
+            >
+              <option value="all">Semua status</option>
+              <option value="kuat">Plagiarisme Kuat</option>
+              <option value="tekstual">Mirip Tekstual</option>
+              <option value="semantik">Mirip Semantik</option>
+              <option value="normal">Normal</option>
+            </select>
+          </div>
+
+          <div>
+            <label className="mb-2 block text-sm font-medium text-zinc-700 dark:text-slate-300">Urutkan berdasarkan</label>
+            <select
+              value={sortBy}
+              onChange={(event) => setSortBy(event.target.value as "sg" | "scb" | "sw")}
+              className="w-full rounded-xl border border-zinc-200 bg-white/90 px-4 py-3 text-sm text-zinc-900 outline-none transition focus:border-cyan-400/40 focus:ring-2 focus:ring-cyan-400/20 dark:border-zinc-700 dark:bg-zinc-950/70 dark:text-white"
+            >
+              <option value="sg">S<sub>H</sub> (Hybrid)</option>
+              <option value="scb">S<sub>CB</sub> (CodeBERT)</option>
+              <option value="sw">S<sub>W</sub> (Winnowing)</option>
+            </select>
+          </div>
+        </section>
+
+        {loading ? (
+          <div className="rounded-3xl border border-zinc-200 bg-white/80 px-6 py-20 text-center shadow-sm backdrop-blur-xl dark:border-zinc-800 dark:bg-zinc-900/70">
+            <RefreshCw className="mx-auto mb-4 h-12 w-12 animate-spin text-cyan-500 dark:text-cyan-300" />
+            <p className="text-sm text-zinc-600 dark:text-slate-300">Memuat hasil perbandingan mahasiswa...</p>
+          </div>
+        ) : filtered.length === 0 ? (
+          <div className="rounded-3xl border border-dashed border-zinc-300 bg-white/80 px-6 py-20 text-center shadow-sm backdrop-blur-xl dark:border-zinc-700 dark:bg-zinc-900/70">
+            <Search className="mx-auto mb-4 h-14 w-14 text-zinc-400 dark:text-slate-500" />
+            <p className="text-sm text-zinc-600 dark:text-slate-300">
+              {results.length === 0 ? "Belum ada hasil perbandingan. Jalankan analisis dulu." : "Tidak ada data yang cocok dengan filter Anda."}
+            </p>
           </div>
         ) : (
-          <div className="divide-y divide-gray-100">
-            {results.map((r, i) => {
-              const hybrid   = r.hybrid_score ?? r.hybridScore ?? 0;
-              const codebert = r.codebert_score ?? r.codebertScore ?? 0;
-              const winnowing = r.winnowing_score ?? r.winnowingScore ?? 0;
-              const cls = r.classification ?? getClassification(hybrid, codebert, winnowing);
-              const st  = LEVEL_STYLE[cls.level];
-              const isOpen = expanded === i;
-              const snippetA = r.snippetA as Record<string, string> | null | undefined;
-              const snippetB = r.snippetB as Record<string, string> | null | undefined;
+          <div className="space-y-4">
+            {filtered.map((pair, index) => {
+              const expandedKey = `${pair.student_a}-${pair.student_b}-${index}`;
+              const isOpen = expanded === expandedKey;
+              const category = classifyCategory(pair.category);
+              const CategoryIcon = category.icon;
 
               return (
-                <div key={i} className={`transition-colors ${isOpen ? st.bg : "hover:bg-gray-50"}`}>
-                  {/* Row Header - klik untuk expand */}
+                <article
+                  key={expandedKey}
+                  className="overflow-hidden rounded-3xl border border-zinc-200 bg-white/80 shadow-sm backdrop-blur-xl transition hover:border-cyan-300 dark:border-zinc-800 dark:bg-zinc-900/70"
+                >
                   <button
-                    className="w-full text-left px-6 py-4 flex items-center gap-4"
-                    onClick={() => setExpanded(isOpen ? null : i)}
+                    type="button"
+                    onClick={() => setExpanded(isOpen ? null : expandedKey)}
+                    className="flex w-full items-start justify-between gap-4 p-6 text-left"
                   >
-                    {/* Nomor urut */}
-                    <span className="text-sm font-bold text-gray-400 w-5 flex-shrink-0">{i + 1}</span>
-
-                    {/* Nama project */}
-                    <div className="flex-1 min-w-0">
-                      <div className="flex items-center gap-2 flex-wrap">
-                        <span className="font-semibold text-gray-800 truncate">{r.projectA.title}</span>
-                        <span className="text-gray-400 text-xs">↔️</span>
-                        <span className="font-semibold text-gray-800 truncate">{r.projectB.title}</span>
+                    <div className="space-y-4">
+                      <div className={`inline-flex items-center gap-2 rounded-full border px-4 py-2 text-sm font-semibold ${category.className}`}>
+                        <CategoryIcon className="h-4 w-4" />
+                        {category.label}
                       </div>
-                      <div className="text-xs text-gray-400 mt-0.5">
-                        {r.projectA.mahasiswa.name} vs {r.projectB.mahasiswa.name}
+
+                      <div className="rounded-2xl border border-cyan-500/20 bg-cyan-500/5 p-4">
+                        <div className="mb-2 flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.2em] text-cyan-700 dark:text-cyan-200">
+                          <FileText className="h-4 w-4" />
+                          Mirip dengan
+                        </div>
+                        <div className="text-base font-semibold text-zinc-900 dark:text-white">
+                          {pair.student_a} ↔ {pair.student_b}
+                        </div>
+                        <div className="mt-1 text-sm text-zinc-600 dark:text-slate-300">
+                          {pair.project_a} ↔ {pair.project_b}
+                        </div>
                       </div>
                     </div>
 
-                    {/* Badge kategori */}
-                    <span className={`px-3 py-1 rounded-full text-xs font-bold flex-shrink-0 ${st.badge}`}>
-                      {cls.label}
-                    </span>
-
-                    {/* Persentase */}
-                    <div className="text-right flex-shrink-0 w-16">
-                      <span className={`text-xl font-extrabold ${st.text}`}>{(hybrid * 100).toFixed(1)}%</span>
-                    </div>
-
-                    {/* Chevron */}
-                    <span className={`text-gray-400 transition-transform ${isOpen ? "rotate-180" : ""}`}>▼</span>
+                    <ChevronDown className={`mt-2 h-5 w-5 flex-none text-zinc-500 transition-transform dark:text-slate-300 ${isOpen ? "rotate-180" : ""}`} />
                   </button>
 
-                  {/* Detail Panel */}
+                  <div className="border-t border-zinc-200 px-6 pb-6 pt-2 dark:border-zinc-800">
+                    <ScoreInline label="Hybrid" score={pair.scores.sg} />
+                  </div>
+
                   {isOpen && (
-                    <div className="px-6 pb-6 space-y-5">
-                      {/* Skor per Metode */}
-                      <div className={`rounded-xl border ${st.border} p-4 space-y-3`}>
-                        <h3 className="text-sm font-bold text-gray-700 uppercase tracking-wider">Breakdown Skor</h3>
-                        {[
-                          { label: "CodeBERT (Semantik)",            value: codebert,  color: "bg-blue-500",   note: "SCB" },
-                          { label: "Winnowing (Tekstual)",           value: winnowing, color: "bg-indigo-500", note: "SW" },
-                          { label: "Hybrid Score (0.6×SCB + 0.4×SW)", value: hybrid,   color: st.bar,          note: "SG" },
-                        ].map((s, idx) => (
-                          <div key={idx}>
-                            <div className="flex justify-between text-sm mb-1">
-                              <span className="text-gray-600">{s.label} <span className="font-mono text-xs text-gray-400">({s.note})</span></span>
-                              <span className="font-extrabold text-gray-800">{(s.value * 100).toFixed(2)}%</span>
-                            </div>
-                            <div className="w-full bg-gray-200 rounded-full h-2.5">
-                              <div className={`h-2.5 rounded-full ${s.color} transition-all`} style={{ width: `${(s.value * 100).toFixed(1)}%` }} />
-                            </div>
-                          </div>
-                        ))}
-                        <p className={`text-xs mt-2 font-medium ${st.text}`}>
-                          ℹ️ {cls.description}
-                        </p>
+                    <div className="border-t border-zinc-200 bg-zinc-50/80 p-6 dark:border-zinc-800 dark:bg-zinc-950/40">
+                      <div className="mb-4 grid gap-4 md:grid-cols-3">
+                        <ScoreInline label="CodeBERT" score={pair.scores.scb} />
+                        <ScoreInline label="Winnowing" score={pair.scores.sw} />
+                        <ScoreInline label="Hybrid" score={pair.scores.sg} />
                       </div>
 
-                      {/* Info Project */}
-                      <div className="grid grid-cols-2 gap-3">
-                        {[
-                          { label: "PROJECT A", project: r.projectA, color: "border-blue-300 bg-blue-50" },
-                          { label: "PROJECT B", project: r.projectB, color: "border-orange-300 bg-orange-50" },
-                        ].map(({ label, project, color }) => (
-                          <div key={label} className={`rounded-xl border ${color} p-4`}>
-                            <div className="text-xs font-bold uppercase tracking-wider text-gray-500 mb-2">{label}</div>
-                            <div className="font-semibold text-gray-800">{project.title}</div>
-                            <div className="text-xs text-gray-500 mt-1">👤 {project.mahasiswa.name}</div>
-                            <div className="text-xs text-gray-400 font-mono">{project.mahasiswa.nim}</div>
-                          </div>
-                        ))}
+                      <div className="mb-4 rounded-2xl border border-zinc-200 bg-white/85 p-4 text-sm text-zinc-700 shadow-sm dark:border-zinc-800 dark:bg-zinc-900/80 dark:text-slate-300">
+                        <div className="flex flex-wrap items-center gap-2">
+                          <span className="font-medium text-zinc-900 dark:text-white">Pasangan terdeteksi:</span>
+                          <span>{pair.student_a}</span>
+                          <span>vs</span>
+                          <span>{pair.student_b}</span>
+                        </div>
+                        <div className="mt-2 text-xs text-zinc-500 dark:text-slate-400">
+                          Skor gabungan: {asPercent(pair.scores.sg).toFixed(1)}%
+                        </div>
                       </div>
 
-                      {/* Snippet Kode */}
-                      {(snippetA || snippetB) ? (
-                        <div>
-                          <h3 className="text-sm font-bold text-gray-700 uppercase tracking-wider mb-3">
-                            💻 Snippet Kode Terdeteksi
-                          </h3>
-                          <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                            {/* Snippet A */}
-                            {snippetA && Object.entries(snippetA).slice(0, 3).map(([file, code]) => (
-                              <div key={file} className="bg-gray-900 rounded-xl overflow-hidden">
-                                <div className="flex items-center gap-2 px-4 py-2 bg-blue-900">
-                                  <span className="w-2 h-2 rounded-full bg-blue-400" />
-                                  <span className="text-xs text-blue-300 font-mono truncate">[A] {file}</span>
-                                </div>
-                                <pre className="p-4 text-xs text-green-300 font-mono whitespace-pre-wrap overflow-auto max-h-52 leading-relaxed">{code}</pre>
+                      {pair.snippets?.length ? (
+                        <div className="space-y-4">
+                          {pair.snippets.map((snippet, snippetIndex) => (
+                            <div key={`${expandedKey}-${snippetIndex}`} className="space-y-2">
+                              <div className="flex flex-wrap items-center gap-2 text-xs font-medium text-zinc-600 dark:text-slate-400">
+                                <span className="rounded-full border border-cyan-400/20 bg-cyan-400/10 px-3 py-1 text-cyan-700 dark:text-cyan-100">
+                                  {getSnippetNote(pair.category, snippet.similarity)}
+                                </span>
+                                <span>{formatCodeLabel(snippet.student_a, snippet.project_a)}</span>
+                                <span>vs</span>
+                                <span>{formatCodeLabel(snippet.student_b, snippet.project_b)}</span>
                               </div>
-                            ))}
-                            {/* Snippet B */}
-                            {snippetB && Object.entries(snippetB).slice(0, 3).map(([file, code]) => (
-                              <div key={file} className="bg-gray-900 rounded-xl overflow-hidden">
-                                <div className="flex items-center gap-2 px-4 py-2 bg-orange-900">
-                                  <span className="w-2 h-2 rounded-full bg-orange-400" />
-                                  <span className="text-xs text-orange-300 font-mono truncate">[B] {file}</span>
-                                </div>
-                                <pre className="p-4 text-xs text-green-300 font-mono whitespace-pre-wrap overflow-auto max-h-52 leading-relaxed">{code}</pre>
-                              </div>
-                            ))}
-                          </div>
+                              <CodeSnippet snippet={snippet} />
+                            </div>
+                          ))}
                         </div>
                       ) : (
-                        <div className="rounded-xl border border-dashed border-gray-300 p-4 text-center text-sm text-gray-400">
-                          Snippet belum tersedia &mdash; jalankan analisis batch untuk mengisi data
+                        <div className="rounded-2xl border border-dashed border-zinc-300 p-6 text-center text-sm text-zinc-500 dark:border-zinc-700 dark:text-slate-400">
+                          Snippet belum tersedia.
                         </div>
                       )}
-
-                      <div className="text-xs text-gray-400 text-right">
-                        Terakhir dicek: {r.checkedAt ? new Date(r.checkedAt).toLocaleString("id-ID") : "-"}
-                      </div>
                     </div>
                   )}
-                </div>
+                </article>
               );
             })}
           </div>

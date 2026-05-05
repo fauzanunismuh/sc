@@ -14,7 +14,7 @@ import re
 # Winnowing: k=5 (k-gram), w=4 (window size) - Ramli et al. 2021
 # ============================================================
 
-THRESHOLD_CODEBERT  = 0.30
+THRESHOLD_CODEBERT  = 0.80
 THRESHOLD_WINNOWING = 0.75
 ALPHA_DEFAULT       = 0.6
 K_GRAM_DEFAULT      = 5
@@ -23,26 +23,22 @@ WINDOW_DEFAULT      = 4
 
 def get_classification(sg: float, scb: float, sw: float) -> dict:
     """
-    4 kategori klasifikasi sesuai proposal:
-    1. Plagiarisme Kuat   : SG >= 0.80
-    2. Mirip Tekstual     : 0.65 <= SG < 0.80, Winnowing dominan (SW >= SCB)
-    3. Mirip Semantik     : 0.45 <= SG < 0.65, atau CodeBERT dominan
-    4. Normal / Aman      : SG < 0.45
+    4 kategori klasifikasi sesuai konteks proposal:
+    1. Plagiarisme Kuat: CodeBERT dan Winnowing sama-sama melewati ambang
+    2. Mirip Tekstual  : Winnowing dominan
+    3. Mirip Semantik  : CodeBERT dominan
+    4. Normal          : tidak melewati ambang
     """
-    # 1. Plagiarisme Kuat
-    if scb >= 0.80 and sw >= 0.75:
+    if scb >= THRESHOLD_CODEBERT and sw >= THRESHOLD_WINNOWING:
         return {"label": "Plagiarisme Kuat", "level": "danger"}
-    
-    # 2. Mirip Tekstual
-    if scb < 0.80 and sw >= 0.75:
+
+    if sw >= THRESHOLD_WINNOWING:
         return {"label": "Mirip Tekstual", "level": "warning"}
-    
-    # 3. Mirip Semantik
-    if scb >= 0.80 and sw < 0.75:
+
+    if scb >= THRESHOLD_CODEBERT:
         return {"label": "Mirip Semantik", "level": "warning"}
-    
-    # 4. Normal
-    return {"label": "Normal / Aman", "level": "success"}
+
+    return {"label": "Normal", "level": "success"}
 
 
 app = FastAPI(title="Similarity Service - Hybrid CodeBERT + Winnowing")
@@ -114,8 +110,8 @@ def calculate_similarity(req: SimilarityRequest):
     # 4. Klasifikasi 4 kategori
     classification = get_classification(hybrid, cb_score, wn_score)
 
-    # 5. is_plagiarized: True jika SG >= 0.65 (terdeteksi mirip/plagiat)
-    is_plagiarized = hybrid >= 0.65
+    # 5. is_plagiarized: True jika masuk kategori mirip (tekstual atau semantik)
+    is_plagiarized = classification["level"] != "success"
 
     return SimilarityResponse(
         codebert_score=round(cb_score, 4),

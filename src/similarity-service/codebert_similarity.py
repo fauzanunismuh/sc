@@ -28,9 +28,13 @@ def get_embedding(code: str) -> np.ndarray:
     )
     with torch.no_grad():
         outputs = mdl(**inputs)
-    
-    # Gunakan mean pooling dari last hidden state
-    embedding = outputs.last_hidden_state.mean(dim=1).squeeze().numpy()
+
+    # Mean pooling dengan attention mask agar token padding tidak ikut dihitung.
+    last_hidden_state = outputs.last_hidden_state
+    attention_mask = inputs["attention_mask"].unsqueeze(-1).expand(last_hidden_state.size()).float()
+    masked_hidden_state = last_hidden_state * attention_mask
+    pooled = masked_hidden_state.sum(dim=1) / attention_mask.sum(dim=1).clamp(min=1e-9)
+    embedding = pooled.squeeze().numpy()
     return embedding
 
 def codebert_similarity(code1: str, code2: str) -> float:
