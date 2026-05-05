@@ -47,36 +47,42 @@ async def root():
                 "threshold": 0.80
             },
             "winnowing": {
-                "k": 5,
-                "w": 4,
+                "k_gram": 5,
+                "window": 4,
                 "threshold": 0.75
             },
             "hybrid": {
                 "alpha": 0.6,
                 "formula": "SG = α*SCB + (1-α)*SW"
             }
-        }
+        },
+        "categories": [
+            "Plagiarisme Kuat",
+            "Mirip Tekstual",
+            "Mirip Semantik",
+            "Normal"
+        ]
     }
 
 @app.get("/health")
-async def health_check():
+async def health():
     """Health check endpoint"""
-    return {"status": "healthy", "service": "plagiarism-detection"}
+    return {"status": "healthy"}
 
 @app.post("/analyze", response_model=SimilarityResponse)
-async def analyze_similarity(code_pair: CodePair):
+async def analyze(pair: CodePair):
     """
-    Analisis similarity antara dua kode.
+    Analyze similarity between two code snippets using hybrid approach.
     
-    Berdasarkan proposal BAB III:
-    - Menggunakan hybrid CodeBERT + Winnowing
-    - Formula: SG = 0.6*SCB + 0.4*SW
-    - Threshold: SCB >= 0.80, SW >= 0.75
-    - Kategori: Plagiarisme Kuat, Mirip Tekstual, Mirip Semantik, Normal
+    Returns:
+    - SCB (CodeBERT score)
+    - SW (Winnowing score)  
+    - SG (Hybrid score)
+    - Category
+    - Snippets evidence
     """
     try:
-        # Analisis menggunakan hybrid detector
-        result = detector.analyze(code_pair.code1, code_pair.code2)
+        result = detector.analyze(pair.code1, pair.code2)
         
         return SimilarityResponse(
             scb=result['scores']['scb'],
@@ -84,22 +90,22 @@ async def analyze_similarity(code_pair: CodePair):
             sg=result['scores']['sg'],
             category=result['category'],
             is_plagiarism=result['is_plagiarism'],
-            snippets=result['snippets'],
-            file1_name=code_pair.file1_name,
-            file2_name=code_pair.file2_name
+            snippets=result['snippets'][:5],  # Top 5 snippets
+            file1_name=pair.file1_name,
+            file2_name=pair.file2_name
         )
     except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Error analyzing similarity: {str(e)}")
+        raise HTTPException(status_code=500, detail=str(e))
 
 @app.post("/analyze/batch")
 async def analyze_batch(batch: BatchCodePair):
     """
-    Analisis multiple pairs of code sekaligus.
-    Useful untuk batch processing.
+    Batch analysis for multiple code pairs.
     """
-    try:
-        results = []
-        for pair in batch.pairs:
+    results = []
+    
+    for pair in batch.pairs:
+        try:
             result = detector.analyze(pair.code1, pair.code2)
             results.append({
                 "file1_name": pair.file1_name,
@@ -107,59 +113,57 @@ async def analyze_batch(batch: BatchCodePair):
                 "scores": result['scores'],
                 "category": result['category'],
                 "is_plagiarism": result['is_plagiarism'],
-                "snippets": result['snippets']
+                "snippets": result['snippets'][:3]
             })
-        
-        return {
-            "total_pairs": len(batch.pairs),
-            "results": results
-        }
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Error in batch analysis: {str(e)}")
+        except Exception as e:
+            results.append({
+                "file1_name": pair.file1_name,
+                "file2_name": pair.file2_name,
+                "error": str(e)
+            })
+    
+    return {"results": results}
 
 @app.post("/analyze/codebert-only")
-async def analyze_codebert_only(code_pair: CodePair):
+async def analyze_codebert_only(pair: CodePair):
     """
-    Analisis menggunakan CodeBERT saja.
+    Analyze using CodeBERT only (semantic similarity).
     """
     try:
-        score = detector.codebert.calculate_similarity(code_pair.code1, code_pair.code2)
-        is_plag = score >= detector.codebert_threshold
-        
+        scb = detector.codebert.calculate_similarity(pair.code1, pair.code2)
         return {
-            "score": score,
-            "threshold": detector.codebert_threshold,
-            "is_plagiarism": is_plag,
-            "file1_name": code_pair.file1_name,
-            "file2_name": code_pair.file2_name
+            "scb": scb,
+            "threshold": 0.80,
+            "is_similar": scb >= 0.80,
+            "file1_name": pair.file1_name,
+            "file2_name": pair.file2_name
         }
     except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Error in CodeBERT analysis: {str(e)}")
+        raise HTTPException(status_code=500, detail=str(e))
 
 @app.post("/analyze/winnowing-only")
-async def analyze_winnowing_only(code_pair: CodePair):
+async def analyze_winnowing_only(pair: CodePair):
     """
-    Analisis menggunakan Winnowing saja.
+    Analyze using Winnowing only (textual similarity).
     """
     try:
-        score = detector.winnowing.calculate_similarity(code_pair.code1, code_pair.code2)
-        is_plag = score >= detector.winnowing_threshold
-        
+        result = detector.winnowing.calculate_similarity(pair.code1, pair.code2)
         return {
-            "score": score,
-            "threshold": detector.winnowing_threshold,
-            "is_plagiarism": is_plag,
-            "file1_name": code_pair.file1_name,
-            "file2_name": code_pair.file2_name
+            "sw": result['similarity'],
+            "threshold": 0.75,
+            "is_similar": result['similarity'] >= 0.75,
+            "matched_fingerprints": len(result.get('common_fingerprints', [])),
+            "file1_name": pair.file1_name,
+            "file2_name": pair.file2_name
         }
     except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Error in Winnowing analysis: {str(e)}")
+        raise HTTPException(status_code=500, detail=str(e))
 
 if __name__ == "__main__":
 
-    # ======================================
+# ================================================
 # ANTAR MAHASISWA: Project Comparison
-# ======================================
+# ================================================
 
 class ProjectSubmission(BaseModel):
     project_id: str
@@ -173,24 +177,46 @@ async def compare_student_projects(projects: List[ProjectSubmission]):
     Dosen deteksi plagiarisme antar mahasiswa berbeda.
     
     Input: List of projects dari mahasiswa yang berbeda
-    Output: Matrix similarity + suspicious pairs
+    Output: Matrix similarity + suspicious pairs dengan label student yang jelas
     """
     results = []
     suspicious = []
     
+    # PENTING: Bandingkan hanya antar mahasiswa berbeda, BUKAN dalam satu project
     for i in range(len(projects)):
         for j in range(i + 1, len(projects)):
             proj_a = projects[i]
             proj_b = projects[j]
             
+            # Skip jika sama student (tidak mungkin terjadi dalam use case normal)
+            if proj_a.student_name == proj_b.student_name:
+                continue
+            
             analysis = detector.analyze(proj_a.code, proj_b.code)
+            
+            # PERBAIKAN: Tambahkan label student pada setiap snippet
+            labeled_snippets = []
+            for snippet in analysis.get('snippets', []):
+                labeled_snippet = {
+                    'student_a': proj_a.student_name,
+                    'student_b': proj_b.student_name,
+                    'project_a': proj_a.project_id,
+                    'project_b': proj_b.project_id,
+                    'code_a': snippet.get('code1', ''),
+                    'code_b': snippet.get('code2', ''),
+                    'similarity': snippet.get('similarity', 0)
+                }
+                labeled_snippets.append(labeled_snippet)
             
             comparison = {
                 "student_a": proj_a.student_name,
                 "student_b": proj_b.student_name,
+                "project_a": proj_a.project_id,
+                "project_b": proj_b.project_id,
                 "scores": analysis['scores'],
                 "category": analysis['category'],
-                "is_plagiarism": analysis['is_plagiarism']
+                "is_plagiarism": analysis['is_plagiarism'],
+                "snippets": labeled_snippets[:3]  # Top 3 dengan label jelas
             }
             
             results.append(comparison)
@@ -199,9 +225,10 @@ async def compare_student_projects(projects: List[ProjectSubmission]):
             if analysis['scores']['sg'] >= 0.70:
                 suspicious.append({
                     **comparison,
-                    "snippets": analysis['snippets'][:3]
+                    "snippets": labeled_snippets[:3]
                 })
     
+    # Sort by score (highest first)
     suspicious.sort(key=lambda x: x['scores']['sg'], reverse=True)
     
     return {
@@ -211,5 +238,5 @@ async def compare_student_projects(projects: List[ProjectSubmission]):
         "all_comparisons": results
     }
 
-
+if __name__ == "__main__":
     uvicorn.run(app, host="0.0.0.0", port=8000)
