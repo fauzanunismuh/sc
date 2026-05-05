@@ -1,0 +1,21 @@
+# Dependencies untuk Similarity Service
+# CodeBERT & Winnowing Algorithm
+
+# Web Framework
+fastapi==0.109.0
+uvicorn[standard]==0.27.0
+python-multipart==0.0.6
+
+# Machine Learning & NLP
+transformers==4.37.0
+torch==2.1.2
+numpy==1.26.3
+scikit-learn==1.4.0
+
+# Code Processing
+tree-sitter==0.20.4
+
+# Utilities
+python-dotenv==1.0.0
+pydantic==2.5.3
+pydantic-settings==2.1.0
