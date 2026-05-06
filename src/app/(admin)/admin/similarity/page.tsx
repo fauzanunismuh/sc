@@ -23,6 +23,8 @@ type CompareSnippet = {
   source_path?: string;
   target_path?: string;
   matched_by?: Array<"CodeBERT" | "Winnowing">;
+  review_required?: boolean;
+  review_reason?: string;
   method_scores?: {
     codebert: number;
     winnowing: number;
@@ -126,7 +128,7 @@ function classifyCategory(category: string, scores?: ScoreLike) {
 
 function getSnippetNote(category: string, similarity: number, scores?: ScoreLike) {
   if (isPlagiarismeKuat(category, scores)) {
-    return `Memenuhi ambang SCB ≥ 0,80 dan SW ≥ 0,75 (${similarity.toFixed(0)}%)`;
+    return `Memenuhi ambang SCB ≥ 98,5% dan SW ≥ 8,0% (${similarity.toFixed(0)}%)`;
   }
 
   const normalized = category.toLowerCase();
@@ -151,6 +153,10 @@ function formatDetectedLabel(kind: "tekstual" | "semantik") {
 }
 
 function getDetectedSummary(snippet: CompareSnippet, category: string) {
+  if (snippet.review_required) {
+    return snippet.review_reason ?? "Perlu Verifikasi";
+  }
+
   const detectedAs = snippet.detected_as ?? [];
   const thresholdScores = toThresholdScores(snippet.method_scores);
 

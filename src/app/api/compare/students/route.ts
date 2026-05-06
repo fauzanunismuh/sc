@@ -1,9 +1,6 @@
 import prisma from "@/lib/prisma";
 import { NextResponse } from "next/server";
 
-const THRESHOLD_CODEBERT = 98.5;
-const THRESHOLD_WINNOWING = 8;
-
 type CompareSnippet = {
   student_a: string;
   student_b: string;
@@ -15,6 +12,8 @@ type CompareSnippet = {
   detected_as?: Array<"tekstual" | "semantik">;
   note?: string;
   matched_by?: Array<"CodeBERT" | "Winnowing">;
+  review_required?: boolean;
+  review_reason?: string;
   method_scores?: {
     codebert: number;
     winnowing: number;
@@ -37,6 +36,31 @@ type SimilarityRow = {
 
 function toPercent(score: number) {
   return score <= 1 ? score * 100 : score;
+}
+
+function normalizeCodeLine(value: string) {
+  return value.trim().replace(/\s+/g, " ").toLowerCase();
+}
+
+function looksLikeTemplateSnippet(snippet: CompareSnippet) {
+  const combined = [snippet.code_a, snippet.code_b].map(normalizeCodeLine).join("\n");
+  const templateSignals = [
+    /^import\s+/m,
+    /^export\s+(default\s+)?/m,
+    /^"use (client|server)";?$/m,
+    /^'use (client|server)';?$/m,
+    /^const\s+nextconfig\s*:/m,
+    /^module\.exports\s*=\s*\{/m,
+    /^package\s+config$/m,
+    /^pages?\//m,
+  ];
+
+  return templateSignals.some((pattern) => pattern.test(combined));
+}
+
+function isStrongMatch(category: string) {
+  const normalized = category.toLowerCase();
+  return normalized.includes("plagiarisme") || normalized.includes("kuat");
 }
 
 function normalizeCompareSnippets(snippets: unknown): CompareSnippet[] {
@@ -96,6 +120,7 @@ export async function POST() {
       const sg = toPercent(result.gabunganScore);
       const snippets = normalizeCompareSnippets(result.snippets);
       const categoryLabel = result.categoryLabel || result.category || "Normal";
+      const templateReviewReason = "Kemiripan didominasi template/framework, perlu verifikasi manual.";
 
       const detectedAs =
         categoryLabel === "Plagiarisme Kuat"
@@ -121,6 +146,11 @@ export async function POST() {
         snippets: snippets.map((snippet) => ({
           ...snippet,
           detected_as: detectedAs,
+          review_required: isStrongMatch(categoryLabel) && looksLikeTemplateSnippet(snippet),
+          review_reason:
+            isStrongMatch(categoryLabel) && looksLikeTemplateSnippet(snippet)
+              ? templateReviewReason
+              : undefined,
         })),
       };
     });

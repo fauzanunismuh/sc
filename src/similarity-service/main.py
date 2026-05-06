@@ -67,6 +67,8 @@ class SimilarityResponse(BaseModel):
     threshold_codebert: float
     threshold_winnowing: float
     alpha: float
+    review_required: bool
+    review_reason: str | None = None
 
 
 @app.get("/health")
@@ -104,6 +106,12 @@ def calculate_similarity(req: SimilarityRequest):
     # 5. is_plagiarized: True jika hasilnya bukan Normal.
     #    Ini mencakup Mirip Tekstual, Mirip Semantik, dan Plagiarisme Kuat.
     is_plagiarized = classification["level"] != "success"
+    review_required = classification["level"] == "danger"
+    review_reason = (
+        "Kemiripan didominasi template/framework, perlu verifikasi manual."
+        if review_required
+        else None
+    )
 
     return SimilarityResponse(
         codebert_score=round(cb_score, 4),
@@ -114,4 +122,6 @@ def calculate_similarity(req: SimilarityRequest):
         threshold_codebert=THRESHOLD_CODEBERT,
         threshold_winnowing=THRESHOLD_WINNOWING,
         alpha=req.alpha,
+        review_required=review_required,
+        review_reason=review_reason,
     )

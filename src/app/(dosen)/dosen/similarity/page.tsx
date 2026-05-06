@@ -23,6 +23,8 @@ type CompareSnippet = {
   source_path?: string;
   target_path?: string;
   matched_by?: Array<"CodeBERT" | "Winnowing">;
+  review_required?: boolean;
+  review_reason?: string;
   method_scores?: {
     codebert: number;
     winnowing: number;
@@ -30,17 +32,6 @@ type CompareSnippet = {
   };
   note?: string;
 };
-
-function toThresholdScores(scores?: CompareSnippet["method_scores"]) {
-  if (!scores) {
-    return undefined;
-  }
-
-  return {
-    scb: scores.codebert,
-    sw: scores.winnowing,
-  };
-}
 
 type SuspiciousPair = {
   student_a: string;
@@ -111,7 +102,7 @@ function classifyCategory(category: string, scores?: { scb: number; sw: number }
 
 function getSnippetNote(category: string, similarity: number, scores?: { scb: number; sw: number }) {
   if (isPlagiarismeKuat(category, scores)) {
-    return `Memenuhi ambang SCB ≥ 0,80 dan SW ≥ 0,10 (${similarity.toFixed(0)}%)`;
+    return `Memenuhi ambang SCB ≥ 98,5% dan SW ≥ 8,0% (${similarity.toFixed(0)}%)`;
   }
 
   const normalized = category.toLowerCase();
@@ -133,32 +124,6 @@ function formatCodeLabel(student: string, project: string) {
 
 function formatDetectedLabel(kind: "tekstual" | "semantik") {
   return kind === "tekstual" ? "Terdeteksi Tekstual" : "Terdeteksi Semantik";
-}
-
-function getDetectedSummary(snippet: CompareSnippet, category: string) {
-  const detectedAs = snippet.detected_as ?? [];
-  const thresholdScores = toThresholdScores(snippet.method_scores);
-
-  if (isPlagiarismeKuat(category, thresholdScores)) {
-    return "Plagiarisme Kuat";
-  }
-
-  if (detectedAs.length > 0) {
-    return detectedAs.map((kind) => formatDetectedLabel(kind)).join(" · ");
-  }
-
-  const normalized = category.toLowerCase();
-  if (normalized.includes("semantik") && normalized.includes("tekstual")) {
-    return "Terdeteksi Tekstual · Terdeteksi Semantik";
-  }
-  if (normalized.includes("semantik")) {
-    return "Terdeteksi Semantik";
-  }
-  if (normalized.includes("tekstual")) {
-    return "Terdeteksi Tekstual";
-  }
-
-  return "Belum ada label deteksi";
 }
 
 function escapeRegExp(value: string) {
