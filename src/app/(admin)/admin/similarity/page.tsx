@@ -79,7 +79,7 @@ function isPlagiarismeKuat(category: string, scores?: ScoreLike) {
   const textualScore = scores?.sw ?? scores?.winnowing;
 
   if (typeof semanticScore === "number" && typeof textualScore === "number") {
-    return normalizeScore(semanticScore) >= 0.8 && normalizeScore(textualScore) >= 0.75;
+    return normalizeScore(semanticScore) >= 0.985 && normalizeScore(textualScore) >= 0.08;
   }
 
   const normalized = category.toLowerCase();
@@ -94,11 +94,11 @@ function classifyCategory(category: string, scores?: ScoreLike) {
     const normalizedSemantic = normalizeScore(semanticScore);
     const normalizedTextual = normalizeScore(textualScore);
 
-    if (normalizedSemantic >= 0.8 && normalizedTextual >= 0.75) {
+    if (normalizedSemantic >= 0.985 && normalizedTextual >= 0.08) {
       return { label: "Plagiarisme Kuat", icon: AlertTriangle, className: "border-red-500/30 bg-red-500/10 text-red-700 dark:text-red-100" };
     }
 
-    if (normalizedTextual >= 0.75) {
+    if (normalizedTextual >= 0.08) {
       return { label: "Mirip Tekstual", icon: AlertTriangle, className: "border-amber-500/30 bg-amber-500/10 text-amber-700 dark:text-amber-100" };
     }
 
@@ -251,11 +251,10 @@ function ScoreInline({ label, score }: { label: string; score: number }) {
 }
 
 function CodeSnippet({ snippet, category }: { snippet: CompareSnippet; category: string }) {
-  const thresholdScores = toThresholdScores(snippet.method_scores);
-  const strongMatch = isPlagiarismeKuat(category, thresholdScores);
+  const strongMatch = isPlagiarismeKuat(category);
   const note = strongMatch
-    ? `Memenuhi ambang SCB ≥ 0,80 dan SW ≥ 0,75 (${snippet.similarity.toFixed(0)}%)`
-    : snippet.note ?? getSnippetNote(category, snippet.similarity, thresholdScores);
+    ? `Kategori ${category} (${snippet.similarity.toFixed(0)}%)`
+    : snippet.note ?? getSnippetNote(category, snippet.similarity);
 
   return (
     <div className="overflow-hidden rounded-2xl border border-zinc-200 bg-white/90 shadow-sm backdrop-blur dark:border-zinc-800 dark:bg-zinc-900/70">
@@ -419,9 +418,9 @@ export default function AdminSimilarityPage() {
       });
   }, [filterStatus, results, search, sortBy]);
 
-  const totalKuat = results.filter((pair) => isPlagiarismeKuat(pair.category, pair.scores)).length;
-  const totalTekstual = results.filter((pair) => !isPlagiarismeKuat(pair.category, pair.scores) && pair.category.toLowerCase().includes("tekstual")).length;
-  const totalSemantik = results.filter((pair) => !isPlagiarismeKuat(pair.category, pair.scores) && pair.category.toLowerCase().includes("semantik")).length;
+  const totalKuat = results.filter((pair) => isPlagiarismeKuat(pair.category)).length;
+  const totalTekstual = results.filter((pair) => !isPlagiarismeKuat(pair.category) && pair.category.toLowerCase().includes("tekstual")).length;
+  const totalSemantik = results.filter((pair) => !isPlagiarismeKuat(pair.category) && pair.category.toLowerCase().includes("semantik")).length;
   const totalNormal = results.filter((pair) => pair.category.toLowerCase().includes("normal")).length;
 
   return (
@@ -577,7 +576,7 @@ export default function AdminSimilarityPage() {
             {filtered.map((pair, index) => {
               const expandedKey = `${pair.student_a}-${pair.student_b}-${index}`;
               const isOpen = expanded === expandedKey;
-              const category = classifyCategory(pair.category, pair.scores);
+              const category = classifyCategory(pair.category);
               const CategoryIcon = category.icon;
 
               return (

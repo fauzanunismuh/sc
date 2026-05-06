@@ -4,8 +4,8 @@ import prisma from "../src/lib/prisma";
 
 const PYTHON_SERVICE_URL = "http://localhost:8000";
 const ALPHA = 0.6;
-const THRESHOLD_CODEBERT = 0.8;
-const THRESHOLD_WINNOWING = 0.75;
+const THRESHOLD_CODEBERT = 0.985;
+const THRESHOLD_WINNOWING = 0.08;
 const FETCH_TIMEOUT_MS = 15000;
 const SIMILARITY_TIMEOUT_MS = 120000;
 

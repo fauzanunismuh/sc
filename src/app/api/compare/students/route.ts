@@ -1,8 +1,8 @@
 import prisma from "@/lib/prisma";
 import { NextResponse } from "next/server";
 
-const THRESHOLD_CODEBERT = 85;
-const THRESHOLD_WINNOWING = 75;
+const THRESHOLD_CODEBERT = 98.5;
+const THRESHOLD_WINNOWING = 8;
 
 type CompareSnippet = {
   student_a: string;
@@ -37,44 +37,6 @@ type SimilarityRow = {
 
 function toPercent(score: number) {
   return score <= 1 ? score * 100 : score;
-}
-
-function getCategory(scb: number, sw: number) {
-  if (scb >= THRESHOLD_CODEBERT && sw >= THRESHOLD_WINNOWING) {
-    return "Plagiarisme Kuat";
-  }
-
-  if (sw >= THRESHOLD_WINNOWING) {
-    return "Mirip Tekstual";
-  }
-
-  if (scb >= THRESHOLD_CODEBERT) {
-    return "Mirip Semantik";
-  }
-
-  return "Normal";
-}
-
-function getLatestCategoryLabel(scb: number, sw: number) {
-  return getCategory(scb, sw);
-}
-
-function getDetectedAs(scb: number, sw: number) {
-  if (scb >= THRESHOLD_CODEBERT && sw >= THRESHOLD_WINNOWING) {
-    return [] as Array<"tekstual" | "semantik">;
-  }
-
-  const detectedAs: Array<"tekstual" | "semantik"> = [];
-
-  if (sw >= THRESHOLD_WINNOWING) {
-    detectedAs.push("tekstual");
-  }
-
-  if (scb >= THRESHOLD_CODEBERT) {
-    detectedAs.push("semantik");
-  }
-
-  return detectedAs;
 }
 
 function normalizeCompareSnippets(snippets: unknown): CompareSnippet[] {
@@ -132,8 +94,17 @@ export async function POST() {
       const scb = toPercent(result.codebertScore);
       const sw = toPercent(result.winnowingScore);
       const sg = toPercent(result.gabunganScore);
-      const detectedAs = getDetectedAs(scb, sw);
       const snippets = normalizeCompareSnippets(result.snippets);
+      const categoryLabel = result.categoryLabel || result.category || "Normal";
+
+      const detectedAs =
+        categoryLabel === "Plagiarisme Kuat"
+          ? (["tekstual", "semantik"] as const)
+          : categoryLabel === "Mirip Tekstual"
+            ? (["tekstual"] as const)
+            : categoryLabel === "Mirip Semantik"
+              ? (["semantik"] as const)
+              : ([] as const);
 
       return {
         student_a: result.projectAStudent || result.projectATitle,
@@ -145,11 +116,11 @@ export async function POST() {
           sw,
           sg,
         },
-        category: getLatestCategoryLabel(scb, sw),
-        stored_category_label: getLatestCategoryLabel(scb, sw),
+        category: categoryLabel,
+        stored_category_label: categoryLabel,
         snippets: snippets.map((snippet) => ({
           ...snippet,
-          detected_as: snippet.detected_as ?? detectedAs,
+          detected_as: detectedAs,
         })),
       };
     });

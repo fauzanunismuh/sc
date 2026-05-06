@@ -67,7 +67,7 @@ function normalizeScore(value: number) {
 
 function isPlagiarismeKuat(category: string, scores?: { scb: number; sw: number }) {
   if (scores) {
-    return normalizeScore(scores.scb) >= 0.8 && normalizeScore(scores.sw) >= 0.1;
+    return normalizeScore(scores.scb) >= 0.985 && normalizeScore(scores.sw) >= 0.08;
   }
 
   const normalized = category.toLowerCase();
@@ -79,11 +79,11 @@ function classifyCategory(category: string, scores?: { scb: number; sw: number }
     const normalizedSemantic = normalizeScore(scores.scb);
     const normalizedTextual = normalizeScore(scores.sw);
 
-    if (normalizedSemantic >= 0.8 && normalizedTextual >= 0.1) {
+    if (normalizedSemantic >= 0.985 && normalizedTextual >= 0.08) {
       return { label: "Plagiarisme Kuat", icon: AlertTriangle, className: "border-red-500/30 bg-red-500/10 text-red-700 dark:text-red-100" };
     }
 
-    if (normalizedTextual >= 0.1) {
+    if (normalizedTextual >= 0.08) {
       return { label: "Mirip Tekstual", icon: AlertTriangle, className: "border-amber-500/30 bg-amber-500/10 text-amber-700 dark:text-amber-100" };
     }
 
@@ -236,11 +236,10 @@ function ScoreInline({ label, score }: { label: string; score: number }) {
 }
 
 function CodeSnippet({ snippet, category }: { snippet: CompareSnippet; category: string }) {
-  const thresholdScores = toThresholdScores(snippet.method_scores);
-  const strongMatch = isPlagiarismeKuat(category, thresholdScores);
+  const strongMatch = isPlagiarismeKuat(category);
   const note = strongMatch
-    ? `Memenuhi ambang SCB ≥ 0,80 dan SW ≥ 0,10 (${snippet.similarity.toFixed(0)}%)`
-    : snippet.note ?? getSnippetNote(category, snippet.similarity, thresholdScores);
+    ? `Kategori ${category} (${snippet.similarity.toFixed(0)}%)`
+    : snippet.note ?? getSnippetNote(category, snippet.similarity);
 
   return (
     <div className="overflow-hidden rounded-2xl border border-zinc-200 bg-white/90 shadow-sm backdrop-blur dark:border-zinc-800 dark:bg-zinc-900/70">

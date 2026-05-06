@@ -5,11 +5,11 @@ import { NextRequest, NextResponse } from "next/server";
 
 const PYTHON_SERVICE_URL = process.env.SIMILARITY_SERVICE_URL || "http://localhost:8000";
 
-// Threshold sesuai proposal skripsi (Tabel 3)
-// CodeBERT: 0.80 (Akbar dkk. 2025), Winnowing: 0.10
+// Threshold hasil kalibrasi lokal
+// CodeBERT: 0.985, Winnowing: 0.08
 const ALPHA = 0.6;
-const THRESHOLD_CODEBERT = 0.85;
-const THRESHOLD_WINNOWING = 0.75;
+const THRESHOLD_CODEBERT = 0.985;
+const THRESHOLD_WINNOWING = 0.08;
 
 /**
  * Klasifikasi sesuai Tabel 3 Proposal:
