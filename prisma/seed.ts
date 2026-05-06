@@ -21,31 +21,22 @@ const prisma = new PrismaClient({ adapter });
 async function main() {
   console.log('🌱 Starting database seeding...\n');
 
-  // ==================== CLEAR ALL DATA ====================
-  console.log('🗑️  Clearing ALL existing data...');
-  
-  // Delete all data in correct order due to foreign key constraints
-  await prisma.reviewComment.deleteMany();
-  await prisma.reviewScore.deleteMany();
-  await prisma.review.deleteMany();
-  await prisma.document.deleteMany();
-  await prisma.projectAssignment.deleteMany();
-  await prisma.project.deleteMany();
-  await prisma.notification.deleteMany();
-  await prisma.account.deleteMany();
-  await prisma.user.deleteMany();
-  await prisma.rubrikPenilaian.deleteMany();
-  await prisma.semester.deleteMany();
-
-  console.log('✅ All data cleared\n');
+  console.log('ℹ️  Preserving existing data; creating missing seed records only.\n');
 
   // ==================== CREATE ADMIN USER ====================
   console.log('👤 Creating Admin user...');
   
   const adminPassword = await hashPassword('hanyaAdmin@25');
-  
-  const admin = await prisma.user.create({
-    data: {
+
+  const admin = await prisma.user.upsert({
+    where: { username: 'devnolife' },
+    update: {
+      name: 'Administrator',
+      password: adminPassword,
+      role: Role.ADMIN,
+      isActive: true,
+    },
+    create: {
       username: 'devnolife',
       name: 'Administrator',
       password: adminPassword,
@@ -60,9 +51,16 @@ async function main() {
   console.log('👨‍🏫 Creating Dosen user...');
   
   const dosenPassword = await hashPassword('password123');
-  
-  const dosen = await prisma.user.create({
-    data: {
+
+  const dosen = await prisma.user.upsert({
+    where: { username: 'dosen' },
+    update: {
+      name: 'Dosen Penguji',
+      password: dosenPassword,
+      role: Role.DOSEN_PENGUJI,
+      isActive: true,
+    },
+    create: {
       username: 'dosen',
       name: 'Dosen Penguji',
       password: dosenPassword,
@@ -77,9 +75,16 @@ async function main() {
   console.log('🎓 Creating Mahasiswa user (dev mode)...');
   
   const mahasiswaPassword = await hashPassword('password123');
-  
-  const mahasiswa = await prisma.user.create({
-    data: {
+
+  const mahasiswa = await prisma.user.upsert({
+    where: { username: 'mahasiswa' },
+    update: {
+      name: 'Mahasiswa Dev',
+      password: mahasiswaPassword,
+      role: Role.MAHASISWA,
+      isActive: true,
+    },
+    create: {
       username: 'mahasiswa',
       name: 'Mahasiswa Dev',
       password: mahasiswaPassword,
@@ -93,25 +98,41 @@ async function main() {
   // ==================== CREATE SEMESTERS ====================
   console.log('📅 Creating Semesters...');
   
-  const activeSemester = await prisma.semester.create({
-    data: {
-      name: 'Ganjil 2025/2026',
-      tahunAkademik: '2025/2026',
-      startDate: new Date('2025-08-01'),
-      endDate: new Date('2026-01-31'),
-      isActive: true,
+  const activeSemester =
+    (await prisma.semester.findFirst({
+      where: {
+        name: 'Ganjil 2025/2026',
+        tahunAkademik: '2025/2026',
+      },
+    })) ??
+    (await prisma.semester.create({
+      data: {
+        name: 'Ganjil 2025/2026',
+        tahunAkademik: '2025/2026',
+        startDate: new Date('2025-08-01'),
+        endDate: new Date('2026-01-31'),
+        isActive: true,
+      },
+    }));
+
+  const inactiveSemesterExists = await prisma.semester.findFirst({
+    where: {
+      name: 'Genap 2024/2025',
+      tahunAkademik: '2024/2025',
     },
   });
 
-  await prisma.semester.create({
-    data: {
-      name: 'Genap 2024/2025',
-      tahunAkademik: '2024/2025',
-      startDate: new Date('2025-02-01'),
-      endDate: new Date('2025-07-31'),
-      isActive: false,
-    },
-  });
+  if (!inactiveSemesterExists) {
+    await prisma.semester.create({
+      data: {
+        name: 'Genap 2024/2025',
+        tahunAkademik: '2024/2025',
+        startDate: new Date('2025-02-01'),
+        endDate: new Date('2025-07-31'),
+        isActive: false,
+      },
+    });
+  }
 
   console.log(`  ✅ Active Semester: ${activeSemester.name}\n`);
 
@@ -164,6 +185,18 @@ async function main() {
   ];
 
   for (const rubrik of rubrikList) {
+    const existingRubrik = await prisma.rubrikPenilaian.findFirst({
+      where: {
+        name: rubrik.name,
+        tipe: 'kelompok',
+      },
+    });
+
+    if (existingRubrik) {
+      console.log(`  ⏭️  Rubrik sudah ada: ${rubrik.name}`);
+      continue;
+    }
+
     await prisma.rubrikPenilaian.create({ data: rubrik });
     console.log(`  ✅ Rubrik: ${rubrik.name} (max: ${rubrik.bobotMax})`);
   }

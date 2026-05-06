@@ -1,10 +1,18 @@
 from winnowing import winnowing_similarity
 
-t1 = ["def", "hitung", "a", "b", "return", "a", "b"]
-t2 = ["def", "jumlah", "x", "y", "return", "x", "y"]
+code1 = """
+def hitung(a, b):
+	return a + b
+"""
 
-print("Token 1:", t1)
-print("Token 2:", t2)
-print("Jumlah token 1:", len(t1))
-score = winnowing_similarity(t1, t2)
+code2 = """
+def jumlah(x, y):
+	return x + y
+"""
+
+print("Code 1:")
+print(code1)
+print("Code 2:")
+print(code2)
+score = winnowing_similarity(code1, code2)
 print("Winnowing score:", score)

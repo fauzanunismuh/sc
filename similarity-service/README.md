@@ -1,14 +1,14 @@
 # Similarity Service
 
-Layanan deteksi plagiarisme kode menggunakan hybrid CodeBERT dan Winnowing.
+Layanan deteksi plagiarisme kode menggunakan gabungan CodeBERT dan Winnowing.
 
 ## Deskripsi
 
-Similarity Service adalah implementasi dari proposal skripsi untuk deteksi plagiarisme tugas akhir mahasiswa. Service ini menggunakan pendekatan hybrid yang menggabungkan:
+Similarity Service adalah implementasi dari proposal skripsi untuk deteksi plagiarisme tugas akhir mahasiswa. Service ini menggunakan pendekatan gabungan yang menggabungkan:
 
 1. **CodeBERT** - Untuk mendeteksi kesamaan semantik kode
 2. **Winnowing** - Untuk mendeteksi kesamaan tekstual/struktural
-3. **Hybrid Score** - Kombinasi dari kedua algoritma
+3. **Skor Gabungan** - Kombinasi dari kedua algoritma
 
 ## Arsitektur
 
@@ -29,11 +29,11 @@ Berdasarkan proposal BAB III:
 - Formula: SCB = cos(θ) = (A · B) / (||A|| × ||B||)
 - Threshold: SCB ≥ 0.80
 
-#### 3. Hybrid (hybrid.py)
+#### 3. Gabungan (gabungan.py)
 - Formula: **SG = α*SCB + (1-α)*SW**
 - Parameter: α = 0.6
 - Kategori:
-  - **Plagiarisme Kuat**: SCB ≥ 0.80 OR SW ≥ 0.75
+  - **Plagiarisme Kuat**: SCB ≥ 0.80 AND SW ≥ 0.75
   - **Mirip Tekstual**: SW tinggi, SCB rendah
   - **Mirip Semantik**: SCB tinggi, SW rendah
   - **Normal**: Keduanya di bawah threshold
@@ -61,7 +61,7 @@ Server akan berjalan di `http://localhost:8000`
 
 ### API Endpoints
 
-#### 1. Analyze Similarity (Hybrid)
+#### 1. Analyze Similarity (Gabungan)
 ```bash
 POST /analyze
 
@@ -102,10 +102,10 @@ POST /analyze/batch
 ### Contoh Penggunaan Python
 
 ```python
-from hybrid import HybridSimilarity
+from gabungan import GabunganSimilarity
 
 # Initialize
-detector = HybridSimilarity(alpha=0.6)
+detector = GabunganSimilarity(alpha=0.6)
 
 # Analyze
 code1 = "def hello(): print('hello')"
@@ -115,7 +115,7 @@ result = detector.analyze(code1, code2)
 
 print(f"CodeBERT Score: {result['scores']['scb']}")
 print(f"Winnowing Score: {result['scores']['sw']}")
-print(f"Hybrid Score: {result['scores']['sg']}")
+print(f"Skor Gabungan: {result['scores']['sg']}")
 print(f"Category: {result['category']}")
 print(f"Is Plagiarism: {result['is_plagiarism']}")
 ```
@@ -127,7 +127,7 @@ similarity-service/
 ├── api.py              # FastAPI REST endpoints
 ├── codebert.py         # CodeBERT implementation
 ├── winnowing.py        # Winnowing implementation
-├── hybrid.py           # Hybrid similarity detector
+├── gabungan.py         # Gabungan similarity detector
 ├── requirements.txt    # Dependencies
 └── README.md          # Documentation
 ```

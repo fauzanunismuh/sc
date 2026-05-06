@@ -1,8 +1,39 @@
 import prisma from "@/lib/prisma";
 import { NextResponse } from "next/server";
 
-const THRESHOLD_CODEBERT = 80;
+const THRESHOLD_CODEBERT = 85;
 const THRESHOLD_WINNOWING = 75;
+
+type CompareSnippet = {
+  student_a: string;
+  student_b: string;
+  project_a: string;
+  project_b: string;
+  code_a: string;
+  code_b: string;
+  similarity: number;
+  detected_as?: Array<"tekstual" | "semantik">;
+  note?: string;
+  matched_by?: Array<"CodeBERT" | "Winnowing">;
+  method_scores?: {
+    codebert: number;
+    winnowing: number;
+    gabungan: number;
+  };
+};
+
+type SimilarityRow = {
+  codebertScore: number;
+  winnowingScore: number;
+  gabunganScore: number;
+  category: string;
+  categoryLabel: string | null;
+  snippets: unknown;
+  projectATitle: string;
+  projectAStudent: string | null;
+  projectBTitle: string;
+  projectBStudent: string | null;
+};
 
 function toPercent(score: number) {
   return score <= 1 ? score * 100 : score;
@@ -24,117 +55,102 @@ function getCategory(scb: number, sw: number) {
   return "Normal";
 }
 
-function normalizeSnippetMap(snippet: unknown): Record<string, string> {
-  if (!snippet || typeof snippet !== "object" || Array.isArray(snippet)) {
-    return {};
-  }
-
-  return Object.entries(snippet as Record<string, unknown>).reduce<Record<string, string>>((accumulator, [file, code]) => {
-    if (typeof code === "string") {
-      accumulator[file] = code;
-    }
-    return accumulator;
-  }, {});
+function getLatestCategoryLabel(scb: number, sw: number) {
+  return getCategory(scb, sw);
 }
 
-function buildSnippetPairs(
-  studentA: string,
-  studentB: string,
-  projectA: string,
-  projectB: string,
-  snippetA: Record<string, string>,
-  snippetB: Record<string, string>,
-  similarity: number
-) {
-  const sharedFiles = Object.keys(snippetA).filter((file) => snippetB[file]);
-
-  if (sharedFiles.length > 0) {
-    return sharedFiles.map((file) => ({
-      student_a: studentA,
-      student_b: studentB,
-      project_a: projectA,
-      project_b: projectB,
-      code_a: snippetA[file],
-      code_b: snippetB[file],
-      similarity,
-    }));
+function getDetectedAs(scb: number, sw: number) {
+  if (scb >= THRESHOLD_CODEBERT && sw >= THRESHOLD_WINNOWING) {
+    return [] as Array<"tekstual" | "semantik">;
   }
 
-  const firstA = Object.entries(snippetA)[0];
-  const firstB = Object.entries(snippetB)[0];
+  const detectedAs: Array<"tekstual" | "semantik"> = [];
 
-  if (firstA && firstB) {
-    return [
-      {
-        student_a: studentA,
-        student_b: studentB,
-        project_a: projectA,
-        project_b: projectB,
-        code_a: firstA[1],
-        code_b: firstB[1],
-        similarity,
-      },
-    ];
+  if (sw >= THRESHOLD_WINNOWING) {
+    detectedAs.push("tekstual");
   }
 
-  return [];
+  if (scb >= THRESHOLD_CODEBERT) {
+    detectedAs.push("semantik");
+  }
+
+  return detectedAs;
+}
+
+function normalizeCompareSnippets(snippets: unknown): CompareSnippet[] {
+  if (!Array.isArray(snippets)) {
+    return [];
+  }
+
+  return snippets
+    .map((snippet) => {
+      if (!snippet || typeof snippet !== "object") {
+        return null;
+      }
+
+      const entry = snippet as Partial<CompareSnippet>;
+      if (
+        typeof entry.student_a !== "string" ||
+        typeof entry.student_b !== "string" ||
+        typeof entry.project_a !== "string" ||
+        typeof entry.project_b !== "string" ||
+        typeof entry.code_a !== "string" ||
+        typeof entry.code_b !== "string" ||
+        typeof entry.similarity !== "number"
+      ) {
+        return null;
+      }
+
+      return entry as CompareSnippet;
+    })
+    .filter((snippet): snippet is CompareSnippet => snippet !== null);
 }
 
 export async function POST() {
   try {
-    const similarityResults = await prisma.similarityResult.findMany({
-      orderBy: [{ hybridScore: "desc" }, { checkedAt: "desc" }],
-      include: {
-        projectA: {
-          select: {
-            title: true,
-            mahasiswa: {
-              select: {
-                name: true,
-                nim: true,
-              },
-            },
-          },
-        },
-        projectB: {
-          select: {
-            title: true,
-            mahasiswa: {
-              select: {
-                name: true,
-                nim: true,
-              },
-            },
-          },
-        },
-      },
-    });
+    const similarityResults = await prisma.$queryRawUnsafe<SimilarityRow[]>(`
+      SELECT
+        sr."scoreCodebert" AS "codebertScore",
+        sr."scoreWinnowing" AS "winnowingScore",
+        sr."scoreHybrid" AS "gabunganScore",
+        sr.category AS category,
+        sr."categoryLabel" AS "categoryLabel",
+        sr.snippets AS snippets,
+        pa.title AS "projectATitle",
+        COALESCE(ua.name, pa.title) AS "projectAStudent",
+        pb.title AS "projectBTitle",
+        COALESCE(ub.name, pb.title) AS "projectBStudent"
+      FROM similarity_results sr
+      JOIN projects pa ON pa.id = sr."projectAId"
+      JOIN projects pb ON pb.id = sr."projectBId"
+      LEFT JOIN users ua ON ua.id = pa."mahasiswaId"
+      LEFT JOIN users ub ON ub.id = pb."mahasiswaId"
+      ORDER BY sr."scoreHybrid" DESC, sr."updatedAt" DESC, sr."createdAt" DESC;
+    `);
 
     const suspiciousPairs = similarityResults.map((result) => {
       const scb = toPercent(result.codebertScore);
       const sw = toPercent(result.winnowingScore);
-      const sg = toPercent(result.hybridScore);
-
-      const studentA = result.projectA.mahasiswa?.name || result.projectA.title;
-      const studentB = result.projectB.mahasiswa?.name || result.projectB.title;
-      const projectA = result.projectA.title;
-      const projectB = result.projectB.title;
-
-      const snippetA = normalizeSnippetMap(result.snippetA);
-      const snippetB = normalizeSnippetMap(result.snippetB);
+      const sg = toPercent(result.gabunganScore);
+      const detectedAs = getDetectedAs(scb, sw);
+      const snippets = normalizeCompareSnippets(result.snippets);
 
       return {
-        student_a: studentA,
-        student_b: studentB,
-        project_a: projectA,
-        project_b: projectB,
+        student_a: result.projectAStudent || result.projectATitle,
+        student_b: result.projectBStudent || result.projectBTitle,
+        project_a: result.projectATitle,
+        project_b: result.projectBTitle,
         scores: {
           scb,
           sw,
           sg,
         },
-        category: getCategory(scb, sw),
-        snippets: buildSnippetPairs(studentA, studentB, projectA, projectB, snippetA, snippetB, sg),
+        category: getLatestCategoryLabel(scb, sw),
+        stored_category_label: getLatestCategoryLabel(scb, sw),
+        snippets: snippets.map((snippet) => ({
+          ...snippet,
+          detected_as: snippet.detected_as ?? detectedAs,
+        })),
       };
     });
 

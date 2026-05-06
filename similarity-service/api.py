@@ -91,7 +91,6 @@ async def analyze(pair: CodePair):
             category=result['category'],
             is_plagiarism=result['is_plagiarism'],
             snippets=result['snippets'][:5],  # Top 5 snippets
-            file1_name=pair.file1_name,
             file2_name=pair.file2_name
         )
     except Exception as e:
@@ -148,11 +147,11 @@ async def analyze_winnowing_only(pair: CodePair):
     """
     try:
         result = detector.winnowing.calculate_similarity(pair.code1, pair.code2)
+        sw = result if isinstance(result, float) else result.get('similarity', 0)
         return {
-            "sw": result['similarity'],
+            "sw": sw,
             "threshold": 0.75,
-            "is_similar": result['similarity'] >= 0.75,
-            "matched_fingerprints": len(result.get('common_fingerprints', [])),
+            "is_similar": sw >= 0.75,
             "file1_name": pair.file1_name,
             "file2_name": pair.file2_name
         }
@@ -160,6 +159,7 @@ async def analyze_winnowing_only(pair: CodePair):
         raise HTTPException(status_code=500, detail=str(e))
 
 if __name__ == "__main__":
+    pass
 
 # ================================================
 # ANTAR MAHASISWA: Project Comparison

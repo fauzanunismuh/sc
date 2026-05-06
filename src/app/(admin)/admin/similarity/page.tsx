@@ -1,13 +1,13 @@
 "use client";
 
 import {
-    AlertTriangle,
-    BarChart,
-    CheckCircle2,
-    ChevronDown,
-    FileText,
-    RefreshCw,
-    Search,
+  AlertTriangle,
+  BarChart,
+  CheckCircle2,
+  ChevronDown,
+  FileText,
+  RefreshCw,
+  Search,
 } from "lucide-react";
 import { useCallback, useEffect, useMemo, useState } from "react";
 
@@ -19,7 +19,28 @@ type CompareSnippet = {
   code_a: string;
   code_b: string;
   similarity: number;
+  detected_as?: Array<"tekstual" | "semantik">;
+  source_path?: string;
+  target_path?: string;
+  matched_by?: Array<"CodeBERT" | "Winnowing">;
+  method_scores?: {
+    codebert: number;
+    winnowing: number;
+    gabungan: number;
+  };
+  note?: string;
 };
+
+function toThresholdScores(scores?: CompareSnippet["method_scores"]) {
+  if (!scores) {
+    return undefined;
+  }
+
+  return {
+    scb: scores.codebert,
+    sw: scores.winnowing,
+  };
+}
 
 type SuspiciousPair = {
   student_a: string;
@@ -36,11 +57,62 @@ type CompareStudentsResponse = {
   error?: string;
 };
 
+type ScoreLike = {
+  scb?: number;
+  sw?: number;
+  sg?: number;
+  codebert?: number;
+  winnowing?: number;
+  gabungan?: number;
+};
+
 function asPercent(value: number) {
   return value <= 1 ? value * 100 : value;
 }
 
-function classifyCategory(category: string) {
+function normalizeScore(value: number) {
+  return value > 1 ? value / 100 : value;
+}
+
+function isPlagiarismeKuat(category: string, scores?: ScoreLike) {
+  const semanticScore = scores?.scb ?? scores?.codebert;
+  const textualScore = scores?.sw ?? scores?.winnowing;
+
+  if (typeof semanticScore === "number" && typeof textualScore === "number") {
+    return normalizeScore(semanticScore) >= 0.8 && normalizeScore(textualScore) >= 0.75;
+  }
+
+  const normalized = category.toLowerCase();
+  return normalized.includes("plagiarisme") || normalized.includes("kuat") || (normalized.includes("semantik") && normalized.includes("tekstual"));
+}
+
+function classifyCategory(category: string, scores?: ScoreLike) {
+  const semanticScore = scores?.scb ?? scores?.codebert;
+  const textualScore = scores?.sw ?? scores?.winnowing;
+
+  if (typeof semanticScore === "number" && typeof textualScore === "number") {
+    const normalizedSemantic = normalizeScore(semanticScore);
+    const normalizedTextual = normalizeScore(textualScore);
+
+    if (normalizedSemantic >= 0.8 && normalizedTextual >= 0.75) {
+      return { label: "Plagiarisme Kuat", icon: AlertTriangle, className: "border-red-500/30 bg-red-500/10 text-red-700 dark:text-red-100" };
+    }
+
+    if (normalizedTextual >= 0.75) {
+      return { label: "Mirip Tekstual", icon: AlertTriangle, className: "border-amber-500/30 bg-amber-500/10 text-amber-700 dark:text-amber-100" };
+    }
+
+    if (normalizedSemantic >= 0.8) {
+      return { label: "Mirip Semantik", icon: AlertTriangle, className: "border-amber-500/30 bg-amber-500/10 text-amber-700 dark:text-amber-100" };
+    }
+
+    return { label: "Normal", icon: CheckCircle2, className: "border-emerald-500/30 bg-emerald-500/10 text-emerald-700 dark:text-emerald-100" };
+  }
+
+  if (isPlagiarismeKuat(category, scores)) {
+    return { label: "Plagiarisme Kuat", icon: AlertTriangle, className: "border-red-500/30 bg-red-500/10 text-red-700 dark:text-red-100" };
+  }
+
   const normalized = category.toLowerCase();
 
   if (normalized.includes("tekstual")) {
@@ -52,7 +124,11 @@ function classifyCategory(category: string) {
   return { label: "Normal", icon: CheckCircle2, className: "border-emerald-500/30 bg-emerald-500/10 text-emerald-700 dark:text-emerald-100" };
 }
 
-function getSnippetNote(category: string, similarity: number) {
+function getSnippetNote(category: string, similarity: number, scores?: ScoreLike) {
+  if (isPlagiarismeKuat(category, scores)) {
+    return `Memenuhi ambang SCB ≥ 0,80 dan SW ≥ 0,75 (${similarity.toFixed(0)}%)`;
+  }
+
   const normalized = category.toLowerCase();
   if (normalized.includes("semantik") && normalized.includes("tekstual")) {
     return `Mirip secara semantik dan tekstual (${similarity.toFixed(0)}%)`;
@@ -70,6 +146,97 @@ function formatCodeLabel(student: string, project: string) {
   return `[${student} - ${project}]`;
 }
 
+function formatDetectedLabel(kind: "tekstual" | "semantik") {
+  return kind === "tekstual" ? "Terdeteksi Tekstual" : "Terdeteksi Semantik";
+}
+
+function getDetectedSummary(snippet: CompareSnippet, category: string) {
+  const detectedAs = snippet.detected_as ?? [];
+  const thresholdScores = toThresholdScores(snippet.method_scores);
+
+  if (isPlagiarismeKuat(category, thresholdScores)) {
+    return "Plagiarisme Kuat";
+  }
+
+  if (detectedAs.length > 0) {
+    return detectedAs.map((kind) => formatDetectedLabel(kind)).join(" · ");
+  }
+
+  const normalized = category.toLowerCase();
+  if (normalized.includes("semantik") && normalized.includes("tekstual")) {
+    return "Terdeteksi Tekstual · Terdeteksi Semantik";
+  }
+  if (normalized.includes("semantik")) {
+    return "Terdeteksi Semantik";
+  }
+  if (normalized.includes("tekstual")) {
+    return "Terdeteksi Tekstual";
+  }
+
+  return "Belum ada label deteksi";
+}
+
+function escapeRegExp(value: string) {
+  return value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+}
+
+function buildHighlightTerms(primaryCode: string, counterpartCode: string) {
+  const tokenPattern = /[A-Za-z_][A-Za-z0-9_]{2,}/g;
+  const primaryTokens = new Set((primaryCode.match(tokenPattern) ?? []).map((token) => token.toLowerCase()));
+  const counterpartTokens = new Set((counterpartCode.match(tokenPattern) ?? []).map((token) => token.toLowerCase()));
+
+  return [...primaryTokens].filter((token) => counterpartTokens.has(token)).slice(0, 12);
+}
+
+function renderHighlightedLine(line: string, terms: string[]) {
+  if (terms.length === 0) {
+    return line;
+  }
+
+  const regex = new RegExp(`(${terms.map(escapeRegExp).join("|")})`, "gi");
+
+  return line.split(regex).map((part, index) =>
+    terms.some((term) => term.toLowerCase() === part.toLowerCase()) ? (
+      <mark key={`${part}-${index}`} className="rounded bg-yellow-300/40 px-0.5 text-inherit dark:bg-yellow-300/20">
+        {part}
+      </mark>
+    ) : (
+      <span key={`${part}-${index}`}>{part}</span>
+    )
+  );
+}
+
+function HighlightedCode({ code, counterpart }: { code: string; counterpart: string }) {
+  const terms = buildHighlightTerms(code, counterpart);
+  const counterpartLines = new Set(
+    counterpart
+      .split("\n")
+      .map((line) => line.trim().replace(/\s+/g, " "))
+      .filter((line) => line.length > 0)
+  );
+
+  return (
+    <div className="max-h-72 overflow-x-auto p-4 text-xs leading-relaxed text-zinc-900 dark:text-white">
+      {code.split("\n").map((line, index) => {
+        const normalized = line.trim().replace(/\s+/g, " ");
+        const isMatched = normalized.length > 0 && counterpartLines.has(normalized);
+
+        return (
+          <div
+            key={`${index}-${normalized.slice(0, 16)}`}
+            className={`flex gap-3 rounded-md px-2 py-0.5 ${isMatched ? "bg-yellow-300/15 dark:bg-yellow-300/10" : ""}`}
+          >
+            <span className="w-8 shrink-0 select-none text-right text-[10px] text-zinc-400 dark:text-zinc-500">{index + 1}</span>
+            <span className="min-w-0 flex-1 whitespace-pre-wrap break-words">
+              {renderHighlightedLine(line, terms)}
+            </span>
+          </div>
+        );
+      })}
+    </div>
+  );
+}
+
 function ScoreInline({ label, score }: { label: string; score: number }) {
   const percent = asPercent(score);
   return (
@@ -83,7 +250,13 @@ function ScoreInline({ label, score }: { label: string; score: number }) {
   );
 }
 
-function CodeSnippet({ snippet }: { snippet: CompareSnippet }) {
+function CodeSnippet({ snippet, category }: { snippet: CompareSnippet; category: string }) {
+  const thresholdScores = toThresholdScores(snippet.method_scores);
+  const strongMatch = isPlagiarismeKuat(category, thresholdScores);
+  const note = strongMatch
+    ? `Memenuhi ambang SCB ≥ 0,80 dan SW ≥ 0,75 (${snippet.similarity.toFixed(0)}%)`
+    : snippet.note ?? getSnippetNote(category, snippet.similarity, thresholdScores);
+
   return (
     <div className="overflow-hidden rounded-2xl border border-zinc-200 bg-white/90 shadow-sm backdrop-blur dark:border-zinc-800 dark:bg-zinc-900/70">
       <div className="flex items-center justify-between gap-3 border-b border-zinc-200 bg-zinc-50 px-4 py-3 dark:border-zinc-800 dark:bg-zinc-950/30">
@@ -91,9 +264,40 @@ function CodeSnippet({ snippet }: { snippet: CompareSnippet }) {
           <FileText className="h-4 w-4 text-cyan-600 dark:text-cyan-300" />
           Potongan kode yang mirip
         </div>
-        <span className="rounded-full border border-cyan-400/20 bg-cyan-400/10 px-3 py-1 text-xs font-semibold text-cyan-700 dark:text-cyan-100">
-          Similarity {asPercent(snippet.similarity).toFixed(0)}%
-        </span>
+        <div className="flex flex-wrap items-center gap-2">
+          {strongMatch ? (
+            <span className="rounded-full border border-red-400/30 bg-red-400/10 px-3 py-1 text-xs font-semibold text-red-700 dark:text-red-100">
+              Plagiarisme Kuat
+            </span>
+          ) : (
+            snippet.detected_as?.map((kind) => (
+              <span
+                key={kind}
+                className={`rounded-full border px-3 py-1 text-xs font-semibold ${kind === "tekstual" ? "border-amber-400/30 bg-amber-400/10 text-amber-700 dark:text-amber-100" : "border-fuchsia-400/30 bg-fuchsia-400/10 text-fuchsia-700 dark:text-fuchsia-100"}`}
+              >
+                {formatDetectedLabel(kind)}
+              </span>
+            ))
+          )}
+          <span className="rounded-full border border-cyan-400/20 bg-cyan-400/10 px-3 py-1 text-xs font-semibold text-cyan-700 dark:text-cyan-100">
+            Similarity {asPercent(snippet.similarity).toFixed(0)}%
+          </span>
+        </div>
+      </div>
+
+      <div className="flex flex-wrap gap-2 border-b border-zinc-200 px-4 py-3 text-[11px] font-medium text-zinc-600 dark:border-zinc-800 dark:text-slate-400">
+        <span className="rounded-full border border-zinc-200 bg-white px-3 py-1 dark:border-zinc-700 dark:bg-zinc-900/80">{note}</span>
+        {snippet.source_path && <span className="rounded-full border border-zinc-200 bg-white px-3 py-1 dark:border-zinc-700 dark:bg-zinc-900/80">A: {snippet.source_path}</span>}
+        {snippet.target_path && <span className="rounded-full border border-zinc-200 bg-white px-3 py-1 dark:border-zinc-700 dark:bg-zinc-900/80">B: {snippet.target_path}</span>}
+        {snippet.method_scores && (
+          <span className="rounded-full border border-zinc-200 bg-white px-3 py-1 dark:border-zinc-700 dark:bg-zinc-900/80">
+            CB {asPercent(snippet.method_scores.codebert).toFixed(1)}% · WN {asPercent(snippet.method_scores.winnowing).toFixed(1)}%
+          </span>
+        )}
+      </div>
+
+      <div className="border-b border-zinc-200 bg-zinc-50/70 px-4 py-2 text-xs text-zinc-500 dark:border-zinc-800 dark:bg-zinc-950/20 dark:text-slate-400">
+        Bagian yang sama ditandai kuning di bawah.
       </div>
 
       <div className="grid gap-4 p-4 lg:grid-cols-2">
@@ -101,18 +305,14 @@ function CodeSnippet({ snippet }: { snippet: CompareSnippet }) {
           <div className="border-b border-cyan-500/20 bg-cyan-500/10 px-4 py-2 text-xs font-semibold text-cyan-900 dark:text-cyan-100">
             {formatCodeLabel(snippet.student_a, snippet.project_a)}
           </div>
-          <pre className="max-h-72 overflow-x-auto p-4 text-xs leading-relaxed whitespace-pre-wrap break-words text-zinc-900 dark:text-cyan-50">
-            <code>{snippet.code_a}</code>
-          </pre>
+          <HighlightedCode code={snippet.code_a} counterpart={snippet.code_b} />
         </div>
 
         <div className="overflow-hidden rounded-xl border border-fuchsia-500/20 bg-fuchsia-500/5">
           <div className="border-b border-fuchsia-500/20 bg-fuchsia-500/10 px-4 py-2 text-xs font-semibold text-fuchsia-900 dark:text-fuchsia-100">
             {formatCodeLabel(snippet.student_b, snippet.project_b)}
           </div>
-          <pre className="max-h-72 overflow-x-auto p-4 text-xs leading-relaxed whitespace-pre-wrap break-words text-zinc-900 dark:text-fuchsia-50">
-            <code>{snippet.code_b}</code>
-          </pre>
+          <HighlightedCode code={snippet.code_b} counterpart={snippet.code_a} />
         </div>
       </div>
     </div>
@@ -202,9 +402,10 @@ export default function AdminSimilarityPage() {
           pair.category.toLowerCase().includes(query);
 
         const status = pair.category.toLowerCase();
+        const strongMatch = isPlagiarismeKuat(pair.category, pair.scores);
         const matchStatus =
           filterStatus === "all" ||
-          (filterStatus === "kuat" && status.includes("kuat")) ||
+          (filterStatus === "kuat" && strongMatch) ||
           (filterStatus === "tekstual" && status.includes("tekstual")) ||
           (filterStatus === "semantik" && status.includes("semantik")) ||
           (filterStatus === "normal" && status.includes("normal"));
@@ -217,10 +418,10 @@ export default function AdminSimilarityPage() {
         return asPercent(right.scores.sg) - asPercent(left.scores.sg);
       });
   }, [filterStatus, results, search, sortBy]);
-  const totalKuat = results.filter((pair) => pair.category.toLowerCase().includes("kuat")).length;
 
-  const totalTekstual = results.filter((pair) => pair.category.toLowerCase().includes("tekstual")).length;
-  const totalSemantik = results.filter((pair) => pair.category.toLowerCase().includes("semantik")).length;
+  const totalKuat = results.filter((pair) => isPlagiarismeKuat(pair.category, pair.scores)).length;
+  const totalTekstual = results.filter((pair) => !isPlagiarismeKuat(pair.category, pair.scores) && pair.category.toLowerCase().includes("tekstual")).length;
+  const totalSemantik = results.filter((pair) => !isPlagiarismeKuat(pair.category, pair.scores) && pair.category.toLowerCase().includes("semantik")).length;
   const totalNormal = results.filter((pair) => pair.category.toLowerCase().includes("normal")).length;
 
   return (
@@ -276,6 +477,15 @@ export default function AdminSimilarityPage() {
             </div>
             <div className="text-3xl font-bold text-zinc-900 dark:text-white">{results.length}</div>
             <p className="mt-1 text-xs text-zinc-500 dark:text-slate-400">Data yang berhasil dibaca</p>
+          </div>
+
+          <div className="rounded-2xl border border-red-500/20 bg-red-500/10 p-5 shadow-sm backdrop-blur-xl">
+            <div className="mb-3 flex items-center justify-between text-red-700 dark:text-red-100">
+              <span className="text-sm font-medium">Plagiarisme Kuat</span>
+              <AlertTriangle className="h-5 w-5 text-red-300" />
+            </div>
+            <div className="text-3xl font-bold text-red-700 dark:text-red-100">{totalKuat}</div>
+            <p className="mt-1 text-xs text-red-700/70 dark:text-red-100/70">SCB ≥ 0,80 dan SW ≥ 0,75</p>
           </div>
 
           <div className="rounded-2xl border border-amber-500/20 bg-amber-500/10 p-5 shadow-sm backdrop-blur-xl">
@@ -343,9 +553,9 @@ export default function AdminSimilarityPage() {
               onChange={(event) => setSortBy(event.target.value as "sg" | "scb" | "sw")}
               className="w-full rounded-xl border border-zinc-200 bg-white/90 px-4 py-3 text-sm text-zinc-900 outline-none transition focus:border-cyan-400/40 focus:ring-2 focus:ring-cyan-400/20 dark:border-zinc-700 dark:bg-zinc-950/70 dark:text-white"
             >
-              <option value="sg">S<sub>H</sub> (Hybrid)</option>
-              <option value="scb">S<sub>CB</sub> (CodeBERT)</option>
-              <option value="sw">S<sub>W</sub> (Winnowing)</option>
+              <option value="sg">SG (Gabungan)</option>
+              <option value="scb">SCB (CodeBERT)</option>
+              <option value="sw">SW (Winnowing)</option>
             </select>
           </div>
         </section>
@@ -367,7 +577,7 @@ export default function AdminSimilarityPage() {
             {filtered.map((pair, index) => {
               const expandedKey = `${pair.student_a}-${pair.student_b}-${index}`;
               const isOpen = expanded === expandedKey;
-              const category = classifyCategory(pair.category);
+              const category = classifyCategory(pair.category, pair.scores);
               const CategoryIcon = category.icon;
 
               return (
@@ -404,7 +614,7 @@ export default function AdminSimilarityPage() {
                   </button>
 
                   <div className="border-t border-zinc-200 px-6 pb-6 pt-2 dark:border-zinc-800">
-                    <ScoreInline label="Hybrid" score={pair.scores.sg} />
+                    <ScoreInline label="Gabungan" score={pair.scores.sg} />
                   </div>
 
                   {isOpen && (
@@ -412,7 +622,7 @@ export default function AdminSimilarityPage() {
                       <div className="mb-4 grid gap-4 md:grid-cols-3">
                         <ScoreInline label="CodeBERT" score={pair.scores.scb} />
                         <ScoreInline label="Winnowing" score={pair.scores.sw} />
-                        <ScoreInline label="Hybrid" score={pair.scores.sg} />
+                        <ScoreInline label="Gabungan" score={pair.scores.sg} />
                       </div>
 
                       <div className="mb-4 rounded-2xl border border-zinc-200 bg-white/85 p-4 text-sm text-zinc-700 shadow-sm dark:border-zinc-800 dark:bg-zinc-900/80 dark:text-slate-300">
@@ -433,13 +643,13 @@ export default function AdminSimilarityPage() {
                             <div key={`${expandedKey}-${snippetIndex}`} className="space-y-2">
                               <div className="flex flex-wrap items-center gap-2 text-xs font-medium text-zinc-600 dark:text-slate-400">
                                 <span className="rounded-full border border-cyan-400/20 bg-cyan-400/10 px-3 py-1 text-cyan-700 dark:text-cyan-100">
-                                  {getSnippetNote(pair.category, snippet.similarity)}
+                                  {getDetectedSummary(snippet, pair.category)}
                                 </span>
                                 <span>{formatCodeLabel(snippet.student_a, snippet.project_a)}</span>
                                 <span>vs</span>
                                 <span>{formatCodeLabel(snippet.student_b, snippet.project_b)}</span>
                               </div>
-                              <CodeSnippet snippet={snippet} />
+                              <CodeSnippet snippet={snippet} category={pair.category} />
                             </div>
                           ))}
                         </div>

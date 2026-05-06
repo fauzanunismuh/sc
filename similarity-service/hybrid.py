@@ -57,7 +57,7 @@ class HybridSimilarity:
         """
         Klasifikasi hasil plagiarisme berdasarkan threshold.
         Kategori sesuai proposal BAB III:
-        1. Plagiarisme Kuat: SCB >= 0.80 OR SW >= 0.75
+        1. Plagiarisme Kuat: SCB >= 0.80 AND SW >= 0.75
         2. Mirip Tekstual: SW tinggi, SCB rendah
         3. Mirip Semantik: SCB tinggi, SW rendah
         4. Normal: Keduanya di bawah threshold
@@ -69,8 +69,8 @@ class HybridSimilarity:
         Returns:
             Kategori plagiarisme
         """
-        # Plagiarisme Kuat: salah satu atau kedua score di atas threshold
-        if scb >= self.codebert_threshold or sw >= self.winnowing_threshold:
+        # Plagiarisme Kuat: kedua score harus melewati threshold
+        if scb >= self.codebert_threshold and sw >= self.winnowing_threshold:
             return "Plagiarisme Kuat"
         
         # Mirip Tekstual: Winnowing tinggi (>= 0.60), CodeBERT rendah
