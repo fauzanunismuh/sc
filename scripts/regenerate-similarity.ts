@@ -6,11 +6,20 @@ const PYTHON_SERVICE_URL = "http://localhost:8000";
 const ALPHA = 0.6;
 const THRESHOLD_CODEBERT = 0.985;
 const THRESHOLD_WINNOWING = 0.08;
+const MIN_BLOCK_TOKENS = 2;
+const BLOCK_MATCH_THRESHOLD = 0.5;
 const FETCH_TIMEOUT_MS = 15000;
 const SIMILARITY_TIMEOUT_MS = 120000;
 
 const codeExts = [".py", ".js", ".ts", ".jsx", ".tsx", ".java", ".cpp", ".c", ".go", ".php", ".rb", ".cs"];
 const branches = ["main", "master", "dev", "development"];
+
+type ProjectRecord = {
+  id: string;
+  title: string;
+  githubRepoUrl: string | null;
+  mahasiswa: { name: string | null; nim: string | null } | null;
+};
 
 async function fetchWithTimeout(url: string, init: RequestInit = {}) {
   const controller = new AbortController();
@@ -87,15 +96,47 @@ function normalizeBlock(block: string) {
   return block.replace(/\s+/g, " ").trim().toLowerCase();
 }
 
+function tokenizeBlock(block: string) {
+  return new Set((block.match(/[A-Za-z_][A-Za-z0-9_]{2,}/g) ?? []).map((token) => token.toLowerCase()));
+}
+
 function collectBlocks(snippetData: Record<string, string>) {
   return Object.entries(snippetData).flatMap(([path, code]) =>
     splitIntoBlocks(code).map((block, index) => ({
       path,
       index,
       code: block,
-      normalized: normalizeBlock(block),
+      cleaned: stripBoilerplate(block),
     }))
+    .filter((entry) => entry.cleaned.length > 0)
+    .map((entry) => ({
+      ...entry,
+      normalized: normalizeBlock(entry.cleaned),
+      tokens: tokenizeBlock(entry.cleaned),
+    }))
+    .filter((entry) => entry.tokens.size >= MIN_BLOCK_TOKENS)
   );
+}
+
+function blockSimilarity(left: { tokens: Set<string>; normalized: string }, right: { tokens: Set<string>; normalized: string }) {
+  if (!left.normalized || !right.normalized) return 0;
+
+  const leftTokens = left.tokens;
+  const rightTokens = right.tokens;
+  if (leftTokens.size === 0 || rightTokens.size === 0) return 0;
+
+  let intersection = 0;
+  for (const token of leftTokens) {
+    if (rightTokens.has(token)) intersection++;
+  }
+
+  const minSize = Math.min(leftTokens.size, rightTokens.size);
+  const maxSize = Math.max(leftTokens.size, rightTokens.size);
+  const overlap = intersection / minSize;
+  const jaccard = intersection / (leftTokens.size + rightTokens.size - intersection);
+  const sizeBalance = minSize / maxSize;
+
+  return (0.55 * overlap) + (0.30 * jaccard) + (0.15 * sizeBalance);
 }
 
 async function fetchGitHubCode(repoUrl: string) {
@@ -182,8 +223,8 @@ async function getSimilarity(codeA: string, codeB: string) {
 
 type PairJob = {
   index: number;
-  a: (typeof projects)[number];
-  b: (typeof projects)[number];
+  a: ProjectRecord;
+  b: ProjectRecord;
 };
 
 function buildSnippetPairs(
@@ -204,20 +245,22 @@ function buildSnippetPairs(
   const methodScores = { codebert: scoreCodebert, winnowing: scoreWinnowing, gabungan: scoreGabungan };
   const blocksA = collectBlocks(snippetAData);
   const blocksB = collectBlocks(snippetBData);
-  const pairMap = new Map<string, { a: typeof blocksA[number]; b: typeof blocksB[number] }>();
+  const pairMap = new Map<string, { a: typeof blocksA[number]; b: typeof blocksB[number]; score: number }>();
 
   for (const blockA of blocksA) {
-    if (!blockA.normalized) continue;
     for (const blockB of blocksB) {
-      if (!blockB.normalized) continue;
-      if (blockA.normalized !== blockB.normalized) continue;
+      const score = blockSimilarity(blockA, blockB);
+      if (score < BLOCK_MATCH_THRESHOLD) continue;
 
       const key = `${blockA.path}:${blockA.index}|${blockB.path}:${blockB.index}`;
-      pairMap.set(key, { a: blockA, b: blockB });
+      const existing = pairMap.get(key);
+      if (!existing || score > existing.score) {
+        pairMap.set(key, { a: blockA, b: blockB, score });
+      }
     }
   }
 
-  const matchedPairs = [...pairMap.values()];
+  const matchedPairs = [...pairMap.values()].sort((left, right) => right.score - left.score);
   if (matchedPairs.length === 0) {
     const firstSnippetA = Object.values(snippetAData)[0] ?? "";
     const firstSnippetB = Object.values(snippetBData)[0] ?? "";
@@ -240,7 +283,7 @@ function buildSnippetPairs(
     ];
   }
 
-  return matchedPairs.map(({ a, b }) => ({
+  return matchedPairs.map(({ a, b, score }) => ({
     student_a: projectAStudent,
     student_b: projectBStudent,
     project_a: projectA.title,
@@ -248,6 +291,7 @@ function buildSnippetPairs(
     code_a: a.code,
     code_b: b.code,
     similarity,
+    snippet_similarity: score,
     source_path: a.path,
     target_path: b.path,
     matched_by: matchedBy,
@@ -259,7 +303,7 @@ function buildSnippetPairs(
 
 async function main() {
   try {
-    const projects = await prisma.project.findMany({
+    const projects: ProjectRecord[] = await prisma.project.findMany({
       where: { githubRepoUrl: { not: null } },
       select: { id: true, title: true, githubRepoUrl: true, mahasiswa: { select: { name: true, nim: true } } },
     });
@@ -267,7 +311,7 @@ async function main() {
     console.log(`projects=${projects.length}`);
 
     const projectDataEntries = await Promise.all(
-      projects.map(async (project, index) => {
+      projects.map(async (project: ProjectRecord, index: number) => {
         try {
           const data = project.githubRepoUrl ? await fetchGitHubCode(project.githubRepoUrl) : null;
           console.log(`fetched ${index + 1}/${projects.length}: ${project.title} ${data ? "ok" : "null"}`);

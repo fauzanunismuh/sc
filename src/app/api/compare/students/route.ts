@@ -38,6 +38,25 @@ function toPercent(score: number) {
   return score <= 1 ? score * 100 : score;
 }
 
+const THRESHOLD_CODEBERT_PERCENT = 98.5;
+const THRESHOLD_WINNOWING_PERCENT = 8;
+
+function classifyFromScores(scb: number, sw: number) {
+  if (scb >= THRESHOLD_CODEBERT_PERCENT && sw >= THRESHOLD_WINNOWING_PERCENT) {
+    return "Plagiarisme Kuat";
+  }
+
+  if (sw >= THRESHOLD_WINNOWING_PERCENT) {
+    return "Mirip Tekstual";
+  }
+
+  if (scb >= THRESHOLD_CODEBERT_PERCENT) {
+    return "Mirip Semantik";
+  }
+
+  return "Normal";
+}
+
 function normalizeCodeLine(value: string) {
   return value.trim().replace(/\s+/g, " ").toLowerCase();
 }
@@ -119,7 +138,8 @@ export async function POST() {
       const sw = toPercent(result.winnowingScore);
       const sg = toPercent(result.gabunganScore);
       const snippets = normalizeCompareSnippets(result.snippets);
-      const categoryLabel = result.categoryLabel || result.category || "Normal";
+      const categoryLabel = classifyFromScores(scb, sw);
+      const storedCategoryLabel = result.categoryLabel || result.category || "Normal";
       const templateReviewReason = "Kemiripan didominasi template/framework, perlu verifikasi manual.";
 
       const detectedAs =
@@ -142,7 +162,7 @@ export async function POST() {
           sg,
         },
         category: categoryLabel,
-        stored_category_label: categoryLabel,
+        stored_category_label: storedCategoryLabel,
         snippets: snippets.map((snippet) => ({
           ...snippet,
           detected_as: detectedAs,
