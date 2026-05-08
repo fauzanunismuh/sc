@@ -58,6 +58,46 @@ function splitIntoBlocks(code: string) {
   return code.split(/\n\s*\n+/).map((block) => block.trim()).filter(Boolean);
 }
 
+function isBoilerplateLine(line: string) {
+  const normalized = line.trim();
+  if (!normalized) return true;
+  return [
+    /^import\s+.+from\s+['"].+['"];?$/,
+    /^import\s+['"].+['"];?$/,
+    /^export\s+default\s+.+$/,
+    /^export\s+(const|function|class|type|interface)\s+.+$/,
+    /^"use (client|server)";?$/,
+    /^'use (client|server)';?$/,
+    /^package\s+config$/,
+    /^#\s*include\s+<.+>$/,
+    /^using\s+namespace\s+.+;$/,
+  ].some((pattern) => pattern.test(normalized));
+}
+
+function stripBoilerplate(code: string) {
+  return code
+    .split("\n")
+    .filter((line) => !isBoilerplateLine(line))
+    .join("\n")
+    .replace(/\n{3,}/g, "\n\n")
+    .trim();
+}
+
+function normalizeBlock(block: string) {
+  return block.replace(/\s+/g, " ").trim().toLowerCase();
+}
+
+function collectBlocks(snippetData: Record<string, string>) {
+  return Object.entries(snippetData).flatMap(([path, code]) =>
+    splitIntoBlocks(code).map((block, index) => ({
+      path,
+      index,
+      code: block,
+      normalized: normalizeBlock(block),
+    }))
+  );
+}
+
 async function fetchGitHubCode(repoUrl: string) {
   const match = repoUrl.match(/github\.com\/([^/]+)\/([^/]+)/);
   if (!match) return null;
@@ -85,8 +125,7 @@ async function fetchGitHubCode(repoUrl: string) {
   if (!treeData) return null;
 
   const codeFiles = ((treeData.tree ?? []) as { type: string; path: string }[])
-    .filter((f) => f.type === "blob" && codeExts.some((ext) => f.path.endsWith(ext)))
-    .slice(0, 20);
+    .filter((f) => f.type === "blob" && codeExts.some((ext) => f.path.endsWith(ext)));
 
   const snippets: Record<string, string> = {};
   const contents: string[] = [];
@@ -96,8 +135,11 @@ async function fetchGitHubCode(repoUrl: string) {
     const r = await fetchWithTimeout(rawUrl, { headers });
     if (r.ok) {
       const text = await r.text();
-      contents.push(text);
-      snippets[file.path] = text.split("\n").slice(0, 20).join("\n");
+      const cleaned = stripBoilerplate(text);
+      if (cleaned) {
+        contents.push(cleaned);
+      }
+      snippets[file.path] = text;
     }
   }
 
@@ -156,75 +198,63 @@ function buildSnippetPairs(
 ) {
   const projectAStudent = projectA.mahasiswa?.name || projectA.mahasiswa?.nim || "Project A";
   const projectBStudent = projectB.mahasiswa?.name || projectB.mahasiswa?.nim || "Project B";
-  const sharedPaths = Object.keys(snippetAData).filter((path) => path in snippetBData);
   const detectedAs = getDetectedAs(scoreCodebert, scoreWinnowing);
   const matchedBy = getMatchedBy(detectedAs);
   const note = getSnippetNote(detectedAs);
   const methodScores = { codebert: scoreCodebert, winnowing: scoreWinnowing, gabungan: scoreGabungan };
+  const blocksA = collectBlocks(snippetAData);
+  const blocksB = collectBlocks(snippetBData);
+  const pairMap = new Map<string, { a: typeof blocksA[number]; b: typeof blocksB[number] }>();
 
-  if (sharedPaths.length > 0) {
-    return sharedPaths.flatMap((path) => {
-      const blocksA = splitIntoBlocks(snippetAData[path]);
-      const blocksB = splitIntoBlocks(snippetBData[path]);
-      const blockCount = Math.min(blocksA.length, blocksB.length);
+  for (const blockA of blocksA) {
+    if (!blockA.normalized) continue;
+    for (const blockB of blocksB) {
+      if (!blockB.normalized) continue;
+      if (blockA.normalized !== blockB.normalized) continue;
 
-      if (blockCount > 0) {
-        return Array.from({ length: blockCount }, (_, index) => ({
-          student_a: projectAStudent,
-          student_b: projectBStudent,
-          project_a: projectA.title,
-          project_b: projectB.title,
-          code_a: blocksA[index],
-          code_b: blocksB[index],
-          similarity,
-          source_path: path,
-          target_path: path,
-          matched_by: matchedBy,
-          detected_as: detectedAs,
-          method_scores: methodScores,
-          note,
-        }));
-      }
-
-      return [
-        {
-          student_a: projectAStudent,
-          student_b: projectBStudent,
-          project_a: projectA.title,
-          project_b: projectB.title,
-          code_a: snippetAData[path],
-          code_b: snippetBData[path],
-          similarity,
-          source_path: path,
-          target_path: path,
-          matched_by: matchedBy,
-          detected_as: detectedAs,
-          method_scores: methodScores,
-          note,
-        },
-      ];
-    });
+      const key = `${blockA.path}:${blockA.index}|${blockB.path}:${blockB.index}`;
+      pairMap.set(key, { a: blockA, b: blockB });
+    }
   }
 
-  const firstSnippetA = Object.values(snippetAData)[0] ?? "";
-  const firstSnippetB = Object.values(snippetBData)[0] ?? "";
-  if (!firstSnippetA && !firstSnippetB) return [];
+  const matchedPairs = [...pairMap.values()];
+  if (matchedPairs.length === 0) {
+    const firstSnippetA = Object.values(snippetAData)[0] ?? "";
+    const firstSnippetB = Object.values(snippetBData)[0] ?? "";
+    if (!firstSnippetA && !firstSnippetB) return [];
 
-  return [
-    {
-      student_a: projectAStudent,
-      student_b: projectBStudent,
-      project_a: projectA.title,
-      project_b: projectB.title,
-      code_a: firstSnippetA,
-      code_b: firstSnippetB,
-      similarity,
-      matched_by: matchedBy,
-      detected_as: detectedAs,
-      method_scores: methodScores,
-      note,
-    },
-  ];
+    return [
+      {
+        student_a: projectAStudent,
+        student_b: projectBStudent,
+        project_a: projectA.title,
+        project_b: projectB.title,
+        code_a: firstSnippetA,
+        code_b: firstSnippetB,
+        similarity,
+        matched_by: matchedBy,
+        detected_as: detectedAs,
+        method_scores: methodScores,
+        note,
+      },
+    ];
+  }
+
+  return matchedPairs.map(({ a, b }) => ({
+    student_a: projectAStudent,
+    student_b: projectBStudent,
+    project_a: projectA.title,
+    project_b: projectB.title,
+    code_a: a.code,
+    code_b: b.code,
+    similarity,
+    source_path: a.path,
+    target_path: b.path,
+    matched_by: matchedBy,
+    detected_as: detectedAs,
+    method_scores: methodScores,
+    note,
+  }));
 }
 
 async function main() {

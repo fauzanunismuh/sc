@@ -12,11 +12,7 @@ const THRESHOLD_CODEBERT = 0.985;
 const THRESHOLD_WINNOWING = 0.08;
 
 /**
- * Klasifikasi sesuai Tabel 3 Proposal:
- * - Plagiarisme Kuat: CodeBERT dan Winnowing sama-sama melewati ambang
- * - Mirip Tekstual: Winnowing dominan
- * - Mirip Semantik: CodeBERT dominan
- * - Normal: tidak melewati ambang
+Klasifikasi
  */
 function getClassification(
   scb: number,
@@ -51,6 +47,142 @@ function getClassification(
     level: "success",
     description: "Tidak terindikasi plagiarisme",
   };
+}
+
+function getDetectedAs(scb: number, sw: number) {
+  const out: Array<"tekstual" | "semantik"> = [];
+  if (sw >= THRESHOLD_WINNOWING) out.push("tekstual");
+  if (scb >= THRESHOLD_CODEBERT) out.push("semantik");
+  return out;
+}
+
+function getMatchedBy(detectedAs: Array<"tekstual" | "semantik">) {
+  const out: Array<"CodeBERT" | "Winnowing"> = [];
+  if (detectedAs.includes("semantik")) out.push("CodeBERT");
+  if (detectedAs.includes("tekstual")) out.push("Winnowing");
+  return out;
+}
+
+function getSnippetNote(detectedAs: Array<"tekstual" | "semantik">) {
+  if (detectedAs.includes("semantik") && detectedAs.includes("tekstual")) return "Didukung CodeBERT dan Winnowing";
+  if (detectedAs.includes("semantik")) return "Didukung CodeBERT";
+  if (detectedAs.includes("tekstual")) return "Didukung Winnowing";
+  return "Belum melewati ambang deteksi";
+}
+
+function splitIntoBlocks(code: string) {
+  return code.split(/\n\s*\n+/).map((block) => block.trim()).filter(Boolean);
+}
+
+function isBoilerplateLine(line: string) {
+  const normalized = line.trim();
+  if (!normalized) return true;
+  return [
+    /^import\s+.+from\s+['"].+['"];?$/,
+    /^import\s+['"].+['"];?$/,
+    /^export\s+default\s+.+$/,
+    /^export\s+(const|function|class|type|interface)\s+.+$/,
+    /^"use (client|server)";?$/,
+    /^'use (client|server)';?$/,
+    /^package\s+config$/,
+    /^#\s*include\s+<.+>$/,
+    /^using\s+namespace\s+.+;$/,
+  ].some((pattern) => pattern.test(normalized));
+}
+
+function stripBoilerplate(code: string) {
+  return code
+    .split("\n")
+    .filter((line) => !isBoilerplateLine(line))
+    .join("\n")
+    .replace(/\n{3,}/g, "\n\n")
+    .trim();
+}
+
+function normalizeBlock(block: string) {
+  return block.replace(/\s+/g, " ").trim().toLowerCase();
+}
+
+function collectBlocks(snippetData: Record<string, string>) {
+  return Object.entries(snippetData).flatMap(([path, code]) =>
+    splitIntoBlocks(code).map((block, index) => ({
+      path,
+      index,
+      code: block,
+      normalized: normalizeBlock(block),
+    }))
+  );
+}
+
+function buildSnippetPairs(
+  projectA: { id: string; title: string; mahasiswa: { name: string | null; nim: string | null } | null },
+  projectB: { id: string; title: string; mahasiswa: { name: string | null; nim: string | null } | null },
+  snippetAData: Record<string, string>,
+  snippetBData: Record<string, string>,
+  similarity: number,
+  scoreCodebert: number,
+  scoreWinnowing: number,
+  scoreGabungan: number
+) {
+  const projectAStudent = projectA.mahasiswa?.name || projectA.mahasiswa?.nim || "Project A";
+  const projectBStudent = projectB.mahasiswa?.name || projectB.mahasiswa?.nim || "Project B";
+  const detectedAs = getDetectedAs(scoreCodebert, scoreWinnowing);
+  const matchedBy = getMatchedBy(detectedAs);
+  const note = getSnippetNote(detectedAs);
+  const methodScores = { codebert: scoreCodebert, winnowing: scoreWinnowing, gabungan: scoreGabungan };
+  const blocksA = collectBlocks(snippetAData);
+  const blocksB = collectBlocks(snippetBData);
+  const pairMap = new Map<string, { a: typeof blocksA[number]; b: typeof blocksB[number] }>();
+
+  for (const blockA of blocksA) {
+    if (!blockA.normalized) continue;
+    for (const blockB of blocksB) {
+      if (!blockB.normalized) continue;
+      if (blockA.normalized !== blockB.normalized) continue;
+
+      const key = `${blockA.path}:${blockA.index}|${blockB.path}:${blockB.index}`;
+      pairMap.set(key, { a: blockA, b: blockB });
+    }
+  }
+
+  const matchedPairs = [...pairMap.values()];
+  if (matchedPairs.length === 0) {
+    const firstSnippetA = Object.values(snippetAData)[0] ?? "";
+    const firstSnippetB = Object.values(snippetBData)[0] ?? "";
+    if (!firstSnippetA && !firstSnippetB) return [];
+
+    return [
+      {
+        student_a: projectAStudent,
+        student_b: projectBStudent,
+        project_a: projectA.title,
+        project_b: projectB.title,
+        code_a: firstSnippetA,
+        code_b: firstSnippetB,
+        similarity,
+        matched_by: matchedBy,
+        detected_as: detectedAs,
+        method_scores: methodScores,
+        note,
+      },
+    ];
+  }
+
+  return matchedPairs.map(({ a, b }) => ({
+    student_a: projectAStudent,
+    student_b: projectBStudent,
+    project_a: projectA.title,
+    project_b: projectB.title,
+    code_a: a.code,
+    code_b: b.code,
+    similarity,
+    source_path: a.path,
+    target_path: b.path,
+    matched_by: matchedBy,
+    detected_as: detectedAs,
+    method_scores: methodScores,
+    note,
+  }));
 }
 
 /**
@@ -97,8 +229,7 @@ async function fetchGitHubCode(
 
     const codeExts = [".py", ".js", ".ts", ".jsx", ".tsx", ".java", ".cpp", ".c", ".go", ".php", ".rb", ".cs"];
     const codeFiles = ((treeData.tree ?? []) as { type: string; path: string }[])
-      .filter((f) => f.type === "blob" && codeExts.some((ext) => f.path.endsWith(ext)))
-      .slice(0, 20);
+      .filter((f) => f.type === "blob" && codeExts.some((ext) => f.path.endsWith(ext)));
 
     const contents: string[] = [];
     const snippets: Record<string, string> = {};
@@ -109,8 +240,11 @@ async function fetchGitHubCode(
         const r = await fetch(rawUrl, { headers });
         if (r.ok) {
           const text = await r.text();
-          contents.push(text);
-          snippets[file.path] = text.split("\n").slice(0, 20).join("\n");
+          const cleaned = stripBoilerplate(text);
+          if (cleaned) {
+            contents.push(cleaned);
+          }
+          snippets[file.path] = text;
         }
       }
     }
@@ -269,47 +403,16 @@ export async function POST(req: NextRequest) {
           const snippetAData = projectData[a.id]?.snippets ?? {};
           const snippetBData = projectData[b.id]?.snippets ?? {};
 
-          const sharedPath = Object.keys(snippetAData).find((path) => path in snippetBData);
-          const sampleCodeA = sharedPath ? snippetAData[sharedPath] : Object.values(snippetAData)[0] ?? "";
-          const sampleCodeB = sharedPath ? snippetBData[sharedPath] : Object.values(snippetBData)[0] ?? "";
-          const snippets =
-            sampleCodeA && sampleCodeB
-              ? [
-                {
-                  student_a: a.mahasiswa?.name || a.mahasiswa?.nim || a.title,
-                  student_b: b.mahasiswa?.name || b.mahasiswa?.nim || b.title,
-                  project_a: a.title,
-                  project_b: b.title,
-                  code_a: sampleCodeA,
-                  code_b: sampleCodeB,
-                  similarity: sg,
-                  detected_as:
-                    classification.label === "Plagiarisme Kuat"
-                      ? ["tekstual", "semantik"]
-                      : classification.label === "Mirip Tekstual"
-                        ? ["tekstual"]
-                        : classification.label === "Mirip Semantik"
-                          ? ["semantik"]
-                          : [],
-                  matched_by:
-                    classification.label === "Plagiarisme Kuat"
-                      ? ["CodeBERT", "Winnowing"]
-                      : classification.label === "Mirip Tekstual"
-                        ? ["Winnowing"]
-                        : classification.label === "Mirip Semantik"
-                          ? ["CodeBERT"]
-                          : [],
-                  note:
-                    classification.label === "Plagiarisme Kuat"
-                      ? "Didukung CodeBERT dan Winnowing"
-                      : classification.label === "Mirip Tekstual"
-                        ? "Didukung Winnowing"
-                        : classification.label === "Mirip Semantik"
-                          ? "Didukung CodeBERT"
-                          : "Belum melewati ambang deteksi",
-                },
-              ]
-              : [];
+          const snippets = buildSnippetPairs(
+            { id: a.id, title: a.title, mahasiswa: a.mahasiswa },
+            { id: b.id, title: b.title, mahasiswa: b.mahasiswa },
+            snippetAData,
+            snippetBData,
+            sg,
+            scb,
+            sw,
+            sg
+          );
 
           await prisma.$executeRaw(
             Prisma.sql`

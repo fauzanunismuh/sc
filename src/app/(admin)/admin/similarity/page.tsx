@@ -440,7 +440,7 @@ export default function AdminSimilarityPage() {
                 Analisis Kemiripan Antar Mahasiswa
               </div>
               <div>
-                <h1 className="text-3xl font-bold tracking-tight text-zinc-900 dark:text-white md:text-5xl">Deteksi plagiarisme capstone</h1>
+                <h1 className="text-3xl font-bold tracking-tight text-zinc-900 dark:text-white md:text-5xl">Deteksi Kemiripan Project</h1>
                 <p className="mt-3 max-w-3xl text-sm leading-6 text-zinc-600 dark:text-slate-300 md:text-base">
                   Admin melihat seluruh pasangan yang mencurigakan, lengkap dengan skor gabungan, CodeBERT, Winnowing, dan potongan snippet yang sudah dilabeli nama mahasiswa serta project sumbernya.
                 </p>
@@ -490,7 +490,7 @@ export default function AdminSimilarityPage() {
               <AlertTriangle className="h-5 w-5 text-red-300" />
             </div>
             <div className="text-3xl font-bold text-red-700 dark:text-red-100">{totalKuat}</div>
-            <p className="mt-1 text-xs text-red-700/70 dark:text-red-100/70">SCB ≥ 0,80 dan SW ≥ 0,75</p>
+            <p className="mt-1 text-xs text-red-700/70 dark:text-red-100/70">Keduanya lewat ambang deteksi</p>
           </div>
 
           <div className="rounded-2xl border border-amber-500/20 bg-amber-500/10 p-5 shadow-sm backdrop-blur-xl">
