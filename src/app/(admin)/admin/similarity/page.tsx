@@ -363,7 +363,7 @@ export default function AdminSimilarityPage() {
     }
   }, []);
 
-  const runComparison = useCallback(async () => {
+  const runAnalysis = useCallback(async () => {
     setRunning(true);
     setError(null);
 
@@ -387,13 +387,12 @@ export default function AdminSimilarityPage() {
       setError("Gagal menjalankan analisis batch.");
     } finally {
       setRunning(false);
-      setLoading(false);
     }
   }, []);
 
   useEffect(() => {
-    runComparison();
-  }, [runComparison]);
+    fetchResults();
+  }, [fetchResults]);
 
   const filtered = useMemo(() => {
     return results
@@ -456,7 +455,7 @@ export default function AdminSimilarityPage() {
                 Refresh
               </button>
               <button
-                onClick={runComparison}
+                onClick={runAnalysis}
                 disabled={running}
                 className="inline-flex items-center gap-2 rounded-xl bg-gradient-to-r from-cyan-500 to-indigo-500 px-5 py-2.5 text-sm font-semibold text-white shadow-lg transition hover:from-cyan-400 hover:to-indigo-400 disabled:cursor-not-allowed disabled:opacity-60"
               >
@@ -466,7 +465,6 @@ export default function AdminSimilarityPage() {
             </div>
           </div>
         </header>
-
         {error && (
           <div className="flex items-center gap-3 rounded-2xl border border-red-500/30 bg-red-500/10 px-5 py-4 text-red-700 shadow-sm dark:text-red-100">
             <AlertTriangle className="h-5 w-5 text-red-300" />
@@ -530,7 +528,7 @@ export default function AdminSimilarityPage() {
                 type="text"
                 placeholder="Nama mahasiswa, project, atau kategori..."
                 value={search}
-                onChange={(event) => setSearch(event.target.value)}
+                onChange={(event: React.ChangeEvent<HTMLInputElement>) => setSearch(event.target.value)}
                 className="w-full rounded-xl border border-zinc-200 bg-white/90 py-3 pl-10 pr-4 text-sm text-zinc-900 outline-none transition placeholder:text-zinc-400 focus:border-cyan-400/40 focus:ring-2 focus:ring-cyan-400/20 dark:border-zinc-700 dark:bg-zinc-950/70 dark:text-white dark:placeholder:text-slate-500"
               />
             </div>
@@ -584,87 +582,114 @@ export default function AdminSimilarityPage() {
               const isOpen = expanded === expandedKey;
               const category = classifyCategory(pair.category);
               const CategoryIcon = category.icon;
+              const snippetCount = pair.snippets?.length ?? 0;
+              const firstSnippet = pair.snippets?.[0];
 
               return (
-                <article
-                  key={expandedKey}
-                  className="overflow-hidden rounded-3xl border border-zinc-200 bg-white/80 shadow-sm backdrop-blur-xl transition hover:border-cyan-300 dark:border-zinc-800 dark:bg-zinc-900/70"
-                >
-                  <button
-                    type="button"
-                    onClick={() => setExpanded(isOpen ? null : expandedKey)}
-                    className="flex w-full items-start justify-between gap-4 p-6 text-left"
-                  >
-                    <div className="space-y-4">
-                      <div className={`inline-flex items-center gap-2 rounded-full border px-4 py-2 text-sm font-semibold ${category.className}`}>
-                        <CategoryIcon className="h-4 w-4" />
-                        {category.label}
-                      </div>
-
-                      <div className="rounded-2xl border border-cyan-500/20 bg-cyan-500/5 p-4">
-                        <div className="mb-2 flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.2em] text-cyan-700 dark:text-cyan-200">
-                          <FileText className="h-4 w-4" />
-                          Mirip dengan
-                        </div>
-                        <div className="text-base font-semibold text-zinc-900 dark:text-white">
+                <article key={expandedKey} className="overflow-hidden rounded-3xl border border-zinc-200 bg-white/85 shadow-sm backdrop-blur-xl dark:border-zinc-800 dark:bg-zinc-900/70">
+                  <div className="border-b border-zinc-200 bg-zinc-50/80 px-5 py-4 dark:border-zinc-800 dark:bg-zinc-950/30">
+                    <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
+                      <div className="space-y-2">
+                        <div className="text-sm font-semibold uppercase tracking-[0.18em] text-cyan-600 dark:text-cyan-300">Mirip dengan</div>
+                        <div className="text-lg font-semibold text-zinc-900 dark:text-white">
                           {pair.student_a} ↔ {pair.student_b}
                         </div>
-                        <div className="mt-1 text-sm text-zinc-600 dark:text-slate-300">
+                        <div className="text-sm text-zinc-600 dark:text-slate-300">
                           {pair.project_a} ↔ {pair.project_b}
                         </div>
+                        <div className="flex flex-wrap gap-2 pt-1 text-[11px] text-zinc-500 dark:text-slate-400">
+                          {firstSnippet?.source_path && <span className="rounded-full border border-zinc-200 bg-white px-2.5 py-1 dark:border-zinc-700 dark:bg-zinc-900/80">A: {firstSnippet.source_path}</span>}
+                          {firstSnippet?.target_path && <span className="rounded-full border border-zinc-200 bg-white px-2.5 py-1 dark:border-zinc-700 dark:bg-zinc-900/80">B: {firstSnippet.target_path}</span>}
+                        </div>
+                      </div>
+
+                      <div className="flex flex-wrap items-center gap-2">
+                        <span className={`inline-flex items-center gap-2 rounded-full border px-3 py-1.5 text-xs font-semibold ${category.className}`}>
+                          <CategoryIcon className="h-4 w-4" />
+                          {category.label}
+                        </span>
+                        <span className="rounded-full border border-cyan-400/20 bg-cyan-400/10 px-3 py-1.5 text-xs font-semibold text-cyan-700 dark:text-cyan-100">
+                          Gabungan {asPercent(pair.scores.sg).toFixed(1)}%
+                        </span>
                       </div>
                     </div>
+                  </div>
 
-                    <ChevronDown className={`mt-2 h-5 w-5 flex-none text-zinc-500 transition-transform dark:text-slate-300 ${isOpen ? "rotate-180" : ""}`} />
-                  </button>
-
-                  <div className="border-t border-zinc-200 px-6 pb-6 pt-2 dark:border-zinc-800">
+                  <div className="grid gap-3 p-5 md:grid-cols-3">
+                    <ScoreInline label="CodeBERT" score={pair.scores.scb} />
+                    <ScoreInline label="Winnowing" score={pair.scores.sw} />
                     <ScoreInline label="Gabungan" score={pair.scores.sg} />
                   </div>
 
-                  {isOpen && (
-                    <div className="border-t border-zinc-200 bg-zinc-50/80 p-6 dark:border-zinc-800 dark:bg-zinc-950/40">
-                      <div className="mb-4 grid gap-4 md:grid-cols-3">
-                        <ScoreInline label="CodeBERT" score={pair.scores.scb} />
-                        <ScoreInline label="Winnowing" score={pair.scores.sw} />
-                        <ScoreInline label="Gabungan" score={pair.scores.sg} />
+                  <div className="px-5 pb-5">
+                    <div className="rounded-2xl border border-zinc-200 bg-white/85 p-4 text-sm text-zinc-700 shadow-sm dark:border-zinc-800 dark:bg-zinc-900/80 dark:text-slate-300">
+                      <div className="flex flex-wrap items-center gap-2">
+                        <span className="font-medium text-zinc-900 dark:text-white">Pasangan terdeteksi:</span>
+                        <span>{pair.student_a}</span>
+                        <span>vs</span>
+                        <span>{pair.student_b}</span>
                       </div>
-
-                      <div className="mb-4 rounded-2xl border border-zinc-200 bg-white/85 p-4 text-sm text-zinc-700 shadow-sm dark:border-zinc-800 dark:bg-zinc-900/80 dark:text-slate-300">
-                        <div className="flex flex-wrap items-center gap-2">
-                          <span className="font-medium text-zinc-900 dark:text-white">Pasangan terdeteksi:</span>
-                          <span>{pair.student_a}</span>
-                          <span>vs</span>
-                          <span>{pair.student_b}</span>
-                        </div>
-                        <div className="mt-2 text-xs text-zinc-500 dark:text-slate-400">
-                          Skor gabungan: {asPercent(pair.scores.sg).toFixed(1)}%
-                        </div>
-                      </div>
-
-                      {pair.snippets?.length ? (
-                        <div className="space-y-4">
-                          {pair.snippets.map((snippet, snippetIndex) => (
-                            <div key={`${expandedKey}-${snippetIndex}`} className="space-y-2">
-                              <div className="flex flex-wrap items-center gap-2 text-xs font-medium text-zinc-600 dark:text-slate-400">
-                                <span className="rounded-full border border-cyan-400/20 bg-cyan-400/10 px-3 py-1 text-cyan-700 dark:text-cyan-100">
-                                  {getDetectedSummary(snippet, pair.category)}
-                                </span>
-                                <span>{formatCodeLabel(snippet.student_a, snippet.project_a)}</span>
-                                <span>vs</span>
-                                <span>{formatCodeLabel(snippet.student_b, snippet.project_b)}</span>
-                              </div>
-                              <CodeSnippet snippet={snippet} category={pair.category} />
-                            </div>
-                          ))}
-                        </div>
-                      ) : (
-                        <div className="rounded-2xl border border-dashed border-zinc-300 p-6 text-center text-sm text-zinc-500 dark:border-zinc-700 dark:text-slate-400">
-                          Snippet belum tersedia.
-                        </div>
-                      )}
+                      <div className="mt-1 text-xs text-zinc-500 dark:text-slate-400">Skor gabungan: {asPercent(pair.scores.sg).toFixed(1)}%</div>
                     </div>
-                  )}
+
+                    <div className="mt-4 flex items-center justify-between gap-3 rounded-2xl border border-zinc-200 bg-zinc-50/80 px-4 py-3 dark:border-zinc-800 dark:bg-zinc-950/30">
+                      <div className="text-sm text-zinc-700 dark:text-slate-300">
+                        <span className="font-medium text-zinc-900 dark:text-white">{snippetCount}</span> snippet ditemukan
+                      </div>
+                      <button
+                        type="button"
+                        onClick={() => setExpanded(isOpen ? null : expandedKey)}
+                        className="inline-flex items-center gap-2 rounded-xl border border-cyan-400/20 bg-cyan-400/10 px-3 py-2 text-sm font-medium text-cyan-700 transition hover:bg-cyan-400/20 dark:text-cyan-100"
+                      >
+                        <ChevronDown className={`h-4 w-4 transition-transform ${isOpen ? "rotate-180" : ""}`} />
+                        {isOpen ? "Tutup" : "Lihat detail"}
+                      </button>
+                    </div>
+
+                    {isOpen && (
+                      <div className="mt-4 space-y-4">
+                        <div className="rounded-2xl border border-zinc-200 bg-white/85 p-4 shadow-sm dark:border-zinc-800 dark:bg-zinc-900/80">
+                          <div className="flex flex-wrap items-center gap-2">
+                            <span className="rounded-full border border-cyan-400/20 bg-cyan-400/10 px-3 py-1 text-xs font-semibold text-cyan-700 dark:text-cyan-100">
+                              {pair.category}
+                            </span>
+                            <span className="rounded-full border border-zinc-200 bg-white px-3 py-1 text-xs font-medium text-zinc-700 dark:border-zinc-700 dark:bg-zinc-900/80 dark:text-slate-300">
+                              CB {asPercent(pair.scores.scb).toFixed(1)}% · WN {asPercent(pair.scores.sw).toFixed(1)}%
+                            </span>
+                          </div>
+                          <div className="mt-3 text-sm text-zinc-600 dark:text-slate-300">
+                            Bagian yang sama ditandai kuning di bawah.
+                          </div>
+                        </div>
+
+                        {pair.snippets?.length ? (
+                          <div className="space-y-3">
+                            {pair.snippets.map((snippet, snippetIndex) => (
+                              <details key={`${expandedKey}-${snippetIndex}`} open={snippetIndex === 0} className="overflow-hidden rounded-2xl border border-zinc-200 bg-white/90 shadow-sm dark:border-zinc-800 dark:bg-zinc-900/80">
+                                <summary className="cursor-pointer list-none px-4 py-3 text-sm font-medium text-zinc-700 dark:text-slate-200">
+                                  <div className="flex flex-wrap items-center gap-2">
+                                    <span className="rounded-full border border-cyan-400/20 bg-cyan-400/10 px-3 py-1 text-xs font-semibold text-cyan-700 dark:text-cyan-100">
+                                      {getDetectedSummary(snippet, pair.category)}
+                                    </span>
+                                    <span className="text-xs text-zinc-500 dark:text-slate-400">
+                                      {formatCodeLabel(snippet.student_a, snippet.project_a)} vs {formatCodeLabel(snippet.student_b, snippet.project_b)}
+                                    </span>
+                                  </div>
+                                </summary>
+                                <div className="border-t border-zinc-200 dark:border-zinc-800">
+                                  <CodeSnippet snippet={snippet} category={pair.category} />
+                                </div>
+                              </details>
+                            ))}
+                          </div>
+                        ) : (
+                          <div className="rounded-2xl border border-dashed border-zinc-300 p-6 text-center text-sm text-zinc-500 dark:border-zinc-700 dark:text-slate-400">
+                            Snippet belum tersedia.
+                          </div>
+                        )}
+                      </div>
+                    )}
+                  </div>
                 </article>
               );
             })}

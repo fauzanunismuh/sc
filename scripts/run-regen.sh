@@ -14,6 +14,10 @@ fi
 
 PYTHON_SERVICE_URL="${PYTHON_SERVICE_URL:-http://127.0.0.1:8000}"
 
+if [ -z "${NODE_OPTIONS:-}" ]; then
+	export NODE_OPTIONS=--max-old-space-size=8192
+fi
+
 if ! curl -sf --max-time 5 \
   -X POST \
   -H "Content-Type: application/json" \
@@ -40,4 +44,5 @@ if ! curl -sf --max-time 5 \
 	done
 fi
 
+echo "rebuilding similarity"
 npx tsx scripts/regenerate-similarity.ts

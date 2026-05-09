@@ -8,6 +8,7 @@ const THRESHOLD_CODEBERT = 0.985;
 const THRESHOLD_WINNOWING = 0.08;
 const MIN_BLOCK_TOKENS = 2;
 const BLOCK_MATCH_THRESHOLD = 0.5;
+const MAX_SNIPPETS_PER_PAIR = 5;
 const FETCH_TIMEOUT_MS = 15000;
 const SIMILARITY_TIMEOUT_MS = 120000;
 
@@ -67,26 +68,24 @@ function splitIntoBlocks(code: string) {
   return code.split(/\n\s*\n+/).map((block) => block.trim()).filter(Boolean);
 }
 
-function isBoilerplateLine(line: string) {
-  const normalized = line.trim();
-  if (!normalized) return true;
-  return [
-    /^import\s+.+from\s+['"].+['"];?$/,
-    /^import\s+['"].+['"];?$/,
-    /^export\s+default\s+.+$/,
-    /^export\s+(const|function|class|type|interface)\s+.+$/,
-    /^"use (client|server)";?$/,
-    /^'use (client|server)';?$/,
-    /^package\s+config$/,
-    /^#\s*include\s+<.+>$/,
-    /^using\s+namespace\s+.+;$/,
-  ].some((pattern) => pattern.test(normalized));
-}
-
 function stripBoilerplate(code: string) {
   return code
     .split("\n")
-    .filter((line) => !isBoilerplateLine(line))
+    .filter((line) => {
+      const normalized = line.trim();
+      if (!normalized) return true;
+      return ![
+        /^import\s+.+from\s+['"].+['"];?$/,
+        /^import\s+['"].+['"];?$/,
+        /^export\s+default\s+.+$/,
+        /^export\s+(const|function|class|type|interface)\s+.+$/,
+        /^"use (client|server)";?$/,
+        /^'use (client|server)';?$/,
+        /^package\s+config$/,
+        /^#\s*include\s+<.+>$/,
+        /^using\s+namespace\s+.+;$/,
+      ].some((pattern) => pattern.test(normalized));
+    })
     .join("\n")
     .replace(/\n{3,}/g, "\n\n")
     .trim();
@@ -102,19 +101,20 @@ function tokenizeBlock(block: string) {
 
 function collectBlocks(snippetData: Record<string, string>) {
   return Object.entries(snippetData).flatMap(([path, code]) =>
-    splitIntoBlocks(code).map((block, index) => ({
-      path,
-      index,
-      code: block,
-      cleaned: stripBoilerplate(block),
-    }))
-    .filter((entry) => entry.cleaned.length > 0)
-    .map((entry) => ({
-      ...entry,
-      normalized: normalizeBlock(entry.cleaned),
-      tokens: tokenizeBlock(entry.cleaned),
-    }))
-    .filter((entry) => entry.tokens.size >= MIN_BLOCK_TOKENS)
+    splitIntoBlocks(code)
+      .map((block, index) => ({
+        path,
+        index,
+        code: block,
+        cleaned: stripBoilerplate(block),
+      }))
+      .filter((entry) => entry.cleaned.length > 0)
+      .map((entry) => ({
+        ...entry,
+        normalized: normalizeBlock(entry.cleaned),
+        tokens: tokenizeBlock(entry.cleaned),
+      }))
+      .filter((entry) => entry.tokens.size >= MIN_BLOCK_TOKENS)
   );
 }
 
@@ -153,9 +153,7 @@ async function fetchGitHubCode(repoUrl: string) {
   let activeBranch = "main";
 
   for (const br of branches) {
-    const res = await fetchWithTimeout(`https://api.github.com/repos/${owner}/${cleanRepo}/git/trees/${br}?recursive=1`, {
-      headers,
-    });
+    const res = await fetchWithTimeout(`https://api.github.com/repos/${owner}/${cleanRepo}/git/trees/${br}?recursive=1`, { headers });
     if (res.ok) {
       treeData = await res.json();
       activeBranch = br;
@@ -184,12 +182,17 @@ async function fetchGitHubCode(repoUrl: string) {
     }
   }
 
-  return { code: contents.length > 0 ? contents.join("\n\n") : "", snippets, hasCode: contents.length > 0 };
+  return {
+    code: contents.length > 0 ? contents.join("\n\n") : "",
+    snippets,
+    hasCode: contents.length > 0,
+  };
 }
 
 async function callWithTimeout(url: string, body: object): Promise<Response> {
   const controller = new AbortController();
   const timer = setTimeout(() => controller.abort(), SIMILARITY_TIMEOUT_MS);
+
   try {
     return await fetch(url, {
       method: "POST",
@@ -204,15 +207,18 @@ async function callWithTimeout(url: string, body: object): Promise<Response> {
 
 async function getSimilarity(codeA: string, codeB: string) {
   try {
-    // Use codebert-only + winnowing-only endpoints to skip expensive N² snippet search
     const [cbRes, wRes] = await Promise.all([
       callWithTimeout(`${PYTHON_SERVICE_URL}/analyze/codebert-only`, { code1: codeA, code2: codeB }),
       callWithTimeout(`${PYTHON_SERVICE_URL}/analyze/winnowing-only`, { code1: codeA, code2: codeB }),
     ]);
 
-    const scb = cbRes.ok ? ((await cbRes.json()) as { scb: number }).scb ?? 0 : 0;
-    const sw = wRes.ok ? ((await wRes.json()) as { sw: number }).sw ?? 0 : 0;
-    return { scb, sw };
+    const cbJson = cbRes.ok ? await cbRes.json() : null;
+    const wJson = wRes.ok ? await wRes.json() : null;
+
+    return {
+      scb: typeof cbJson?.scb === "number" ? cbJson.scb : 0,
+      sw: typeof wJson?.sw === "number" ? wJson.sw : 0,
+    };
   } catch (error) {
     if (error instanceof Error && error.name === "AbortError") {
       return { scb: 0, sw: 0 };
@@ -283,7 +289,7 @@ function buildSnippetPairs(
     ];
   }
 
-  return matchedPairs.map(({ a, b, score }) => ({
+  return matchedPairs.slice(0, MAX_SNIPPETS_PER_PAIR).map(({ a, b, score }) => ({
     student_a: projectAStudent,
     student_b: projectBStudent,
     project_a: projectA.title,

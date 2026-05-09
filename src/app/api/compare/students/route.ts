@@ -113,6 +113,8 @@ function normalizeCompareSnippets(snippets: unknown): CompareSnippet[] {
 
 export async function POST() {
   try {
+    const templateReviewReason = "Kemiripan didominasi template/framework, perlu verifikasi manual.";
+
     const similarityResults = await prisma.$queryRawUnsafe<SimilarityRow[]>(`
       SELECT
         sr."scoreCodebert" AS "codebertScore",
@@ -140,7 +142,6 @@ export async function POST() {
       const snippets = normalizeCompareSnippets(result.snippets);
       const categoryLabel = classifyFromScores(scb, sw);
       const storedCategoryLabel = result.categoryLabel || result.category || "Normal";
-      const templateReviewReason = "Kemiripan didominasi template/framework, perlu verifikasi manual.";
 
       const detectedAs =
         categoryLabel === "Plagiarisme Kuat"

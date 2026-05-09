@@ -1,7 +1,7 @@
-import { NextResponse } from 'next/server';
 import { auth } from '@/lib/auth';
 import prisma from '@/lib/prisma';
 import { projectSchema } from '@/lib/validations';
+import { NextResponse } from 'next/server';
 
 // GET /api/projects - Get projects based on user role
 export async function GET(request: Request) {
