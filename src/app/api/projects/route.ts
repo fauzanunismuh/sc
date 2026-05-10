@@ -3,6 +3,21 @@ import prisma from '@/lib/prisma';
 import { projectSchema } from '@/lib/validations';
 import { NextResponse } from 'next/server';
 
+async function triggerIncrementalSimilarityForProject(projectId: string, requestUrl: string) {
+  try {
+    const origin = new URL(requestUrl).origin;
+    const endpoint = `${origin}/api/similarity/batch`;
+
+    await fetch(endpoint, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ projectIds: [projectId] }),
+    });
+  } catch (error) {
+    console.warn('[projects] Incremental similarity trigger gagal:', error);
+  }
+}
+
 // GET /api/projects - Get projects based on user role
 export async function GET(request: Request) {
   try {
@@ -363,6 +378,11 @@ export async function POST(request: Request) {
         },
       },
     });
+
+    if (project.githubRepoUrl) {
+      // Fire-and-forget agar create project tetap responsif.
+      void triggerIncrementalSimilarityForProject(project.id, request.url);
+    }
 
     return NextResponse.json(
       {

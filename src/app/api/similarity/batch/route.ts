@@ -332,33 +332,55 @@ async function getSimilarity(codeA: string, codeB: string) {
 export async function POST(req: NextRequest) {
   try {
     const body = await req.json().catch(() => ({}));
-    const { projectIds } = body;
+    const requestedProjectIds = Array.isArray(body?.projectIds)
+      ? body.projectIds.filter((id: unknown): id is string => typeof id === "string" && id.length > 0)
+      : [];
 
-    const whereClause = projectIds?.length ? { id: { in: projectIds } } : {};
+    const projectSelect = {
+      id: true,
+      title: true,
+      githubRepoUrl: true,
+      mahasiswa: { select: { name: true, nim: true } },
+    } satisfies Prisma.ProjectSelect;
+
+    const whereClause = requestedProjectIds.length ? { id: { in: requestedProjectIds } } : {};
 
     const projects = await prisma.project.findMany({
       where: whereClause,
-      select: {
-        id: true,
-        title: true,
-        githubRepoUrl: true,
-        mahasiswa: { select: { name: true, nim: true } },
-      },
+      select: projectSelect,
     });
 
-    if (projects.length < 2) {
+    let incrementalTargetId: string | null = null;
+    let projectPool = projects;
+
+    // Mode incremental: jika hanya 1 project dipilih, bandingkan dengan semua project lain.
+    if (requestedProjectIds.length === 1 && projects.length === 1) {
+      const targetId = requestedProjectIds[0];
+      incrementalTargetId = targetId;
+
+      const otherProjects = await prisma.project.findMany({
+        where: { id: { not: targetId } },
+        select: projectSelect,
+      });
+
+      projectPool = [...projects, ...otherProjects];
+    }
+
+    if (projectPool.length < 2) {
       return NextResponse.json(
         { error: "Minimal 2 project diperlukan untuk analisis" },
         { status: 400 }
       );
     }
 
-    console.log(`[Batch] Memproses ${projects.length} proyek → ${(projects.length * (projects.length - 1)) / 2} pasangan`);
+    console.log(
+      `[Batch] Memproses ${projectPool.length} proyek${incrementalTargetId ? ` (incremental target=${incrementalTargetId})` : ""}`
+    );
 
     const projectData: Record<string, { code: string; snippets: Record<string, string>; hasCode?: boolean }> = {};
     const fetchErrors: string[] = [];
 
-    for (const p of projects) {
+    for (const p of projectPool) {
       try {
         if (p.githubRepoUrl) {
           const data = await fetchGitHubCode(p.githubRepoUrl);
@@ -407,10 +429,15 @@ export async function POST(req: NextRequest) {
     let pairCount = 0;
     let errorCount = 0;
 
-    for (let i = 0; i < projects.length; i++) {
-      for (let j = i + 1; j < projects.length; j++) {
-        const a = projects[i];
-        const b = projects[j];
+    for (let i = 0; i < projectPool.length; i++) {
+      for (let j = i + 1; j < projectPool.length; j++) {
+        const a = projectPool[i];
+        const b = projectPool[j];
+
+        if (incrementalTargetId && a.id !== incrementalTargetId && b.id !== incrementalTargetId) {
+          continue;
+        }
+
         pairCount++;
 
         try {
@@ -498,7 +525,9 @@ export async function POST(req: NextRequest) {
 
     return NextResponse.json({
       total: results.length,
-      totalProjects: projects.length,
+      totalProjects: projectPool.length,
+      mode: incrementalTargetId ? "incremental" : "full",
+      targetProjectId: incrementalTargetId,
       fetchErrors,
       results,
     });
