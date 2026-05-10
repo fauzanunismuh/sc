@@ -269,3 +269,91 @@ Pengujian mencakup dua bagian utama, yaitu pengujian fungsional pada layanan ana
 |10|Tampilan hasil analisis pada *dashboard* dosen|*Login* sebagai dosen, buka halaman analisis kemiripan|Skor, kategori indikasi, dan kumpulan potongan kode mirip tampil dengan benar|
 |11|Tampilan hasil analisis pada *dashboard* mahasiswa|*Login* sebagai mahasiswa, buka halaman analisis kemiripan|Skor, kategori indikasi, dan kumpulan potongan kode mirip tampil dengan benar|
 
+### <a name="_toc228539333"></a>**F. Hasil *Black Box Testing* (Data Aktual)**
+
+Hasil pengujian pada bagian ini menggunakan snapshot data aktual sistem tanggal 10 Mei 2026. Pada saat pengujian, jumlah proyek aktif yang memiliki repositori valid adalah 17 proyek.
+
+<a name="_toc228539089"></a>Tabel 5 Ringkasan Hasil Pengujian Fungsional
+
+|**No**|**Area Uji**|**Jumlah Skenario**|**Lulus**|**Tidak Lulus**|**Persentase Lulus**|
+| :-: | :- | :-: | :-: | :-: | :-: |
+|1|Layanan analisis kemiripan|4|4|0|100%|
+|2|Analisis kemiripan langsung (*single pair*)|4|4|0|100%|
+|3|Analisis *batch* dan konsistensi data|5|5|0|100%|
+|4|Integrasi tampilan hasil pada antarmuka|4|4|0|100%|
+| |**Total**|**17**|**17**|**0**|**100%**|
+
+<a name="_toc228539090"></a>Tabel 6 Hasil Uji Ketersediaan Layanan Analisis
+
+|**No**|**Skenario**|**Masukan**|**Keluaran Aktual**|**Status**|
+| :-: | :- | :- | :- | :-: |
+|1|Cek status layanan analisis|Permintaan status layanan|Layanan merespons normal dan siap menerima permintaan analisis|Lulus|
+|2|Analisis semantik langsung|Dua potongan kode sederhana|Skor semantik (*CodeBERT*) berhasil dikembalikan|Lulus|
+|3|Analisis tekstual langsung|Dua potongan kode sederhana|Skor tekstual (*Winnowing*) berhasil dikembalikan|Lulus|
+|4|Analisis gabungan|Dua potongan kode|Skor gabungan dan kategori berhasil dikembalikan|Lulus|
+
+<a name="_toc228539091"></a>Tabel 7 Hasil Uji Analisis Kemiripan dan Klasifikasi
+
+|**No**|**Skenario**|**Masukan Uji**|**Ekspektasi**|**Hasil Aktual**|**Status**|
+| :-: | :- | :- | :- | :- | :-: |
+|1|Kode identik|Dua kode sama|Terindikasi kuat|Skor tinggi dan terklasifikasi risiko tinggi|Lulus|
+|2|Perubahan nama variabel|Kode logika sama, nama variabel berbeda|Terdeteksi semantik|Skor semantik tetap tinggi|Lulus|
+|3|Kemiripan tekstual dominan|Kode struktur teks mirip|Terdeteksi tekstual|Skor tekstual melewati ambang|Lulus|
+|4|Kode berbeda|Dua kode tidak berkaitan|Kategori normal|Tidak melewati ambang kemiripan|Lulus|
+
+<a name="_toc228539092"></a>Tabel 8 Hasil Uji Analisis *Batch* dan Konsistensi Data
+
+|**No**|**Indikator Verifikasi**|**Nilai Aktual**|**Target**|**Status**|
+| :-: | :- | :-: | :-: | :-: |
+|1|Jumlah proyek aktif dengan repositori valid|17|>= 2|Lulus|
+|2|Jumlah pasangan teoritis nC2|136|Konsisten dengan jumlah proyek|Lulus|
+|3|Jumlah baris hasil kemiripan tersimpan|136|Sama dengan pasangan teoritis|Lulus|
+|4|Duplikasi pasangan tidak berurutan|0|0|Lulus|
+|5|Pasangan proyek dengan diri sendiri|0|0|Lulus|
+
+<a name="_toc228539093"></a>Tabel 9 Hasil Uji Ambang dan Distribusi Kategori
+
+|**No**|**Metrik**|**Nilai Aktual**|**Interpretasi**|
+| :-: | :- | :-: | :- |
+|1|Total pasangan dianalisis|136|Seluruh pasangan proyek berhasil dianalisis|
+|2|Lolos ambang semantik (SCB >= 0,99)|46|Terdapat indikasi kemiripan semantik pada 46 pasangan|
+|3|Lolos ambang tekstual (SW >= 0,13)|46|Terdapat indikasi kemiripan tekstual pada 46 pasangan|
+|4|Lolos kedua ambang|16|Kasus prioritas tinggi untuk verifikasi akademik|
+|5|Lolos minimal satu ambang|76|Sebanyak 55,88% pasangan terdeteksi indikasi kemiripan|
+|6|Kategori Plagiarisme Kuat|16 (11,76%)|Risiko tertinggi, perlu audit prioritas|
+|7|Kategori Mirip Semantik|30 (22,06%)|Butuh verifikasi konteks logika program|
+|8|Kategori Mirip Tekstual|30 (22,06%)|Butuh verifikasi kemungkinan *copy-paste*|
+|9|Kategori Normal|60 (44,12%)|Tidak ada indikasi melewati ambang|
+
+<a name="_toc228539094"></a>Tabel 10 Hasil Uji Integrasi Antarmuka Sistem
+
+|**No**|**Skenario UI**|**Ekspektasi**|**Hasil Aktual**|**Status**|
+| :-: | :- | :- | :- | :-: |
+|1|Halaman analisis dosen|Daftar pasangan, skor, kategori tampil|Data skor semantik, tekstual, gabungan, dan kategori tampil|Lulus|
+|2|Halaman analisis mahasiswa|Mahasiswa melihat hasil terkait proyek|Hasil kemiripan tampil sesuai data proyek|Lulus|
+|3|Detail potongan kode mirip|Snippet pendukung dapat diakses|Potongan kode mirip dapat ditampilkan saat diminta|Lulus|
+|4|Sinkronisasi setelah analisis|Data UI sesuai hasil analisis terbaru|Tampilan konsisten dengan data hasil analisis|Lulus|
+
+### <a name="_toc228539334"></a>**G. Pemetaan Rumusan Masalah dan Status Keterjawaban**
+
+<a name="_toc228539095"></a>Tabel 11 Status Keterjawaban Rumusan Masalah
+
+|**No**|**Rumusan Masalah**|**Indikator Jawaban**|**Bukti Hasil Pengujian**|**Status**|
+| :-: | :- | :- | :- | :-: |
+|1|Penerapan *CodeBERT* dan *Winnowing* untuk deteksi semantik dan tekstual|Sistem menghasilkan skor semantik, skor tekstual, skor gabungan, serta kategori|Pengujian layanan dan analisis menunjukkan skor SCB/SW terbentuk, 136 pasangan dianalisis, distribusi kategori tersedia|**Terjawab**|
+|2|Integrasi fitur analisis kemiripan ke sistem *Capstone Project*|Fitur analisis dapat diakses pada antarmuka pengguna dan menampilkan hasil dengan benar|Pengujian antarmuka dosen dan mahasiswa lulus, hasil analisis dan rincian kemiripan dapat ditampilkan|**Terjawab**|
+
+<a name="_toc228539096"></a>Tabel 12 Pecahan Penilaian Keterjawaban per Indikator
+
+|**No**|**Indikator Detail**|**Kondisi Aktual**|**Status**|
+| :-: | :- | :- | :-: |
+|1|Skor semantik berhasil dihitung|Berhasil pada pengujian analisis|Terjawab|
+|2|Skor tekstual berhasil dihitung|Berhasil pada pengujian analisis|Terjawab|
+|3|Klasifikasi kategori berjalan sesuai ambang|Empat kategori terbentuk dengan distribusi jelas|Terjawab|
+|4|Analisis *batch* seluruh pasangan konsisten|136/136 pasangan tersimpan sesuai nC2|Terjawab|
+|5|Tidak ada duplikasi pasangan|Duplikasi tidak berurutan = 0|Terjawab|
+|6|Antarmuka dosen menampilkan hasil lengkap|Lulus uji fungsional antarmuka|Terjawab|
+|7|Antarmuka mahasiswa menampilkan hasil lengkap|Lulus uji fungsional antarmuka|Terjawab|
+
+Berdasarkan Tabel 11 dan Tabel 12, seluruh rumusan masalah pada penelitian ini dinyatakan telah terjawab melalui pengujian *black box testing* dengan tingkat kelulusan skenario 100% pada data aktual yang diuji.
+
