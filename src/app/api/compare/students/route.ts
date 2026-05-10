@@ -52,7 +52,13 @@ type SimilaritySnippetRow = {
 };
 
 function toPercent(score: number) {
-  return score <= 1 ? score * 100 : score;
+  if (!Number.isFinite(score)) return 0;
+  // Treat values close to 1 as ratio-form scores (0..1), including floating overshoot like 1.0000002.
+  if (score <= 1.5) {
+    return Math.max(0, Math.min(100, score * 100));
+  }
+  // Legacy percent-form scores are already 0..100.
+  return Math.max(0, Math.min(100, score));
 }
 
 const THRESHOLD_CODEBERT_PERCENT = 99;

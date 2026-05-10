@@ -52,11 +52,19 @@ type CompareStudentsResponse = {
 };
 
 function asPercent(value: number) {
-  return value <= 1 ? value * 100 : value;
+  if (!Number.isFinite(value)) return 0;
+  if (value <= 1.5) {
+    return Math.max(0, Math.min(100, value * 100));
+  }
+  return Math.max(0, Math.min(100, value));
 }
 
 function normalizeScore(value: number) {
-  return value > 1 ? value / 100 : value;
+  if (!Number.isFinite(value)) return 0;
+  if (value <= 1.5) {
+    return Math.max(0, Math.min(1, value));
+  }
+  return Math.max(0, Math.min(1, value / 100));
 }
 
 const THRESHOLD_CODEBERT = 0.99;

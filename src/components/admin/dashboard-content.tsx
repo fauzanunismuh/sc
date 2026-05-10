@@ -1,41 +1,39 @@
 'use client';
 
-import Link from 'next/link';
+import {
+    formatDate,
+    getRoleLabel,
+    getStatusColor,
+    getStatusLabel,
+} from '@/lib/utils';
+import {
+    Avatar,
+    Button,
+    Chip,
+    Table,
+    TableBody,
+    TableCell,
+    TableColumn,
+    TableHeader,
+    TableRow
+} from '@heroui/react';
 import { motion } from 'framer-motion';
 import {
-  Card,
-  CardBody,
-  CardHeader,
-  Button,
-  Chip,
-  Avatar,
-  Table,
-  TableHeader,
-  TableColumn,
-  TableBody,
-  TableRow,
-  TableCell,
-} from '@heroui/react';
-import {
-  Users,
-  FolderGit2,
-  GraduationCap,
-  ClipboardCheck,
-  UserPlus,
-  ChevronRight,
-  Calendar,
-  Shield,
-  TrendingUp,
-  Activity,
-  BookOpen,
-  Settings,
+    Activity,
+    BookOpen,
+    Calendar,
+    ChevronRight,
+    ClipboardCheck,
+    FolderGit2,
+    GraduationCap,
+    Settings,
+    Shield,
+    TrendingUp,
+    UserPlus,
+    Users,
 } from 'lucide-react';
-import {
-  formatDate,
-  getStatusColor,
-  getStatusLabel,
-  getRoleLabel,
-} from '@/lib/utils';
+import Link from 'next/link';
+import { useEffect, useState } from 'react';
 
 interface User {
   id: string;
@@ -225,6 +223,12 @@ export function AdminDashboardContent({
   recentUsers,
   recentProjects,
 }: AdminDashboardProps) {
+  const [isMounted, setIsMounted] = useState(false);
+
+  useEffect(() => {
+    setIsMounted(true);
+  }, []);
+
   return (
     <motion.div 
       className="space-y-6"
@@ -245,7 +249,7 @@ export function AdminDashboardContent({
                 <Shield className="w-7 h-7" />
               </div>
               <div>
-                <p className="text-rose-600/70 dark:text-rose-400/70 text-sm">{getGreeting()}</p>
+                <p className="text-rose-600/70 dark:text-rose-400/70 text-sm">{isMounted ? getGreeting() : 'Selamat Datang'}</p>
                 <h1 className="text-2xl md:text-3xl font-bold text-slate-800 dark:text-white">Admin Dashboard</h1>
                 <p className="text-rose-600/60 dark:text-rose-400/60 text-sm mt-1">Kelola sistem capstone project</p>
               </div>
@@ -413,63 +417,69 @@ export function AdminDashboardContent({
 
               {/* Desktop View - Table */}
               <div className="hidden md:block">
-                <Table aria-label="Recent users" removeWrapper>
-                  <TableHeader>
-                    <TableColumn>USER</TableColumn>
-                    <TableColumn>ROLE</TableColumn>
-                    <TableColumn>TANGGAL DAFTAR</TableColumn>
-                    <TableColumn>AKSI</TableColumn>
-                  </TableHeader>
-                  <TableBody>
-                    {recentUsers.map((user) => (
-                      <TableRow key={user.id}>
-                        <TableCell>
-                          <div className="flex items-center gap-3">
-                            <Avatar
-                              name={user.name}
-                              src={user.image || undefined}
-                              size="sm"
-                            />
-                            <div>
-                              <p className="font-medium text-sm">{user.name}</p>
-                              <p className="text-xs text-zinc-500">
-                                {user.username}
-                              </p>
+                {isMounted ? (
+                  <Table aria-label="Recent users" removeWrapper>
+                    <TableHeader>
+                      <TableColumn>USER</TableColumn>
+                      <TableColumn>ROLE</TableColumn>
+                      <TableColumn>TANGGAL DAFTAR</TableColumn>
+                      <TableColumn>AKSI</TableColumn>
+                    </TableHeader>
+                    <TableBody>
+                      {recentUsers.map((user) => (
+                        <TableRow key={user.id}>
+                          <TableCell>
+                            <div className="flex items-center gap-3">
+                              <Avatar
+                                name={user.name}
+                                src={user.image || undefined}
+                                size="sm"
+                              />
+                              <div>
+                                <p className="font-medium text-sm">{user.name}</p>
+                                <p className="text-xs text-zinc-500">
+                                  {user.username}
+                                </p>
+                              </div>
                             </div>
-                          </div>
-                        </TableCell>
-                        <TableCell>
-                          <Chip
-                            size="sm"
-                            color={
-                              user.role === 'ADMIN'
-                                ? 'danger'
-                                : user.role === 'DOSEN_PENGUJI'
-                                  ? 'secondary'
-                                  : 'primary'
-                            }
-                            variant="flat"
-                          >
-                            {getRoleLabel(user.role)}
-                          </Chip>
-                        </TableCell>
-                        <TableCell className="text-zinc-500 text-sm">
-                          {formatDate(user.createdAt)}
-                        </TableCell>
-                        <TableCell>
-                          <Button
-                            as={Link}
-                            href={`/admin/users?id=${user.id}`}
-                            size="sm"
-                            variant="flat"
-                          >
-                            Detail
-                          </Button>
-                        </TableCell>
-                      </TableRow>
-                    ))}
-                  </TableBody>
-                </Table>
+                          </TableCell>
+                          <TableCell>
+                            <Chip
+                              size="sm"
+                              color={
+                                user.role === 'ADMIN'
+                                  ? 'danger'
+                                  : user.role === 'DOSEN_PENGUJI'
+                                    ? 'secondary'
+                                    : 'primary'
+                              }
+                              variant="flat"
+                            >
+                              {getRoleLabel(user.role)}
+                            </Chip>
+                          </TableCell>
+                          <TableCell className="text-zinc-500 text-sm">
+                            {formatDate(user.createdAt)}
+                          </TableCell>
+                          <TableCell>
+                            <Button
+                              as={Link}
+                              href={`/admin/users?id=${user.id}`}
+                              size="sm"
+                              variant="flat"
+                            >
+                              Detail
+                            </Button>
+                          </TableCell>
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
+                ) : (
+                  <div className="rounded-lg border border-slate-200/60 dark:border-zinc-700/50 px-4 py-3 text-sm text-slate-500 dark:text-zinc-400">
+                    Memuat tabel user...
+                  </div>
+                )}
               </div>
             </div>
           </div>
@@ -626,74 +636,80 @@ export function AdminDashboardContent({
 
             {/* Desktop View - Table */}
             <div className="hidden md:block">
-              <Table aria-label="Recent projects" removeWrapper>
-                <TableHeader>
-                  <TableColumn>PROJECT</TableColumn>
-                  <TableColumn>MAHASISWA</TableColumn>
-                  <TableColumn>SEMESTER</TableColumn>
-                  <TableColumn>STATUS</TableColumn>
-                  <TableColumn>TANGGAL</TableColumn>
-                  <TableColumn>AKSI</TableColumn>
-                </TableHeader>
-                <TableBody>
-                  {recentProjects.map((project) => (
-                    <TableRow key={project.id}>
-                      <TableCell>
-                        <p className="font-medium truncate max-w-[200px]">
-                          {project.title}
-                        </p>
-                      </TableCell>
-                      <TableCell>
-                        <div className="flex items-center gap-2">
-                          <Avatar name={project.mahasiswa.name} size="sm" />
-                          <div>
-                            <p className="text-sm">{project.mahasiswa.name}</p>
-                            <p className="text-xs text-zinc-500">
-                              {project.mahasiswa.username}
-                            </p>
+              {isMounted ? (
+                <Table aria-label="Recent projects" removeWrapper>
+                  <TableHeader>
+                    <TableColumn>PROJECT</TableColumn>
+                    <TableColumn>MAHASISWA</TableColumn>
+                    <TableColumn>SEMESTER</TableColumn>
+                    <TableColumn>STATUS</TableColumn>
+                    <TableColumn>TANGGAL</TableColumn>
+                    <TableColumn>AKSI</TableColumn>
+                  </TableHeader>
+                  <TableBody>
+                    {recentProjects.map((project) => (
+                      <TableRow key={project.id}>
+                        <TableCell>
+                          <p className="font-medium truncate max-w-[200px]">
+                            {project.title}
+                          </p>
+                        </TableCell>
+                        <TableCell>
+                          <div className="flex items-center gap-2">
+                            <Avatar name={project.mahasiswa.name} size="sm" />
+                            <div>
+                              <p className="text-sm">{project.mahasiswa.name}</p>
+                              <p className="text-xs text-zinc-500">
+                                {project.mahasiswa.username}
+                              </p>
+                            </div>
                           </div>
-                        </div>
-                      </TableCell>
-                      <TableCell>
-                        <Chip size="sm" variant="flat">{project.semester}</Chip>
-                      </TableCell>
-                      <TableCell>
-                        <Chip
-                          size="sm"
-                          color={getStatusColor(project.status)}
-                          variant="flat"
-                        >
-                          {getStatusLabel(project.status)}
-                        </Chip>
-                      </TableCell>
-                      <TableCell className="text-zinc-500 text-sm">
-                        {formatDate(project.createdAt)}
-                      </TableCell>
-                      <TableCell>
-                        <div className="flex gap-2">
-                          <Button
-                            as={Link}
-                            href={`/admin/projects?id=${project.id}`}
+                        </TableCell>
+                        <TableCell>
+                          <Chip size="sm" variant="flat">{project.semester}</Chip>
+                        </TableCell>
+                        <TableCell>
+                          <Chip
                             size="sm"
+                            color={getStatusColor(project.status)}
                             variant="flat"
                           >
-                            Detail
-                          </Button>
-                          <Button
-                            as={Link}
-                            href={`/admin/assignments?projectId=${project.id}`}
-                            size="sm"
-                            color="primary"
-                            variant="flat"
-                          >
-                            Assign
-                          </Button>
-                        </div>
-                      </TableCell>
-                    </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
+                            {getStatusLabel(project.status)}
+                          </Chip>
+                        </TableCell>
+                        <TableCell className="text-zinc-500 text-sm">
+                          {formatDate(project.createdAt)}
+                        </TableCell>
+                        <TableCell>
+                          <div className="flex gap-2">
+                            <Button
+                              as={Link}
+                              href={`/admin/projects?id=${project.id}`}
+                              size="sm"
+                              variant="flat"
+                            >
+                              Detail
+                            </Button>
+                            <Button
+                              as={Link}
+                              href={`/admin/assignments?projectId=${project.id}`}
+                              size="sm"
+                              color="primary"
+                              variant="flat"
+                            >
+                              Assign
+                            </Button>
+                          </div>
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              ) : (
+                <div className="rounded-lg border border-slate-200/60 dark:border-zinc-700/50 px-4 py-3 text-sm text-slate-500 dark:text-zinc-400">
+                  Memuat tabel project...
+                </div>
+              )}
             </div>
           </div>
         </div>
