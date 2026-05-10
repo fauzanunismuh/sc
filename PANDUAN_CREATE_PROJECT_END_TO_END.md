@@ -463,8 +463,8 @@ POST /api/project-requirements
 **Trigger:** Batch processing atau on-demand check
 
 **Files:**
-- [src/similarity-service/main.py](src/similarity-service/main.py) - FastAPI service
-- [src/similarity-service/hybrid.py](src/similarity-service/hybrid.py) - Algoritma hybrid
+- [similarity-service/api.py](similarity-service/api.py) - FastAPI service (endpoint /analyze/*)
+- [similarity-service/hybrid.py](similarity-service/hybrid.py) - Algoritma hybrid
 
 **Algoritma Hybrid Scoring:**
 
@@ -922,7 +922,7 @@ export function useProjectUpdates(projectId: string) {
 | **Prisma Schema** | `prisma/schema.prisma` | Database models |
 | **Utilities** | `src/lib/utils.ts` | Helper functions (bonus calc, etc) |
 | **Display** | `src/components/mahasiswa/project-detail-content.tsx` | Project detail UI |
-| **Similarity** | `src/similarity-service/hybrid.py` | Similarity algorithm |
+| **Similarity** | `similarity-service/hybrid.py` | Similarity algorithm |
 | **Requirements** | `src/app/api/project-requirements/route.ts` | Completion % calculation |
 
 ---

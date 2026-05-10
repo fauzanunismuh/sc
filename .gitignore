@@ -42,3 +42,8 @@ next-env.d.ts
 
 # local python environments
 src/similarity-service/.venv/
+
+# python caches
+similarity-service/__pycache__/
+src/similarity-service/__pycache__/
+*.pyc
