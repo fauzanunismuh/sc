@@ -117,13 +117,13 @@ function collectBlocks(snippetData: Record<string, string>) {
       code: block,
       cleaned: stripBoilerplate(block),
     }))
-    .filter((entry) => entry.cleaned.length > 0)
-    .map((entry) => ({
-      ...entry,
-      normalized: normalizeBlock(entry.cleaned),
-      tokens: tokenizeBlock(entry.cleaned),
-    }))
-    .filter((entry) => entry.tokens.size >= MIN_BLOCK_TOKENS)
+      .filter((entry) => entry.cleaned.length > 0)
+      .map((entry) => ({
+        ...entry,
+        normalized: normalizeBlock(entry.cleaned),
+        tokens: tokenizeBlock(entry.cleaned),
+      }))
+      .filter((entry) => entry.tokens.size >= MIN_BLOCK_TOKENS)
   );
 }
 

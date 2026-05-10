@@ -34,12 +34,15 @@ type CompareSnippet = {
 };
 
 type SuspiciousPair = {
+  project_a_id: string;
+  project_b_id: string;
   student_a: string;
   student_b: string;
   project_a: string;
   project_b: string;
   scores: { scb: number; sw: number; sg: number };
   category: string;
+  snippet_count?: number;
   snippets: CompareSnippet[];
 };
 
@@ -273,10 +276,44 @@ export default function DosenSimilarityPage() {
   const [loading, setLoading] = useState(true);
   const [running, setRunning] = useState(false);
   const [expanded, setExpanded] = useState<string | null>(null);
+  const [snippetCache, setSnippetCache] = useState<Record<string, CompareSnippet[]>>({});
+  const [loadingSnippets, setLoadingSnippets] = useState<Record<string, boolean>>({});
   const [search, setSearch] = useState("");
   const [filterStatus, setFilterStatus] = useState("all");
   const [sortBy, setSortBy] = useState<"sg" | "scb" | "sw">("sg");
   const [error, setError] = useState<string | null>(null);
+
+  const getPairKey = useCallback((pair: SuspiciousPair) => `${pair.project_a_id}:${pair.project_b_id}`, []);
+
+  const fetchPairSnippets = useCallback(async (pair: SuspiciousPair) => {
+    const pairKey = getPairKey(pair);
+    if (snippetCache[pairKey] || loadingSnippets[pairKey]) {
+      return;
+    }
+
+    setLoadingSnippets((previous) => ({ ...previous, [pairKey]: true }));
+
+    try {
+      const response = await fetch("/api/compare/students", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ mode: "snippets", projectAId: pair.project_a_id, projectBId: pair.project_b_id }),
+      });
+
+      const data = (await response.json()) as { snippets?: CompareSnippet[]; error?: string };
+      if (!response.ok || data.error) {
+        setError(data.error || "Gagal mengambil detail snippet.");
+        return;
+      }
+
+      setSnippetCache((previous) => ({ ...previous, [pairKey]: data.snippets || [] }));
+    } catch (requestError) {
+      console.error(requestError);
+      setError("Gagal mengambil detail snippet.");
+    } finally {
+      setLoadingSnippets((previous) => ({ ...previous, [pairKey]: false }));
+    }
+  }, [getPairKey, loadingSnippets, snippetCache]);
 
   const fetchResults = useCallback(async () => {
     setLoading(true);
@@ -286,7 +323,7 @@ export default function DosenSimilarityPage() {
       const response = await fetch("/api/compare/students", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({}),
+        body: JSON.stringify({ mode: "summary" }),
       });
 
       const data = (await response.json()) as CompareStudentsResponse;
@@ -298,6 +335,7 @@ export default function DosenSimilarityPage() {
       }
 
       setResults(data.suspicious_pairs || []);
+      setSnippetCache({});
     } catch (requestError) {
       console.error(requestError);
       setError("Gagal mengambil data. Pastikan server berjalan.");
@@ -315,7 +353,7 @@ export default function DosenSimilarityPage() {
       const response = await fetch("/api/compare/students", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({}),
+        body: JSON.stringify({ mode: "summary" }),
       });
 
       const data = (await response.json()) as CompareStudentsResponse;
@@ -326,6 +364,7 @@ export default function DosenSimilarityPage() {
       }
 
       setResults(data.suspicious_pairs || []);
+      setSnippetCache({});
     } catch (requestError) {
       console.error(requestError);
       setError("Gagal menjalankan analisis batch.");
@@ -515,6 +554,8 @@ export default function DosenSimilarityPage() {
               const isOpen = expanded === expandedKey;
               const category = classifyCategory(pair.category, pair.scores);
               const CategoryIcon = category.icon;
+              const pairKey = getPairKey(pair);
+              const snippets = snippetCache[pairKey] ?? pair.snippets ?? [];
 
               return (
                 <article
@@ -523,7 +564,12 @@ export default function DosenSimilarityPage() {
                 >
                   <button
                     type="button"
-                    onClick={() => setExpanded(isOpen ? null : expandedKey)}
+                    onClick={() => {
+                      if (!isOpen) {
+                        void fetchPairSnippets(pair);
+                      }
+                      setExpanded(isOpen ? null : expandedKey);
+                    }}
                     className="flex w-full items-start justify-between gap-4 p-6 text-left"
                   >
                     <div className="space-y-4">
@@ -561,21 +607,13 @@ export default function DosenSimilarityPage() {
                         <ScoreInline label="Gabungan" score={pair.scores.sg} />
                       </div>
 
-                      <div className="mb-4 rounded-2xl border border-zinc-200 bg-white/85 p-4 text-sm text-zinc-700 shadow-sm dark:border-zinc-800 dark:bg-zinc-900/80 dark:text-slate-300">
-                        <div className="flex flex-wrap items-center gap-2">
-                          <span className="font-medium text-zinc-900 dark:text-white">Pasangan terdeteksi:</span>
-                          <span>{pair.student_a}</span>
-                          <span>vs</span>
-                          <span>{pair.student_b}</span>
+                      {loadingSnippets[pairKey] ? (
+                        <div className="rounded-2xl border border-zinc-200 p-6 text-center text-sm text-zinc-500 dark:border-zinc-700 dark:text-slate-400">
+                          Memuat snippet...
                         </div>
-                        <div className="mt-2 text-xs text-zinc-500 dark:text-slate-400">
-                          Skor gabungan: {asPercent(pair.scores.sg).toFixed(1)}%
-                        </div>
-                      </div>
-
-                      {pair.snippets?.length ? (
+                      ) : snippets.length ? (
                         <div className="space-y-4">
-                          {pair.snippets.map((snippet, snippetIndex) => (
+                          {snippets.map((snippet, snippetIndex) => (
                             <div key={`${expandedKey}-${snippetIndex}`} className="space-y-2">
                               <div className="flex flex-wrap items-center gap-2 text-xs font-medium text-zinc-600 dark:text-slate-400">
                                 <span className="rounded-full border border-cyan-400/20 bg-cyan-400/10 px-3 py-1 text-cyan-700 dark:text-cyan-100">

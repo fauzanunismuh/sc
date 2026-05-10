@@ -1,13 +1,13 @@
 "use client";
 
 import {
-  AlertTriangle,
-  BarChart,
-  CheckCircle2,
-  ChevronDown,
-  FileText,
-  RefreshCw,
-  Search,
+    AlertTriangle,
+    BarChart,
+    CheckCircle2,
+    ChevronDown,
+    FileText,
+    RefreshCw,
+    Search,
 } from "lucide-react";
 import { useCallback, useEffect, useMemo, useState } from "react";
 
@@ -45,12 +45,15 @@ function toThresholdScores(scores?: CompareSnippet["method_scores"]) {
 }
 
 type SuspiciousPair = {
+  project_a_id: string;
+  project_b_id: string;
   student_a: string;
   student_b: string;
   project_a: string;
   project_b: string;
   scores: { scb: number; sw: number; sg: number };
   category: string;
+  snippet_count?: number;
   snippets: CompareSnippet[];
 };
 
@@ -329,10 +332,49 @@ export default function AdminSimilarityPage() {
   const [loading, setLoading] = useState(true);
   const [running, setRunning] = useState(false);
   const [expanded, setExpanded] = useState<string | null>(null);
+  const [snippetCache, setSnippetCache] = useState<Record<string, CompareSnippet[]>>({});
+  const [loadingSnippets, setLoadingSnippets] = useState<Record<string, boolean>>({});
   const [search, setSearch] = useState("");
   const [filterStatus, setFilterStatus] = useState("all");
   const [sortBy, setSortBy] = useState<"sg" | "scb" | "sw">("sg");
   const [error, setError] = useState<string | null>(null);
+
+  const getPairKey = useCallback((pair: SuspiciousPair) => `${pair.project_a_id}:${pair.project_b_id}`, []);
+
+  const fetchPairSnippets = useCallback(async (pair: SuspiciousPair) => {
+    const pairKey = getPairKey(pair);
+    if (snippetCache[pairKey] || loadingSnippets[pairKey]) {
+      return;
+    }
+
+    setLoadingSnippets((previous) => ({ ...previous, [pairKey]: true }));
+
+    try {
+      const response = await fetch("/api/compare/students", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          mode: "snippets",
+          projectAId: pair.project_a_id,
+          projectBId: pair.project_b_id,
+        }),
+      });
+
+      const data = (await response.json()) as { snippets?: CompareSnippet[]; error?: string };
+
+      if (!response.ok || data.error) {
+        setError(data.error || "Gagal mengambil detail snippet.");
+        return;
+      }
+
+      setSnippetCache((previous) => ({ ...previous, [pairKey]: data.snippets || [] }));
+    } catch (requestError) {
+      console.error(requestError);
+      setError("Gagal mengambil detail snippet.");
+    } finally {
+      setLoadingSnippets((previous) => ({ ...previous, [pairKey]: false }));
+    }
+  }, [getPairKey, loadingSnippets, snippetCache]);
 
   const fetchResults = useCallback(async () => {
     setLoading(true);
@@ -342,7 +384,7 @@ export default function AdminSimilarityPage() {
       const response = await fetch("/api/compare/students", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({}),
+        body: JSON.stringify({ mode: "summary" }),
       });
 
       const data = (await response.json()) as CompareStudentsResponse;
@@ -354,6 +396,7 @@ export default function AdminSimilarityPage() {
       }
 
       setResults(data.suspicious_pairs || []);
+      setSnippetCache({});
     } catch (requestError) {
       console.error(requestError);
       setError("Gagal mengambil data. Pastikan server berjalan.");
@@ -371,7 +414,7 @@ export default function AdminSimilarityPage() {
       const response = await fetch("/api/compare/students", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({}),
+        body: JSON.stringify({ mode: "summary" }),
       });
 
       const data = (await response.json()) as CompareStudentsResponse;
@@ -382,6 +425,7 @@ export default function AdminSimilarityPage() {
       }
 
       setResults(data.suspicious_pairs || []);
+      setSnippetCache({});
     } catch (requestError) {
       console.error(requestError);
       setError("Gagal menjalankan analisis batch.");
@@ -582,8 +626,10 @@ export default function AdminSimilarityPage() {
               const isOpen = expanded === expandedKey;
               const category = classifyCategory(pair.category);
               const CategoryIcon = category.icon;
-              const snippetCount = pair.snippets?.length ?? 0;
-              const firstSnippet = pair.snippets?.[0];
+              const pairKey = getPairKey(pair);
+              const snippets = snippetCache[pairKey] ?? pair.snippets ?? [];
+              const snippetCount = pair.snippet_count ?? snippets.length;
+              const firstSnippet = snippets[0];
 
               return (
                 <article key={expandedKey} className="overflow-hidden rounded-3xl border border-zinc-200 bg-white/85 shadow-sm backdrop-blur-xl dark:border-zinc-800 dark:bg-zinc-900/70">
@@ -622,23 +668,18 @@ export default function AdminSimilarityPage() {
                   </div>
 
                   <div className="px-5 pb-5">
-                    <div className="rounded-2xl border border-zinc-200 bg-white/85 p-4 text-sm text-zinc-700 shadow-sm dark:border-zinc-800 dark:bg-zinc-900/80 dark:text-slate-300">
-                      <div className="flex flex-wrap items-center gap-2">
-                        <span className="font-medium text-zinc-900 dark:text-white">Pasangan terdeteksi:</span>
-                        <span>{pair.student_a}</span>
-                        <span>vs</span>
-                        <span>{pair.student_b}</span>
-                      </div>
-                      <div className="mt-1 text-xs text-zinc-500 dark:text-slate-400">Skor gabungan: {asPercent(pair.scores.sg).toFixed(1)}%</div>
-                    </div>
-
                     <div className="mt-4 flex items-center justify-between gap-3 rounded-2xl border border-zinc-200 bg-zinc-50/80 px-4 py-3 dark:border-zinc-800 dark:bg-zinc-950/30">
                       <div className="text-sm text-zinc-700 dark:text-slate-300">
                         <span className="font-medium text-zinc-900 dark:text-white">{snippetCount}</span> snippet ditemukan
                       </div>
                       <button
                         type="button"
-                        onClick={() => setExpanded(isOpen ? null : expandedKey)}
+                        onClick={() => {
+                          if (!isOpen) {
+                            void fetchPairSnippets(pair);
+                          }
+                          setExpanded(isOpen ? null : expandedKey);
+                        }}
                         className="inline-flex items-center gap-2 rounded-xl border border-cyan-400/20 bg-cyan-400/10 px-3 py-2 text-sm font-medium text-cyan-700 transition hover:bg-cyan-400/20 dark:text-cyan-100"
                       >
                         <ChevronDown className={`h-4 w-4 transition-transform ${isOpen ? "rotate-180" : ""}`} />
@@ -648,25 +689,15 @@ export default function AdminSimilarityPage() {
 
                     {isOpen && (
                       <div className="mt-4 space-y-4">
-                        <div className="rounded-2xl border border-zinc-200 bg-white/85 p-4 shadow-sm dark:border-zinc-800 dark:bg-zinc-900/80">
-                          <div className="flex flex-wrap items-center gap-2">
-                            <span className="rounded-full border border-cyan-400/20 bg-cyan-400/10 px-3 py-1 text-xs font-semibold text-cyan-700 dark:text-cyan-100">
-                              {pair.category}
-                            </span>
-                            <span className="rounded-full border border-zinc-200 bg-white px-3 py-1 text-xs font-medium text-zinc-700 dark:border-zinc-700 dark:bg-zinc-900/80 dark:text-slate-300">
-                              CB {asPercent(pair.scores.scb).toFixed(1)}% · WN {asPercent(pair.scores.sw).toFixed(1)}%
-                            </span>
+                        {loadingSnippets[pairKey] ? (
+                          <div className="rounded-2xl border border-zinc-200 p-6 text-center text-sm text-zinc-500 dark:border-zinc-700 dark:text-slate-400">
+                            Memuat snippet...
                           </div>
-                          <div className="mt-3 text-sm text-zinc-600 dark:text-slate-300">
-                            Bagian yang sama ditandai kuning di bawah.
-                          </div>
-                        </div>
-
-                        {pair.snippets?.length ? (
+                        ) : snippets.length ? (
                           <div className="space-y-3">
-                            {pair.snippets.map((snippet, snippetIndex) => (
-                              <details key={`${expandedKey}-${snippetIndex}`} open={snippetIndex === 0} className="overflow-hidden rounded-2xl border border-zinc-200 bg-white/90 shadow-sm dark:border-zinc-800 dark:bg-zinc-900/80">
-                                <summary className="cursor-pointer list-none px-4 py-3 text-sm font-medium text-zinc-700 dark:text-slate-200">
+                            {snippets.map((snippet, snippetIndex) => (
+                              <div key={`${expandedKey}-${snippetIndex}`} className="overflow-hidden rounded-2xl border border-zinc-200 bg-white/90 shadow-sm dark:border-zinc-800 dark:bg-zinc-900/80">
+                                <div className="px-4 py-3 text-sm font-medium text-zinc-700 dark:text-slate-200">
                                   <div className="flex flex-wrap items-center gap-2">
                                     <span className="rounded-full border border-cyan-400/20 bg-cyan-400/10 px-3 py-1 text-xs font-semibold text-cyan-700 dark:text-cyan-100">
                                       {getDetectedSummary(snippet, pair.category)}
@@ -675,11 +706,11 @@ export default function AdminSimilarityPage() {
                                       {formatCodeLabel(snippet.student_a, snippet.project_a)} vs {formatCodeLabel(snippet.student_b, snippet.project_b)}
                                     </span>
                                   </div>
-                                </summary>
+                                </div>
                                 <div className="border-t border-zinc-200 dark:border-zinc-800">
                                   <CodeSnippet snippet={snippet} category={pair.category} />
                                 </div>
-                              </details>
+                              </div>
                             ))}
                           </div>
                         ) : (
