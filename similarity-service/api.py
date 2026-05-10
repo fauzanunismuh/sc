@@ -11,7 +11,7 @@ app = FastAPI(
 )
 
 # Initialize hybrid similarity detector
-detector = HybridSimilarity(alpha=0.6, codebert_threshold=0.80, winnowing_threshold=0.75)
+detector = HybridSimilarity(alpha=0.5, codebert_threshold=0.99, winnowing_threshold=0.13)
 
 class CodePair(BaseModel):
     """Model untuk pasangan kode yang akan dibandingkan"""
@@ -44,15 +44,15 @@ async def root():
         "algorithms": {
             "codebert": {
                 "model": "microsoft/codebert-base",
-                "threshold": 0.80
+                "threshold": 0.99
             },
             "winnowing": {
                 "k_gram": 5,
                 "window": 4,
-                "threshold": 0.75
+                "threshold": 0.13
             },
             "hybrid": {
-                "alpha": 0.6,
+                "alpha": 0.5,
                 "formula": "SG = α*SCB + (1-α)*SW"
             }
         },
@@ -132,8 +132,8 @@ async def analyze_codebert_only(pair: CodePair):
         scb = detector.codebert.calculate_similarity(pair.code1, pair.code2)
         return {
             "scb": scb,
-            "threshold": 0.80,
-            "is_similar": scb >= 0.80,
+            "threshold": 0.99,
+            "is_similar": scb >= 0.99,
             "file1_name": pair.file1_name,
             "file2_name": pair.file2_name
         }
@@ -150,8 +150,8 @@ async def analyze_winnowing_only(pair: CodePair):
         sw = result if isinstance(result, float) else result.get('similarity', 0)
         return {
             "sw": sw,
-            "threshold": 0.75,
-            "is_similar": sw >= 0.75,
+            "threshold": 0.13,
+            "is_similar": sw >= 0.13,
             "file1_name": pair.file1_name,
             "file2_name": pair.file2_name
         }

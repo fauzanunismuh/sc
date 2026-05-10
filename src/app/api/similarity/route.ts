@@ -23,7 +23,7 @@ export async function GET() {
 export async function POST(req: NextRequest) {
     try {
         const body = await req.json();
-        const { code1, code2, alpha = 0.6 } = body;
+        const { code1, code2, alpha = 0.5 } = body;
 
         if (!code1 || !code2) {
             return NextResponse.json(

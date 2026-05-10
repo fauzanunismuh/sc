@@ -31,7 +31,7 @@ Berdasarkan proposal BAB III:
 
 #### 3. Gabungan (gabungan.py)
 - Formula: **SG = α*SCB + (1-α)*SW**
-- Parameter: α = 0.6
+- Parameter: α = 0.5
 - Kategori:
   - **Plagiarisme Kuat**: SCB ≥ 0.80 AND SW ≥ 0.75
   - **Mirip Tekstual**: SW tinggi, SCB rendah
@@ -105,7 +105,7 @@ POST /analyze/batch
 from gabungan import GabunganSimilarity
 
 # Initialize
-detector = GabunganSimilarity(alpha=0.6)
+detector = GabunganSimilarity(alpha=0.5)
 
 # Analyze
 code1 = "def hello(): print('hello')"

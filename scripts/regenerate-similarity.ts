@@ -3,7 +3,7 @@ import { Prisma } from "../src/generated/prisma";
 import prisma from "../src/lib/prisma";
 
 const PYTHON_SERVICE_URL = "http://localhost:8000";
-const ALPHA = 0.6;
+const ALPHA = 0.5;
 const THRESHOLD_CODEBERT = 0.985;
 const THRESHOLD_WINNOWING = 0.08;
 const MIN_BLOCK_TOKENS = 2;

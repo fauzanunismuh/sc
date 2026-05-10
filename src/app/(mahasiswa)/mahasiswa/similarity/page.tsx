@@ -52,9 +52,12 @@ function normalizeScore(value: number) {
   return value > 1 ? value / 100 : value;
 }
 
+const THRESHOLD_CODEBERT = 0.99;
+const THRESHOLD_WINNOWING = 0.13;
+
 function isPlagiarismeKuat(category: string, scores?: { scb: number; sw: number }) {
   if (scores) {
-    return normalizeScore(scores.scb) >= 0.985 && normalizeScore(scores.sw) >= 0.08;
+    return normalizeScore(scores.scb) >= THRESHOLD_CODEBERT && normalizeScore(scores.sw) >= THRESHOLD_WINNOWING;
   }
 
   const normalized = category.toLowerCase();
@@ -66,15 +69,15 @@ function classifyCategory(category: string, scores?: { scb: number; sw: number }
     const normalizedSemantic = normalizeScore(scores.scb);
     const normalizedTextual = normalizeScore(scores.sw);
 
-    if (normalizedSemantic >= 0.985 && normalizedTextual >= 0.08) {
+    if (normalizedSemantic >= THRESHOLD_CODEBERT && normalizedTextual >= THRESHOLD_WINNOWING) {
       return { label: "Plagiarisme Kuat", icon: AlertTriangle, className: "border-red-500/30 bg-red-500/10 text-red-700 dark:text-red-100" };
     }
 
-    if (normalizedTextual >= 0.08) {
+    if (normalizedTextual >= THRESHOLD_WINNOWING) {
       return { label: "Mirip Tekstual", icon: AlertTriangle, className: "border-amber-500/30 bg-amber-500/10 text-amber-700 dark:text-amber-100" };
     }
 
-    if (normalizedSemantic >= 0.8) {
+    if (normalizedSemantic >= THRESHOLD_CODEBERT) {
       return { label: "Mirip Semantik", icon: AlertTriangle, className: "border-amber-500/30 bg-amber-500/10 text-amber-700 dark:text-amber-100" };
     }
 
@@ -98,7 +101,7 @@ function classifyCategory(category: string, scores?: { scb: number; sw: number }
 
 function getSnippetNote(category: string, similarity: number, scores?: { scb: number; sw: number }) {
   if (isPlagiarismeKuat(category, scores)) {
-    return `Memenuhi ambang SCB ≥ 98,5% dan SW ≥ 8,0% (${similarity.toFixed(0)}%)`;
+    return `Memenuhi ambang SCB ≥ 99% dan SW ≥ 13% (${similarity.toFixed(0)}%)`;
   }
 
   const normalized = category.toLowerCase();

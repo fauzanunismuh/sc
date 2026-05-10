@@ -7,26 +7,26 @@ from codebert_similarity import codebert_similarity
 # ============================================================
 # Konfigurasi hasil kalibrasi awal berdasarkan distribusi data lokal
 # Formula: SG = alpha * SCB + (1 - alpha) * SW
-# Threshold CodeBERT  : >= 0.985
-# Threshold Winnowing : >= 0.08
-# Alpha               : 0.6 (CodeBERT lebih dominan - semantik)
+# Threshold CodeBERT  : >= 0.99
+# Threshold Winnowing : >= 0.13
+# Alpha               : 0.5 (bobot seimbang semantik vs tekstual)
 # Winnowing: k=5 (k-gram), w=4 (window size) - Ramli et al. 2021
 # ============================================================
 
-THRESHOLD_CODEBERT  = 0.985
-THRESHOLD_WINNOWING = 0.08
-ALPHA_DEFAULT       = 0.6
+THRESHOLD_CODEBERT  = 0.99
+THRESHOLD_WINNOWING = 0.13
+ALPHA_DEFAULT       = 0.5
 K_GRAM_DEFAULT      = 5
 WINDOW_DEFAULT      = 4
 
 
 def get_classification(sg: float, scb: float, sw: float) -> dict:
     """
-    4 kategori klasifikasi sesuai konteks proposal:
-    1. Plagiarisme Kuat: SCB >= 0.985 AND SW >= 0.08
-    2. Mirip Tekstual  : SCB < 0.985 AND SW >= 0.08
-    3. Mirip Semantik  : SCB >= 0.985 AND SW < 0.08
-    4. Normal          : SCB < 0.985 AND SW < 0.08
+    Klasifikasi sesuai diagram revisi proposal:
+    1. Plagiarisme Kuat: SCB >= 0.99 AND SW >= 0.13
+    2. Mirip Tekstual  : SCB < 0.99 AND SW >= 0.13
+    3. Mirip Semantik  : SCB >= 0.99 AND SW < 0.13
+    4. Normal          : SCB < 0.99 AND SW < 0.13
     """
     if scb >= THRESHOLD_CODEBERT and sw >= THRESHOLD_WINNOWING:
         return {"label": "Plagiarisme Kuat", "level": "danger"}
@@ -53,7 +53,7 @@ app.add_middleware(
 class SimilarityRequest(BaseModel):
     code1: str
     code2: str
-    alpha: float = ALPHA_DEFAULT       # bobot CodeBERT (0.6)
+    alpha: float = ALPHA_DEFAULT       # bobot CodeBERT (0.5)
     k: int = K_GRAM_DEFAULT            # ukuran k-gram Winnowing (5)
     w: int = WINDOW_DEFAULT            # ukuran window Winnowing (4)
 

@@ -79,12 +79,15 @@ function normalizeScore(value: number) {
   return value > 1 ? value / 100 : value;
 }
 
+const THRESHOLD_CODEBERT = 0.99;
+const THRESHOLD_WINNOWING = 0.13;
+
 function isPlagiarismeKuat(category: string, scores?: ScoreLike) {
   const semanticScore = scores?.scb ?? scores?.codebert;
   const textualScore = scores?.sw ?? scores?.winnowing;
 
   if (typeof semanticScore === "number" && typeof textualScore === "number") {
-    return normalizeScore(semanticScore) >= 0.985 && normalizeScore(textualScore) >= 0.08;
+    return normalizeScore(semanticScore) >= THRESHOLD_CODEBERT && normalizeScore(textualScore) >= THRESHOLD_WINNOWING;
   }
 
   const normalized = category.toLowerCase();
@@ -94,20 +97,19 @@ function isPlagiarismeKuat(category: string, scores?: ScoreLike) {
 function classifyCategory(category: string, scores?: ScoreLike) {
   const semanticScore = scores?.scb ?? scores?.codebert;
   const textualScore = scores?.sw ?? scores?.winnowing;
-
   if (typeof semanticScore === "number" && typeof textualScore === "number") {
     const normalizedSemantic = normalizeScore(semanticScore);
     const normalizedTextual = normalizeScore(textualScore);
 
-    if (normalizedSemantic >= 0.985 && normalizedTextual >= 0.08) {
+    if (normalizedSemantic >= THRESHOLD_CODEBERT && normalizedTextual >= THRESHOLD_WINNOWING) {
       return { label: "Plagiarisme Kuat", icon: AlertTriangle, className: "border-red-500/30 bg-red-500/10 text-red-700 dark:text-red-100" };
     }
 
-    if (normalizedTextual >= 0.08) {
+    if (normalizedTextual >= THRESHOLD_WINNOWING) {
       return { label: "Mirip Tekstual", icon: AlertTriangle, className: "border-amber-500/30 bg-amber-500/10 text-amber-700 dark:text-amber-100" };
     }
 
-    if (normalizedSemantic >= 0.8) {
+    if (normalizedSemantic >= THRESHOLD_CODEBERT) {
       return { label: "Mirip Semantik", icon: AlertTriangle, className: "border-amber-500/30 bg-amber-500/10 text-amber-700 dark:text-amber-100" };
     }
 
@@ -131,7 +133,7 @@ function classifyCategory(category: string, scores?: ScoreLike) {
 
 function getSnippetNote(category: string, similarity: number, scores?: ScoreLike) {
   if (isPlagiarismeKuat(category, scores)) {
-    return `Memenuhi ambang SCB ≥ 98,5% dan SW ≥ 8,0% (${similarity.toFixed(0)}%)`;
+    return `Memenuhi ambang SCB ≥ 99% dan SW ≥ 13% (${similarity.toFixed(0)}%)`;
   }
 
   const normalized = category.toLowerCase();

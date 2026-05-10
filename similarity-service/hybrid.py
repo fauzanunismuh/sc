@@ -6,17 +6,17 @@ class HybridSimilarity:
     """
     Implementasi hybrid CodeBERT + Winnowing untuk deteksi plagiarisme.
     Berdasarkan proposal BAB III:
-    - Formula: SG = α*SCB + (1-α)*SW dengan α=0.6
-    - Threshold: SCB >= 0.80, SW >= 0.75
+    - Formula: SG = α*SCB + (1-α)*SW dengan α=0.5
+    - Threshold: SCB >= 0.99, SW >= 0.13
     - Kategori: Plagiarisme Kuat, Mirip Tekstual, Mirip Semantik, Normal
     """
     
-    def __init__(self, alpha: float = 0.6, codebert_threshold: float = 0.80, winnowing_threshold: float = 0.75):
+    def __init__(self, alpha: float = 0.5, codebert_threshold: float = 0.99, winnowing_threshold: float = 0.13):
         """
         Args:
-            alpha: Bobot untuk CodeBERT (default: 0.6 sesuai proposal)
-            codebert_threshold: Threshold CodeBERT (default: 0.80)
-            winnowing_threshold: Threshold Winnowing (default: 0.75)
+            alpha: Bobot untuk CodeBERT (default: 0.5)
+            codebert_threshold: Threshold CodeBERT (default: 0.99)
+            winnowing_threshold: Threshold Winnowing (default: 0.13)
         """
         self.alpha = alpha
         self.codebert_threshold = codebert_threshold
@@ -57,7 +57,7 @@ class HybridSimilarity:
         """
         Klasifikasi hasil plagiarisme berdasarkan threshold.
         Kategori sesuai proposal BAB III:
-        1. Plagiarisme Kuat: SCB >= 0.80 AND SW >= 0.75
+        1. Plagiarisme Kuat: SCB >= 0.99 AND SW >= 0.13
         2. Mirip Tekstual: SW tinggi, SCB rendah
         3. Mirip Semantik: SCB tinggi, SW rendah
         4. Normal: Keduanya di bawah threshold

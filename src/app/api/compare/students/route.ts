@@ -55,10 +55,10 @@ function toPercent(score: number) {
   return score <= 1 ? score * 100 : score;
 }
 
-const THRESHOLD_CODEBERT_PERCENT = 98.5;
-const THRESHOLD_WINNOWING_PERCENT = 8;
+const THRESHOLD_CODEBERT_PERCENT = 99;
+const THRESHOLD_WINNOWING_PERCENT = 13;
 
-function classifyFromScores(scb: number, sw: number) {
+function classifyFromScores(scb: number, sw: number, sg: number) {
   if (scb >= THRESHOLD_CODEBERT_PERCENT && sw >= THRESHOLD_WINNOWING_PERCENT) {
     return "Plagiarisme Kuat";
   }
@@ -235,7 +235,7 @@ export async function POST(request: Request) {
       const scb = toPercent(row.codebertScore);
       const sw = toPercent(row.winnowingScore);
       const sg = toPercent(row.gabunganScore);
-      const categoryLabel = classifyFromScores(scb, sw);
+      const categoryLabel = classifyFromScores(scb, sw, sg);
       const snippets = normalizeCompareSnippets(row.snippets);
       const contextSnippets = enrichSnippetContext(snippets, {
         studentA: row.projectAStudent || row.projectATitle,
@@ -278,7 +278,7 @@ export async function POST(request: Request) {
       const scb = toPercent(result.codebertScore);
       const sw = toPercent(result.winnowingScore);
       const sg = toPercent(result.gabunganScore);
-      const categoryLabel = classifyFromScores(scb, sw);
+      const categoryLabel = classifyFromScores(scb, sw, sg);
       const storedCategoryLabel = result.categoryLabel || result.category || "Normal";
 
       return {
