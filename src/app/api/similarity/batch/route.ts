@@ -314,19 +314,44 @@ async function callWithTimeout(url: string, body: Record<string, unknown>) {
   }
 }
 
+function delay(ms: number) {
+  return new Promise((resolve) => setTimeout(resolve, ms));
+}
+
 async function getSimilarity(codeA: string, codeB: string) {
-  const [cbRes, wRes] = await Promise.all([
-    callWithTimeout(`${PYTHON_SERVICE_URL}/analyze/codebert-only`, { code1: codeA, code2: codeB }),
-    callWithTimeout(`${PYTHON_SERVICE_URL}/analyze/winnowing-only`, { code1: codeA, code2: codeB }),
-  ]);
+  let lastError: unknown = null;
 
-  const cbJson = cbRes.ok ? await cbRes.json() : null;
-  const wJson = wRes.ok ? await wRes.json() : null;
+  for (let attempt = 1; attempt <= 3; attempt++) {
+    try {
+      const [cbRes, wRes] = await Promise.all([
+        callWithTimeout(`${PYTHON_SERVICE_URL}/analyze/codebert-only`, { code1: codeA, code2: codeB }),
+        callWithTimeout(`${PYTHON_SERVICE_URL}/analyze/winnowing-only`, { code1: codeA, code2: codeB }),
+      ]);
 
-  return {
-    scb: typeof cbJson?.scb === "number" ? cbJson.scb : 0,
-    sw: typeof wJson?.sw === "number" ? wJson.sw : 0,
-  };
+      if (!cbRes.ok || !wRes.ok) {
+        throw new Error(`Similarity service non-OK response (codebert=${cbRes.status}, winnowing=${wRes.status})`);
+      }
+
+      const cbJson = await cbRes.json();
+      const wJson = await wRes.json();
+
+      if (typeof cbJson?.scb !== "number" || typeof wJson?.sw !== "number") {
+        throw new Error("Similarity service response missing numeric scores");
+      }
+
+      return {
+        scb: cbJson.scb,
+        sw: wJson.sw,
+      };
+    } catch (error) {
+      lastError = error;
+      if (attempt < 3) {
+        await delay(350 * attempt);
+      }
+    }
+  }
+
+  throw lastError instanceof Error ? lastError : new Error("Similarity service failed after retries");
 }
 
 export async function POST(req: NextRequest) {
@@ -366,6 +391,10 @@ export async function POST(req: NextRequest) {
       projectPool = [...projects, ...otherProjects];
     }
 
+    // Pastikan urutan proyek deterministik agar pasangan selalu tersimpan sebagai (A,B)
+    // yang sama di setiap run, dan tidak menghasilkan duplikat terbalik (B,A).
+    projectPool = [...projectPool].sort((left, right) => left.id.localeCompare(right.id));
+
     if (projectPool.length < 2) {
       return NextResponse.json(
         { error: "Minimal 2 project diperlukan untuk analisis" },
@@ -376,6 +405,15 @@ export async function POST(req: NextRequest) {
     console.log(
       `[Batch] Memproses ${projectPool.length} proyek${incrementalTargetId ? ` (incremental target=${incrementalTargetId})` : ""}`
     );
+
+    // Bersihkan pasangan terbalik (A,B) dan (B,A) dari run lama agar total pair stabil.
+    await prisma.$executeRaw`
+      DELETE FROM "similarity_results" s
+      USING "similarity_results" s2
+      WHERE s."projectAId" > s."projectBId"
+        AND s2."projectAId" = s."projectBId"
+        AND s2."projectBId" = s."projectAId"
+    `;
 
     const projectData: Record<string, { code: string; snippets: Record<string, string>; hasCode?: boolean }> = {};
     const fetchErrors: string[] = [];
@@ -428,11 +466,13 @@ export async function POST(req: NextRequest) {
     }> = [];
     let pairCount = 0;
     let errorCount = 0;
+    let skippedNoCodeCount = 0;
 
     for (let i = 0; i < projectPool.length; i++) {
       for (let j = i + 1; j < projectPool.length; j++) {
-        const a = projectPool[i];
-        const b = projectPool[j];
+        const left = projectPool[i];
+        const right = projectPool[j];
+        const [a, b] = left.id.localeCompare(right.id) <= 0 ? [left, right] : [right, left];
 
         if (incrementalTargetId && a.id !== incrementalTargetId && b.id !== incrementalTargetId) {
           continue;
@@ -456,9 +496,14 @@ export async function POST(req: NextRequest) {
             } catch (e) {
               errorCount++;
               console.warn(`[Batch] Timeout/error pasangan ${a.title} x ${b.title}:`, e);
+              // Jangan overwrite skor existing menjadi 0 ketika service sedang gagal sementara.
+              continue;
             }
           } else {
+            skippedNoCodeCount++;
             console.warn(`[Batch] Lewati similarity untuk pasangan ${a.title} x ${b.title} karena source code tidak tersedia`);
+            // Jangan simpan hasil 0 sebagai "Normal" jika kode tidak tersedia.
+            continue;
           }
 
           const sg = ALPHA * scb + (1 - ALPHA) * sw;
@@ -514,7 +559,7 @@ export async function POST(req: NextRequest) {
       }
     }
 
-    console.log(`[Batch] Selesai: ${pairCount} pasangan diproses, ${errorCount} error`);
+    console.log(`[Batch] Selesai: ${pairCount} pasangan diproses, ${errorCount} error, ${skippedNoCodeCount} dilewati (kode tidak tersedia)`);
 
     const levelOrder: Record<string, number> = { danger: 0, warning: 1, secondary: 2, success: 3 };
     results.sort(
@@ -528,6 +573,7 @@ export async function POST(req: NextRequest) {
       totalProjects: projectPool.length,
       mode: incrementalTargetId ? "incremental" : "full",
       targetProjectId: incrementalTargetId,
+      skippedNoCodeCount,
       fetchErrors,
       results,
     });

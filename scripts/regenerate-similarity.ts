@@ -8,7 +8,6 @@ const THRESHOLD_CODEBERT = 0.99;
 const THRESHOLD_WINNOWING = 0.13;
 const MIN_BLOCK_TOKENS = 2;
 const BLOCK_MATCH_THRESHOLD = 0.5;
-const MAX_SNIPPETS_PER_PAIR = 10;
 const MIN_BLOCK_CHAR_LENGTH = 40;
 const FETCH_TIMEOUT_MS = 15000;
 const SIMILARITY_TIMEOUT_MS = 120000;
@@ -229,26 +228,44 @@ async function callWithTimeout(url: string, body: object): Promise<Response> {
     }
 }
 
+function delay(ms: number) {
+    return new Promise((resolve) => setTimeout(resolve, ms));
+}
+
 async function getSimilarity(codeA: string, codeB: string) {
-    try {
-        const [cbRes, wRes] = await Promise.all([
-            callWithTimeout(`${PYTHON_SERVICE_URL}/analyze/codebert-only`, { code1: codeA, code2: codeB }),
-            callWithTimeout(`${PYTHON_SERVICE_URL}/analyze/winnowing-only`, { code1: codeA, code2: codeB }),
-        ]);
+    let lastError: unknown = null;
 
-        const cbJson = cbRes.ok ? await cbRes.json() : null;
-        const wJson = wRes.ok ? await wRes.json() : null;
+    for (let attempt = 1; attempt <= 3; attempt++) {
+        try {
+            const [cbRes, wRes] = await Promise.all([
+                callWithTimeout(`${PYTHON_SERVICE_URL}/analyze/codebert-only`, { code1: codeA, code2: codeB }),
+                callWithTimeout(`${PYTHON_SERVICE_URL}/analyze/winnowing-only`, { code1: codeA, code2: codeB }),
+            ]);
 
-        return {
-            scb: typeof cbJson?.scb === "number" ? cbJson.scb : 0,
-            sw: typeof wJson?.sw === "number" ? wJson.sw : 0,
-        };
-    } catch (error) {
-        if (error instanceof Error && error.name === "AbortError") {
-            return { scb: 0, sw: 0 };
+            if (!cbRes.ok || !wRes.ok) {
+                throw new Error(`Similarity service non-OK response (codebert=${cbRes.status}, winnowing=${wRes.status})`);
+            }
+
+            const cbJson = await cbRes.json();
+            const wJson = await wRes.json();
+
+            if (typeof cbJson?.scb !== "number" || typeof wJson?.sw !== "number") {
+                throw new Error("Similarity service response missing numeric scores");
+            }
+
+            return {
+                scb: cbJson.scb,
+                sw: wJson.sw,
+            };
+        } catch (error) {
+            lastError = error;
+            if (attempt < 3) {
+                await delay(350 * attempt);
+            }
         }
-        throw error;
     }
+
+    throw lastError instanceof Error ? lastError : new Error("Similarity service failed after retries");
 }
 
 type PairJob = {
@@ -282,7 +299,7 @@ function buildSnippetPairs(
     const matchedPairs = [...pairMap.values()].sort((left, right) => right.score - left.score);
     if (matchedPairs.length === 0) return [];
 
-    return matchedPairs.slice(0, MAX_SNIPPETS_PER_PAIR).map(({ a, b, score }) => ({
+    return matchedPairs.map(({ a, b, score }) => ({
         code_a: a.code,
         code_b: b.code,
         similarity,
@@ -299,7 +316,17 @@ async function main() {
             select: { id: true, title: true, githubRepoUrl: true, mahasiswa: { select: { name: true, nim: true } } },
         });
 
+        projects.sort((left, right) => left.id.localeCompare(right.id));
+
         console.log(`projects=${projects.length}`);
+
+        await prisma.$executeRaw`
+                        DELETE FROM "similarity_results" s
+                        USING "similarity_results" s2
+                        WHERE s."projectAId" > s."projectBId"
+                            AND s2."projectAId" = s."projectBId"
+                            AND s2."projectBId" = s."projectAId"
+                `;
 
         const projectDataEntries = await Promise.all(
             projects.map(async (project: ProjectRecord, index: number) => {
@@ -337,10 +364,12 @@ async function main() {
         for (const batch of batches) {
             await Promise.allSettled(
                 batch.map(async ({ a, b }) => {
+                    let hasValidCode = false;
                     try {
-                        const codeA = projectData[a.id]?.code ?? "";
-                        const codeB = projectData[b.id]?.code ?? "";
-                        const hasValidCode = Boolean(projectData[a.id]?.hasCode && projectData[b.id]?.hasCode);
+                        const [projectA, projectB] = a.id.localeCompare(b.id) <= 0 ? [a, b] : [b, a];
+                        const codeA = projectData[projectA.id]?.code ?? "";
+                        const codeB = projectData[projectB.id]?.code ?? "";
+                        hasValidCode = Boolean(projectData[projectA.id]?.hasCode && projectData[projectB.id]?.hasCode);
 
                         let scb = 0;
                         let sw = 0;
@@ -354,8 +383,8 @@ async function main() {
                         const sg = ALPHA * scb + (1 - ALPHA) * sw;
                         const classification = getClassification(scb, sw);
                         const snippetPairs = buildSnippetPairs(
-                            projectData[a.id]?.snippets ?? {},
-                            projectData[b.id]?.snippets ?? {},
+                            projectData[projectA.id]?.snippets ?? {},
+                            projectData[projectB.id]?.snippets ?? {},
                             sg
                         );
 
@@ -364,7 +393,7 @@ async function main() {
                 INSERT INTO "similarity_results" (
                   "id", "projectAId", "projectBId", "scoreCodebert", "scoreWinnowing", "scoreHybrid", category, "categoryLabel", snippets, "createdAt", "updatedAt"
                 ) VALUES (
-                  ${randomUUID()}, ${a.id}, ${b.id}, ${scb}, ${sw}, ${sg}, ${classification.level}, ${classification.label}, CAST(${JSON.stringify(snippetPairs)} AS jsonb), ${new Date()}, ${new Date()}
+                                    ${randomUUID()}, ${projectA.id}, ${projectB.id}, ${scb}, ${sw}, ${sg}, ${classification.level}, ${classification.label}, CAST(${JSON.stringify(snippetPairs)} AS jsonb), ${new Date()}, ${new Date()}
                 )
                 ON CONFLICT ("projectAId", "projectBId") DO UPDATE SET
                   "scoreCodebert" = EXCLUDED."scoreCodebert",
@@ -383,13 +412,20 @@ async function main() {
                         }
                     } catch (error) {
                         console.warn(`pair failed: ${a.title} x ${b.title}`, String(error));
+
+                        if (hasValidCode) {
+                            // Jangan timpa skor existing dengan 0 jika gagal sementara.
+                            return;
+                        }
+
                         try {
+                            const [projectA, projectB] = a.id.localeCompare(b.id) <= 0 ? [a, b] : [b, a];
                             await prisma.$executeRaw(
                                 Prisma.sql`
                   INSERT INTO "similarity_results" (
                     "id", "projectAId", "projectBId", "scoreCodebert", "scoreWinnowing", "scoreHybrid", category, "categoryLabel", snippets, "createdAt", "updatedAt"
                   ) VALUES (
-                    ${randomUUID()}, ${a.id}, ${b.id}, ${0}, ${0}, ${0}, ${"success"}, ${"Normal"}, CAST(${JSON.stringify([])} AS jsonb), ${new Date()}, ${new Date()}
+                                        ${randomUUID()}, ${projectA.id}, ${projectB.id}, ${0}, ${0}, ${0}, ${"success"}, ${"Normal"}, CAST(${JSON.stringify([])} AS jsonb), ${new Date()}, ${new Date()}
                   )
                   ON CONFLICT ("projectAId", "projectBId") DO UPDATE SET
                     "scoreCodebert" = EXCLUDED."scoreCodebert",

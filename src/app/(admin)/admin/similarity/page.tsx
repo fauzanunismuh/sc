@@ -421,28 +421,27 @@ export default function AdminSimilarityPage() {
     setError(null);
 
     try {
-      const response = await fetch("/api/compare/students", {
+      const response = await fetch("/api/similarity/batch", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ mode: "summary" }),
+        body: JSON.stringify({}),
       });
 
-      const data = (await response.json()) as CompareStudentsResponse;
+      const data = (await response.json()) as { error?: string };
 
       if (!response.ok || data.error) {
         setError(data.error || "Gagal menjalankan analisis batch.");
         return;
       }
 
-      setResults(data.suspicious_pairs || []);
-      setSnippetCache({});
+      await fetchResults();
     } catch (requestError) {
       console.error(requestError);
       setError("Gagal menjalankan analisis batch.");
     } finally {
       setRunning(false);
     }
-  }, []);
+  }, [fetchResults]);
 
   useEffect(() => {
     fetchResults();

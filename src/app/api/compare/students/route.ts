@@ -25,6 +25,8 @@ type CompareSnippet = {
 type SimilarityRow = {
   projectAId: string;
   projectBId: string;
+  projectAOwnerId: string;
+  projectBOwnerId: string;
   codebertScore: number;
   winnowingScore: number;
   gabunganScore: number;
@@ -262,6 +264,8 @@ export async function POST(request: Request) {
       SELECT
         sr."projectAId" AS "projectAId",
         sr."projectBId" AS "projectBId",
+        pa."mahasiswaId" AS "projectAOwnerId",
+        pb."mahasiswaId" AS "projectBOwnerId",
         sr."scoreCodebert" AS "codebertScore",
         sr."scoreWinnowing" AS "winnowingScore",
         sr."scoreHybrid" AS "gabunganScore",
@@ -290,6 +294,8 @@ export async function POST(request: Request) {
       return {
         project_a_id: result.projectAId,
         project_b_id: result.projectBId,
+        project_a_owner_id: result.projectAOwnerId,
+        project_b_owner_id: result.projectBOwnerId,
         student_a: result.projectAStudent || result.projectATitle,
         student_b: result.projectBStudent || result.projectBTitle,
         project_a: result.projectATitle,

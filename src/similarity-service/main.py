@@ -71,6 +71,11 @@ class SimilarityResponse(BaseModel):
     review_reason: str | None = None
 
 
+class AnalyzeOnlyResponse(BaseModel):
+    scb: float | None = None
+    sw: float | None = None
+
+
 @app.get("/health")
 def health():
     return {
@@ -125,3 +130,40 @@ def calculate_similarity(req: SimilarityRequest):
         review_required=review_required,
         review_reason=review_reason,
     )
+
+
+@app.post("/analyze")
+def analyze(req: SimilarityRequest):
+    """
+    Endpoint kompatibilitas lama untuk service caller yang memakai /analyze.
+    """
+    cb_score = codebert_similarity(req.code1, req.code2)
+    wn_score = winnowing_similarity(req.code1, req.code2, req.k, req.w)
+    gabungan = req.alpha * cb_score + (1 - req.alpha) * wn_score
+    classification = get_classification(gabungan, cb_score, wn_score)
+
+    return {
+        "scb": round(cb_score, 4),
+        "sw": round(wn_score, 4),
+        "sg": round(gabungan, 4),
+        "category": classification["label"],
+        "level": classification["level"],
+    }
+
+
+@app.post("/analyze/codebert-only", response_model=AnalyzeOnlyResponse)
+def analyze_codebert_only(req: SimilarityRequest):
+    """
+    Endpoint kompatibilitas untuk perhitungan semantik saja.
+    """
+    cb_score = codebert_similarity(req.code1, req.code2)
+    return {"scb": round(cb_score, 4)}
+
+
+@app.post("/analyze/winnowing-only", response_model=AnalyzeOnlyResponse)
+def analyze_winnowing_only(req: SimilarityRequest):
+    """
+    Endpoint kompatibilitas untuk perhitungan tekstual saja.
+    """
+    wn_score = winnowing_similarity(req.code1, req.code2, req.k, req.w)
+    return {"sw": round(wn_score, 4)}

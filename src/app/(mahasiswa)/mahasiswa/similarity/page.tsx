@@ -29,6 +29,8 @@ type CompareSnippet = {
 type SuspiciousPair = {
   project_a_id: string;
   project_b_id: string;
+  project_a_owner_id?: string;
+  project_b_owner_id?: string;
   student_a: string;
   student_b: string;
   project_a: string;
@@ -324,13 +326,27 @@ export default function MahasiswaSimilarityPage() {
     return rawName || username || null;
   }, [session]);
 
+  const currentStudentId = session?.user?.id || null;
+
   const visibleResults = useMemo(() => {
-    if (!currentStudent) {
+    if (!currentStudent && !currentStudentId) {
       return [];
     }
 
-    return results.filter((pair) => pair.student_a === currentStudent || pair.student_b === currentStudent);
-  }, [currentStudent, results]);
+    const normalizedCurrentStudent = (currentStudent || "").trim().toLowerCase();
+
+    return results.filter((pair) => {
+      if (currentStudentId && (pair.project_a_owner_id === currentStudentId || pair.project_b_owner_id === currentStudentId)) {
+        return true;
+      }
+
+      if (!normalizedCurrentStudent) {
+        return false;
+      }
+
+      return pair.student_a.trim().toLowerCase() === normalizedCurrentStudent || pair.student_b.trim().toLowerCase() === normalizedCurrentStudent;
+    });
+  }, [currentStudent, currentStudentId, results]);
 
   const filtered = useMemo(() => {
     const query = search.toLowerCase();
@@ -383,21 +399,20 @@ export default function MahasiswaSimilarityPage() {
     setError(null);
 
     try {
-      const response = await fetch("/api/compare/students", {
+      const response = await fetch("/api/similarity/batch", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ mode: "summary" }),
+        body: JSON.stringify({}),
       });
 
-      const data = (await response.json()) as CompareStudentsResponse;
+      const data = (await response.json()) as { error?: string };
 
       if (!response.ok || data.error) {
         setError(data.error || "Gagal menjalankan analisis batch.");
         return;
       }
 
-      setResults(data.suspicious_pairs || []);
-      setSnippetCache({});
+      await fetchResults();
     } catch (requestError) {
       console.error(requestError);
       setError("Gagal menjalankan analisis batch.");
@@ -405,11 +420,11 @@ export default function MahasiswaSimilarityPage() {
       setRunning(false);
       setLoading(false);
     }
-  }, []);
+  }, [fetchResults]);
 
   useEffect(() => {
-    runComparison();
-  }, [runComparison]);
+    fetchResults();
+  }, [fetchResults]);
 
   return (
     <div className="min-h-screen bg-[var(--background)] px-4 py-8 text-[var(--foreground)] md:px-8">

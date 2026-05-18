@@ -3,18 +3,43 @@ import prisma from '@/lib/prisma';
 import { projectSchema } from '@/lib/validations';
 import { NextResponse } from 'next/server';
 
-async function triggerIncrementalSimilarityForProject(projectId: string, requestUrl: string) {
+async function runIncrementalSimilarityForProject(projectId: string, requestUrl: string) {
   try {
-    const origin = new URL(requestUrl).origin;
-    const endpoint = `${origin}/api/similarity/batch`;
-
-    await fetch(endpoint, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ projectIds: [projectId] }),
+    console.log(`[Similarity] Starting incremental analysis for project: ${projectId}`);
+    
+    const peerProjects = await prisma.project.findMany({
+      where: {
+        id: { not: projectId },
+      },
+      select: { id: true },
     });
+
+    if (peerProjects.length === 0) {
+      console.log(`[Similarity] No peer projects found for project ${projectId}`);
+      return;
+    }
+
+    const batchUrl = new URL('/api/similarity/batch', requestUrl).toString();
+    const projectIds = [projectId, ...peerProjects.map((project) => project.id)];
+    
+    console.log(`[Similarity] Processing ${projectIds.length} projects (${projectIds.length * (projectIds.length - 1) / 2} pairs)`);
+
+    const response = await fetch(batchUrl, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ projectIds }),
+    });
+
+    if (!response.ok) {
+      const text = await response.text().catch(() => 'unknown error');
+      console.warn(`[Similarity] Batch trigger failed for project ${projectId}:`, response.status, text);
+    } else {
+      console.log(`[Similarity] Batch completed successfully for project ${projectId}`);
+    }
   } catch (error) {
-    console.warn('[projects] Incremental similarity trigger gagal:', error);
+    console.error(`[Similarity] Error in incremental similarity for project ${projectId}:`, error);
   }
 }
 
@@ -379,10 +404,10 @@ export async function POST(request: Request) {
       },
     });
 
-    if (project.githubRepoUrl) {
-      // Fire-and-forget agar create project tetap responsif.
-      void triggerIncrementalSimilarityForProject(project.id, request.url);
-    }
+    // Jalankan sinkronisasi kemiripan di background agar respons create project tetap cepat.
+    setTimeout(() => {
+      void runIncrementalSimilarityForProject(project.id, request.url);
+    }, 0);
 
     return NextResponse.json(
       {

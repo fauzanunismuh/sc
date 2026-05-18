@@ -1,0 +1,111 @@
+Siap, ini cheat sheet command yang paling sering dipakai untuk run dan troubleshooting manual di project Anda.
+
+1. Setup dasar
+- Masuk project:
+cd "/Volumes/Farhan/seminar hasil/sistem-penelitian"
+
+- Aktifkan virtual env Python:
+source ".venv/bin/activate"
+
+2. Jalankan aplikasi
+- Jalankan Next.js:
+npm run dev
+
+- Cek app hidup:
+curl -sS --max-time 8 -o /dev/null -w "%{http_code}\n" http://localhost:3012/
+
+3. Jalankan / restart similarity service (Python)
+- Matikan service di port 8000:
+lsof -ti tcp:8000 | xargs kill 2>/dev/null || true
+
+- Start service manual:
+cd "/Volumes/Farhan/seminar hasil/sistem-penelitian/similarity-service"
+nohup "/Volumes/Farhan/seminar hasil/sistem-penelitian/.venv/bin/python" -m uvicorn api:app --host 0.0.0.0 --port 8000 >/tmp/uvicorn.log 2>&1 &
+
+- Cek health service:
+curl -sS http://127.0.0.1:8000/health
+
+4. Trigger kalkulasi similarity
+- Jalankan batch dari API:
+curl -sS -X POST http://localhost:3012/api/similarity/batch -H "Content-Type: application/json" -d '{}'
+
+- Jalankan regen full (disarankan saat data kacau):
+./regen.sh
+
+- Jalankan script regen langsung:
+npx tsx regenerate-similarity.ts
+
+5. Cek jumlah pair harus sesuai rumus n(n-1)/2
+- Cek cepat via script inline:
+cat > /tmp/pair-check.ts <<'EOF'
+import prisma from "@/lib/prisma";
+type C = { c: bigint };
+async function main() {
+  const [p] = await prisma.$queryRaw<C[]>`SELECT COUNT(*)::bigint AS c FROM projects`;
+  const [r] = await prisma.$queryRaw<C[]>`SELECT COUNT(*)::bigint AS c FROM similarity_results`;
+  const [u] = await prisma.$queryRaw<C[]>`
+    SELECT COUNT(*)::bigint AS c
+    FROM (
+      SELECT DISTINCT LEAST("projectAId","projectBId") AS a, GREATEST("projectAId","projectBId") AS b
+      FROM similarity_results
+    ) t`;
+  const n = Number(p.c);
+  console.log({ projects:n, expected:(n*(n-1))/2, totalRows:Number(r.c), uniqueUnordered:Number(u.c) });
+}
+main().finally(async()=>{ await prisma.$disconnect(); });
+EOF
+set -a && . .env && set +a && npx tsx /tmp/pair-check.ts
+
+6. Bersihkan duplikat mirror pair (A-B dan B-A)
+- Jalankan jika totalRows > uniqueUnordered:
+cat > /tmp/dedupe-pairs.ts <<'EOF'
+import prisma from "@/lib/prisma";
+async function main() {
+  await prisma.$executeRaw`
+    DELETE FROM "similarity_results" s
+    USING "similarity_results" s2
+    WHERE s."projectAId" > s."projectBId"
+      AND s2."projectAId" = s."projectBId"
+      AND s2."projectBId" = s."projectAId"`;
+  console.log("dedupe done");
+}
+main().finally(async()=>{ await prisma.$disconnect(); });
+EOF
+set -a && . .env && set +a && npx tsx /tmp/dedupe-pairs.ts
+
+7. Cek pair yang masih skor 0 (padahal dua-duanya punya repo)
+cat > /tmp/zero-pairs.ts <<'EOF'
+import prisma from "@/lib/prisma";
+type R = { a_title:string; b_title:string; scb:number; sw:number; sg:number };
+async function main() {
+  const rows = await prisma.$queryRaw<R[]>`
+    SELECT p1.title AS a_title, p2.title AS b_title,
+           sr."scoreCodebert" AS scb, sr."scoreWinnowing" AS sw, sr."scoreHybrid" AS sg
+    FROM similarity_results sr
+    JOIN projects p1 ON p1.id = sr."projectAId"
+    JOIN projects p2 ON p2.id = sr."projectBId"
+    WHERE p1."githubRepoUrl" IS NOT NULL AND trim(p1."githubRepoUrl") <> ''
+      AND p2."githubRepoUrl" IS NOT NULL AND trim(p2."githubRepoUrl") <> ''
+      AND COALESCE(sr."scoreCodebert",0)=0
+      AND COALESCE(sr."scoreWinnowing",0)=0
+      AND COALESCE(sr."scoreHybrid",0)=0
+    ORDER BY p1.title, p2.title
+    LIMIT 20`;
+  console.log(rows);
+}
+main().finally(async()=>{ await prisma.$disconnect(); });
+EOF
+set -a && . .env && set +a && npx tsx /tmp/zero-pairs.ts
+
+8. Cek repo GitHub valid / branch
+curl -sS "https://api.github.com/repos/OWNER/REPO"
+
+9. Kombinasi langkah paling aman saat ada masalah
+- Urutan praktis:
+1) source .venv/bin/activate
+2) npm run dev
+3) curl http://127.0.0.1:8000/health
+4) ./regen.sh
+5) cek pair count (command nomor 5)
+
+Kalau mau, berikutnya saya bisa bikin satu file scripts/troubleshoot.sh yang menggabungkan semua langkah di atas jadi menu otomatis.
