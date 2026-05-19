@@ -96,13 +96,13 @@ def calculate_similarity(req: SimilarityRequest):
     Hitung similarity gabungan CodeBERT + Winnowing.
     Formula: SG = alpha * SCB + (1 - alpha) * SW
     """
-    # 1. CodeBERT similarity (semantik)
+    # 1. CodeBERT similarity 
     cb_score = codebert_similarity(req.code1, req.code2)
 
-    # 2. Winnowing similarity (tekstual/struktural)
+    # 2. Winnowing similarity 
     wn_score = winnowing_similarity(req.code1, req.code2, req.k, req.w)
 
-    # 3. Skor gabungan: SG = alpha * SCB + (1 - alpha) * SW
+    # 3. Skor gabungan:
     gabungan = req.alpha * cb_score + (1 - req.alpha) * wn_score
 
     # 4. Klasifikasi 4 kategori

@@ -1,13 +1,13 @@
 "use client";
 
 import {
-    AlertTriangle,
-    BarChart,
-    CheckCircle2,
-    ChevronDown,
-    FileText,
-    RefreshCw,
-    Search,
+  AlertTriangle,
+  BarChart,
+  CheckCircle2,
+  ChevronDown,
+  FileText,
+  RefreshCw,
+  Search,
 } from "lucide-react";
 import { useCallback, useEffect, useMemo, useState } from "react";
 
@@ -494,7 +494,7 @@ export default function AdminSimilarityPage() {
               <div>
                 <h1 className="text-3xl font-bold tracking-tight text-zinc-900 dark:text-white md:text-5xl">Deteksi Kemiripan Project</h1>
                 <p className="mt-3 max-w-3xl text-sm leading-6 text-zinc-600 dark:text-slate-300 md:text-base">
-                  Admin melihat seluruh pasangan yang mencurigakan, lengkap dengan skor gabungan, CodeBERT, Winnowing, dan potongan snippet yang sudah dilabeli nama mahasiswa serta project sumbernya.
+                  Seluruh pasangan yang mencurigakan, skor gabungan, CodeBERT, Winnowing, dan potongan snippet
                 </p>
               </div>
             </div>
