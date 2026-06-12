@@ -3,13 +3,13 @@
 import { cn } from '@/lib/utils';
 import { motion } from 'framer-motion';
 import {
-  ClipboardCheck,
-  FolderGit2,
-  GitCompare,
-  LayoutDashboard,
-  Mail,
-  User,
-  Users
+    ClipboardCheck,
+    FolderGit2,
+    GitCompare,
+    LayoutDashboard,
+    Mail,
+    User,
+    Users
 } from 'lucide-react';
 import { useSession } from 'next-auth/react';
 import Link from 'next/link';
@@ -41,7 +41,7 @@ const adminNavItems: NavItem[] = [
   { title: 'Home', href: '/admin/dashboard', icon: LayoutDashboard },
   { title: 'Project', href: '/admin/projects', icon: FolderGit2 },
   { title: 'User', href: '/admin/users', icon: Users },
-  { title: 'Kemiripan', href: '/admin/similarity', icon: GitCompare },
+  { title: 'Kemiripan', href: '/admin/similarity-check', icon: GitCompare },
   { title: 'Profil', href: '/admin/profile', icon: User },
 ];
 

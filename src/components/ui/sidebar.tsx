@@ -131,7 +131,7 @@ const adminMenuItems: SidebarItem[] = [
     href: '/admin/semesters',
     icon: <GraduationCap size={20} />,
   },
-  { title: 'Kemiripan', href: '/admin/similarity', icon: <GitCompare size={20} /> },
+  { title: 'Kemiripan', href: '/admin/similarity-check', icon: <GitCompare size={20} /> },
 ];
 
 interface SidebarProps {

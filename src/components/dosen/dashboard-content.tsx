@@ -1,25 +1,25 @@
 'use client';
 
-import Link from 'next/link';
+import { formatDateTime, getSimakPhotoUrl, getStatusColor, getStatusLabel } from '@/lib/utils';
 import {
+  Avatar,
+  Button,
   Card,
   CardBody,
-  Button,
   Chip,
-  Avatar,
 } from '@heroui/react';
 import {
-  FolderGit2,
-  Users,
-  Clock,
+  Activity,
   CheckCircle2,
   ChevronRight,
-  Activity,
   ClipboardCheck,
-  TrendingUp,
+  Clock,
   Eye,
+  FolderGit2,
+  TrendingUp,
+  Users
 } from 'lucide-react';
-import { getStatusColor, getStatusLabel, formatDateTime, getSimakPhotoUrl } from '@/lib/utils';
+import Link from 'next/link';
 
 interface Project {
   id: string;

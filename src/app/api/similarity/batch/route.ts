@@ -12,6 +12,8 @@ const THRESHOLD_CODEBERT = 0.99;
 const THRESHOLD_WINNOWING = 0.13;
 const MIN_BLOCK_TOKENS = 2;
 const BLOCK_MATCH_THRESHOLD = 0.5;
+const SERVICE_TIMEOUT_MS = 45000;
+const SERVICE_RETRY_COUNT = 2;
 
 /**
 Klasifikasi
@@ -300,7 +302,7 @@ async function fetchGitHubCode(
 
 async function callWithTimeout(url: string, body: Record<string, unknown>) {
   const controller = new AbortController();
-  const timer = setTimeout(() => controller.abort(), 120000);
+  const timer = setTimeout(() => controller.abort(), SERVICE_TIMEOUT_MS);
 
   try {
     return await fetch(url, {
@@ -321,7 +323,7 @@ function delay(ms: number) {
 async function getSimilarity(codeA: string, codeB: string) {
   let lastError: unknown = null;
 
-  for (let attempt = 1; attempt <= 3; attempt++) {
+  for (let attempt = 1; attempt <= SERVICE_RETRY_COUNT; attempt++) {
     try {
       const [cbRes, wRes] = await Promise.all([
         callWithTimeout(`${PYTHON_SERVICE_URL}/analyze/codebert-only`, { code1: codeA, code2: codeB }),
@@ -345,7 +347,7 @@ async function getSimilarity(codeA: string, codeB: string) {
       };
     } catch (error) {
       lastError = error;
-      if (attempt < 3) {
+      if (attempt < SERVICE_RETRY_COUNT) {
         await delay(350 * attempt);
       }
     }
@@ -360,6 +362,7 @@ export async function POST(req: NextRequest) {
     const requestedProjectIds = Array.isArray(body?.projectIds)
       ? body.projectIds.filter((id: unknown): id is string => typeof id === "string" && id.length > 0)
       : [];
+    const includeResults = body?.includeResults === true;
 
     const projectSelect = {
       id: true,
@@ -460,9 +463,6 @@ export async function POST(req: NextRequest) {
       winnowing_score: number;
       hybrid_score: number;
       classification: ReturnType<typeof getClassification>;
-      snippetA: Record<string, string>;
-      snippetB: Record<string, string>;
-      checkedAt: string;
     }> = [];
     let pairCount = 0;
     let errorCount = 0;
@@ -479,6 +479,9 @@ export async function POST(req: NextRequest) {
         }
 
         pairCount++;
+        if (pairCount % 10 === 0) {
+          console.log(`[Batch] Progress: ${pairCount} pasangan diproses`);
+        }
 
         try {
           const codeA = projectData[a.id]?.code ?? "";
@@ -523,21 +526,23 @@ export async function POST(req: NextRequest) {
             sg
           );
 
+          // Hapus pasangan existing dalam urutan mana pun agar tidak bentrok
+          // dengan constraint unik pasangan tak berurutan.
+          await prisma.$executeRaw(
+            Prisma.sql`
+              DELETE FROM "similarity_results"
+              WHERE ("projectAId" = ${a.id} AND "projectBId" = ${b.id})
+                 OR ("projectAId" = ${b.id} AND "projectBId" = ${a.id});
+            `
+          );
+
           await prisma.$executeRaw(
             Prisma.sql`
               INSERT INTO "similarity_results" (
                 "id", "projectAId", "projectBId", "scoreCodebert", "scoreWinnowing", "scoreHybrid", category, "categoryLabel", snippets, "createdAt", "updatedAt"
               ) VALUES (
                 ${randomUUID()}, ${a.id}, ${b.id}, ${scb}, ${sw}, ${sg}, ${classification.level}, ${classification.label}, CAST(${JSON.stringify(snippets)} AS jsonb), ${new Date()}, ${new Date()}
-              )
-              ON CONFLICT ("projectAId", "projectBId") DO UPDATE SET
-                "scoreCodebert" = EXCLUDED."scoreCodebert",
-                "scoreWinnowing" = EXCLUDED."scoreWinnowing",
-                "scoreHybrid" = EXCLUDED."scoreHybrid",
-                category = EXCLUDED.category,
-                "categoryLabel" = EXCLUDED."categoryLabel",
-                snippets = EXCLUDED.snippets,
-                "updatedAt" = EXCLUDED."updatedAt";
+              );
             `
           );
 
@@ -548,9 +553,6 @@ export async function POST(req: NextRequest) {
             winnowing_score: sw,
             hybrid_score: sg,
             classification,
-            snippetA: snippetAData,
-            snippetB: snippetBData,
-            checkedAt: new Date().toISOString(),
           });
         } catch (error) {
           errorCount++;
@@ -575,7 +577,7 @@ export async function POST(req: NextRequest) {
       targetProjectId: incrementalTargetId,
       skippedNoCodeCount,
       fetchErrors,
-      results,
+      ...(includeResults ? { results } : {}),
     });
   } catch (error) {
     console.error("Batch similarity error:", error);

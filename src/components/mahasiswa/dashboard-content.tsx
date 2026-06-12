@@ -1,50 +1,50 @@
 'use client';
 
-import { useState } from 'react';
-import Link from 'next/link';
-import { useRouter } from 'next/navigation';
+import { formatDate, getStatusColor, getStatusLabel } from '@/lib/utils';
+import {
+    addToast,
+    Avatar,
+    Button,
+    Card,
+    CardBody,
+    Chip,
+    Modal,
+    ModalBody,
+    ModalContent,
+    ModalFooter,
+    ModalHeader,
+    Progress,
+    useDisclosure,
+} from '@heroui/react';
 import { motion } from 'framer-motion';
 import {
-  Button,
-  Card,
-  CardBody,
-  Chip,
-  Progress,
-  Modal,
-  ModalContent,
-  ModalHeader,
-  ModalBody,
-  ModalFooter,
-  useDisclosure,
-  addToast,
-  Avatar,
-} from '@heroui/react';
-import {
-  FolderGit2,
-  FileText,
-  ClipboardCheck,
-  Clock,
-  Plus,
-  Github,
-  ChevronRight,
-  ExternalLink,
-  Calendar,
-  Trash2,
-  AlertTriangle,
-  Sparkles,
-  TrendingUp,
-  Edit,
-  Rocket,
-  BookOpen,
-  Target,
-  Award,
-  Zap,
-  Users,
-  Crown,
-  Link2,
-  CheckCircle2,
+    AlertTriangle,
+    Award,
+    BookOpen,
+    Calendar,
+    CheckCircle2,
+    ChevronRight,
+    ClipboardCheck,
+    Clock,
+    Crown,
+    Edit,
+    ExternalLink,
+    FileText,
+    FolderGit2,
+    Github,
+    Link2,
+    Plus,
+    Rocket,
+    Sparkles,
+    Target,
+    Trash2,
+    TrendingUp,
+    Users,
+    Zap,
 } from 'lucide-react';
-import { formatDate, getStatusColor, getStatusLabel } from '@/lib/utils';
+import Link from 'next/link';
+import { useRouter } from 'next/navigation';
+import { useState } from 'react';
 
 interface ProjectMember {
   id: string;
@@ -140,9 +140,9 @@ const STATS_CONFIG = [
     key: 'documents',
     label: 'Dokumen',
     icon: FileText,
-    gradient: 'from-violet-500 via-purple-500 to-fuchsia-500',
-    bgLight: 'bg-violet-50 dark:bg-violet-900/20',
-    iconColor: 'text-violet-600 dark:text-violet-400',
+    gradient: 'from-purple-500 via-pink-500 to-fuchsia-500',
+    bgLight: 'bg-purple-50 dark:bg-purple-900/20',
+    iconColor: 'text-purple-600 dark:text-purple-400',
   },
   {
     key: 'reviewed',

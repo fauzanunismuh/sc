@@ -434,33 +434,17 @@ export default function MahasiswaSimilarityPage() {
             <div className="space-y-4">
               <div className="inline-flex items-center gap-2 rounded-full border border-cyan-400/20 bg-cyan-400/10 px-4 py-2 text-sm font-semibold text-cyan-700 dark:text-cyan-100">
                 <BarChart className="h-4 w-4" />
-                Pemeriksaan Kemiripan Mahasiswa
+                Pemeriksaan Kemiripan
               </div>
               <div>
-                <h1 className="text-3xl font-bold tracking-tight text-zinc-900 dark:text-white md:text-5xl">Hasil pengecekan skripsi</h1>
+                <h1 className="text-3xl font-bold tracking-tight text-zinc-900 dark:text-white md:text-5xl">Kemiripan Project Mahasiswa</h1>
                 <p className="mt-3 max-w-3xl text-sm leading-6 text-zinc-600 dark:text-slate-300 md:text-base">
-                  Halaman ini hanya menampilkan pasangan yang melibatkan akun Anda. Skor gabungan ditampilkan ringkas, sementara detail snippet menjelaskan apakah kemiripan muncul secara semantik atau tekstual.
+                  Kemiripan project yang dibandingkan dengan seluruh project lainnya.
                 </p>
               </div>
             </div>
 
-            <div className="flex flex-wrap items-center gap-3">
-              <button
-                onClick={fetchResults}
-                className="inline-flex items-center gap-2 rounded-xl border border-zinc-200 bg-white/80 px-4 py-2.5 text-sm font-medium text-zinc-900 transition hover:bg-zinc-50 dark:border-zinc-700 dark:bg-zinc-900/70 dark:text-white dark:hover:bg-zinc-800"
-              >
-                <RefreshCw className="h-4 w-4" />
-                Refresh
-              </button>
-              <button
-                onClick={runComparison}
-                disabled={running}
-                className="inline-flex items-center gap-2 rounded-xl bg-gradient-to-r from-cyan-500 to-indigo-500 px-5 py-2.5 text-sm font-semibold text-white shadow-lg transition hover:from-cyan-400 hover:to-indigo-400 disabled:cursor-not-allowed disabled:opacity-60"
-              >
-                {running ? <RefreshCw className="h-4 w-4 animate-spin" /> : <CheckCircle2 className="h-4 w-4" />}
-                {running ? "Memproses..." : "Jalankan Analisis"}
-              </button>
-            </div>
+  
           </div>
         </header>
 
@@ -493,7 +477,7 @@ export default function MahasiswaSimilarityPage() {
                 Cakupan akses
               </div>
               <div className="text-sm text-zinc-700 dark:text-slate-300">
-                {currentStudent ? `Menampilkan hasil untuk ${currentStudent}.` : "Belum bisa menentukan akun mahasiswa."}
+                {currentStudent ? `Menampilkan hasil untuk project ${currentStudent}.` : "Belum bisa menentukan akun mahasiswa."}
               </div>
             </div>
           </div>
