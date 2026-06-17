@@ -5,8 +5,6 @@ import { NextRequest, NextResponse } from "next/server";
 
 const PYTHON_SERVICE_URL = process.env.SIMILARITY_SERVICE_URL || "http://localhost:8000";
 
-// Threshold hasil kalibrasi lokal
-// CodeBERT: 0.99, Winnowing: 0.13
 const ALPHA = 0.5;
 const THRESHOLD_CODEBERT = 0.99;
 const THRESHOLD_WINNOWING = 0.13;

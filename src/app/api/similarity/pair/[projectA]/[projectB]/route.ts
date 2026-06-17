@@ -137,8 +137,6 @@ export async function GET(
         scoreHybrid: number;
         categoryLabel: string;
         snippets: unknown;
-        snippetA: unknown;
-        snippetB: unknown;
         createdAt: Date;
       }>
     >`
@@ -151,8 +149,6 @@ export async function GET(
         sr."scoreHybrid",
         sr."categoryLabel",
         sr."snippets",
-        sr."snippetA",
-        sr."snippetB",
         sr."createdAt"
       FROM "similarity_results" sr
       WHERE (sr."projectAId" = ${projectAId} AND sr."projectBId" = ${projectBId})
@@ -169,11 +165,8 @@ export async function GET(
 
     const sim = similarity[0];
 
-    // Parse snippets dari field utama, fallback ke snippetA/snippetB bila diperlukan
+    // Parse snippets dari field utama. Kolom snippets adalah sumber utama yang dipakai batch job.
     let snippets = normalizeSnippets(sim.snippets);
-    if (!snippets.length) {
-      snippets = buildFallbackSnippets(sim.snippetA, sim.snippetB);
-    }
 
     snippets = snippets.sort(
       (a, b) =>

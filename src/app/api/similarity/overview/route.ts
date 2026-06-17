@@ -20,13 +20,6 @@ function getDominantStatus(counts: Record<CategoryLabel, number>): CategoryLabel
   return "Normal";
 }
 
-/**
- * Endpoint untuk mendapatkan overview similarity untuk semua project.
- * Menampilkan jumlah pasangan mirip (bukan Normal) untuk setiap project.
- * 
- * Query params:
- * - includeNormal: boolean (default: false) - jika true, include kategori Normal juga
- */
 export async function GET(req: NextRequest) {
   try {
     const searchParams = req.nextUrl.searchParams;

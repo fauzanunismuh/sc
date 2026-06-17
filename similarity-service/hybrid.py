@@ -69,19 +69,18 @@ class HybridSimilarity:
         Returns:
             Kategori plagiarisme
         """
-        # Plagiarisme Kuat: kedua score harus melewati threshold
+ 
         if scb >= self.codebert_threshold and sw >= self.winnowing_threshold:
             return "Plagiarisme Kuat"
         
-        # Mirip Tekstual: Winnowing tinggi (>= 0.13), CodeBERT rendah
+
         elif sw >= 0.13 and scb < self.codebert_threshold:
             return "Mirip Tekstual"
         
-        # Mirip Semantik: CodeBERT tinggi (>= 0.99), Winnowing rendah
+
         elif scb >= 0.99 and sw < self.winnowing_threshold:
             return "Mirip Semantik"
         
-        # Normal: keduanya di bawah threshold
         else:
             return "Normal"
     

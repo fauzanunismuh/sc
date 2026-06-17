@@ -109,7 +109,7 @@ export default function SimilarityCheckPage() {
             <div>
               <h1 className="text-3xl font-bold tracking-tight text-zinc-900 dark:text-white md:text-5xl">Deteksi Kemiripan Project</h1>
               <p className="mt-3 max-w-3xl text-sm leading-6 text-zinc-600 dark:text-zinc-300 md:text-base">
-                Konsep 1:semua - setiap project dibandingkan terhadap seluruh project lain untuk memetakan indikasi plagiarisme dan kemiripan.
+                Kemiripan project yang dibandingkan dengan seluruh project lainnya.
               </p>
             </div>
           </div>
@@ -228,7 +228,7 @@ export default function SimilarityCheckPage() {
                     Skor Gabungan
                   </th>
                   <th className="px-16 py-3 text-left text-xs font-semibold text-zinc-900 dark:text-white uppercase tracking-wider">
-                    Status
+                    Status Dominan
                   </th>
                   <th className="px-6 py-3 text-left text-xs font-semibold text-zinc-900 dark:text-white uppercase tracking-wider">
                     Aksi

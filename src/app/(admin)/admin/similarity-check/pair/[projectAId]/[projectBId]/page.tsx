@@ -68,6 +68,14 @@ function buildSnippetKey(snippet: SnippetData, index: number): string {
   return `${index}-${a}-${b}`;
 }
 
+function getSnippetRootPath(filePath?: string): string {
+  if (!filePath) {
+    return "-";
+  }
+
+  return filePath.replace(/\\/g, "/").replace(/^\/+/, "");
+}
+
 function renderHighlightedCode(code: string, highlightTokens: string[], semanticTint = false) {
   if (!highlightTokens.length && !semanticTint) {
     return <code>{code}</code>;
@@ -429,8 +437,13 @@ export default function SimilarityPairDetailPage({
 
                 <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 p-4">
                   <div className="overflow-hidden rounded-xl border border-cyan-500/20 bg-cyan-500/5">
-                    <div className="bg-cyan-500/10 px-4 py-3 border-b border-cyan-500/20 flex justify-between items-center">
-                      <p className="font-semibold text-cyan-900 dark:text-cyan-100 text-xs">[{snippet.student_a || data.pair.projectA.student_name || "Project A"} - {snippet.project_a || data.pair.projectA.title}]</p>
+                    <div className="bg-cyan-500/10 px-4 py-3 border-b border-cyan-500/20 flex flex-wrap items-center justify-between gap-2">
+                      <div className="flex flex-wrap items-center gap-2">
+                        <p className="font-semibold text-cyan-900 dark:text-cyan-100 text-xs">[{snippet.student_a || data.pair.projectA.student_name || "Project A"} - {snippet.project_a || data.pair.projectA.title}]</p>
+                        <span className="max-w-[18rem] truncate rounded-full border border-cyan-500/20 bg-white/70 px-2 py-0.5 text-[11px] font-medium text-cyan-800 dark:bg-zinc-950/40 dark:text-cyan-100" title={getSnippetRootPath(snippet.source_path)}>
+                          {getSnippetRootPath(snippet.source_path)}
+                        </span>
+                      </div>
                       <button
                         onClick={() => copyToClipboard(snippet.code_a, `${index}-a`)}
                         className="p-1 hover:bg-cyan-500/20 rounded transition-colors"
@@ -449,8 +462,13 @@ export default function SimilarityPairDetailPage({
                   </div>
 
                   <div className="overflow-hidden rounded-xl border border-fuchsia-500/20 bg-fuchsia-500/5">
-                    <div className="bg-fuchsia-500/10 px-4 py-3 border-b border-fuchsia-500/20 flex justify-between items-center">
-                      <p className="font-semibold text-fuchsia-900 dark:text-fuchsia-100 text-xs">[{snippet.student_b || data.pair.projectB.student_name || "Project B"} - {snippet.project_b || data.pair.projectB.title}]</p>
+                    <div className="bg-fuchsia-500/10 px-4 py-3 border-b border-fuchsia-500/20 flex flex-wrap items-center justify-between gap-2">
+                      <div className="flex flex-wrap items-center gap-2">
+                        <p className="font-semibold text-fuchsia-900 dark:text-fuchsia-100 text-xs">[{snippet.student_b || data.pair.projectB.student_name || "Project B"} - {snippet.project_b || data.pair.projectB.title}]</p>
+                        <span className="max-w-[18rem] truncate rounded-full border border-fuchsia-500/20 bg-white/70 px-2 py-0.5 text-[11px] font-medium text-fuchsia-800 dark:bg-zinc-950/40 dark:text-fuchsia-100" title={getSnippetRootPath(snippet.target_path)}>
+                          {getSnippetRootPath(snippet.target_path)}
+                        </span>
+                      </div>
                       <button
                         onClick={() => copyToClipboard(snippet.code_b, `${index}-b`)}
                         className="p-1 hover:bg-fuchsia-500/20 rounded transition-colors"
